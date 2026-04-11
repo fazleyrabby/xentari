@@ -1,6 +1,8 @@
 import { chat } from "./llm.js";
 import { getContext } from "./context.js";
 import { detectTier, getTierProfile } from "./tier.js";
+import { log } from "./logger.js";
+import { loadConfig } from "./config.js";
 
 const BASE_SYSTEM = `You are a code editor. You output the FULL UPDATED FILE content only.
 
@@ -45,6 +47,7 @@ Ensure all cross-file dependencies (imports, exports) are consistent.`,
 function buildPrompt(step, files, feedback, chainContext) {
   const tier = detectTier();
   const { context } = getContext(step);
+  const config = loadConfig();
   let system = `${context}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
 
   if (chainContext) {
@@ -64,7 +67,14 @@ function buildPrompt(step, files, feedback, chainContext) {
     }
   }
 
-  const fileContext = files
+  let fileList = files;
+  if (config.incrementalContext && files.length > 2) {
+    // Keep only the first file (target) and one more for context
+    fileList = files.slice(0, 2);
+    log.info(`[CODER] Incremental context active: sending only 2/${files.length} files`);
+  }
+
+  const fileContext = fileList
     .map((f) => `=== FILE: ${f.file} ===\n${f.content}`)
     .join("\n\n---\n\n");
 
@@ -171,10 +181,10 @@ export async function generatePatch(step, files, feedback, chainContext) {
     fileUpdates.length = 1;
   }
 
-  for (const { file, content } of fileUpdates) {
-    file.content = cleanOutput(content);
-    validateGeneratedContent(file.content);
-    if (!file) {
+  for (const update of fileUpdates) {
+    update.content = cleanOutput(update.content);
+    validateGeneratedContent(update.content);
+    if (!update.file) {
       throw new Error("Missing file path in generated content");
     }
   }

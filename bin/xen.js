@@ -7,6 +7,8 @@ import { run, runPlanOnly, runCodeOnly, runReviewOnly } from "../core/pipeline.j
 import { undo } from "../core/patcher.js";
 import { confirm } from "../core/prompt.js";
 import { log } from "../core/logger.js";
+import { indexProject } from "../core/indexer.js";
+import { getContext } from "../core/context.js";
 
 async function main() {
   const HELP = `
@@ -20,6 +22,9 @@ async function main() {
       xen "task" --dry        Generate and validate patch, do not apply
       xen "task" --auto       Auto-retry up to 3x using reviewer feedback
       xen "task" --step       Execute single step (no planning, direct execution)
+      xen index               Build/update project index
+      xen context             Show current dynamic context
+      xen debug "task"        Show retrieval scores and token estimates
       xen undo                Revert last change (git reset --hard HEAD)
       xen --help, xen -h       Show this help
 
@@ -27,8 +32,9 @@ async function main() {
       xen "add a login endpoint"
       xen "fix the auth bug" --auto
       xen "refactor utils" --dry
-      xen "add tests for user model" --plan
-      xen "add hello route" --step
+      xen index
+      xen context
+      xen debug "fix login"
       xen undo
   `;
 
@@ -51,6 +57,34 @@ async function main() {
   }
 
   const task = positionals.join(" ");
+  const projectDir = process.cwd();
+
+  if (task === "index") {
+    await indexProject(projectDir);
+    process.exit(0);
+  }
+
+  if (task === "context") {
+    const { context, stack } = getContext("");
+    log.section("DYNAMIC CONTEXT");
+    log.info(`Stack: ${stack}`);
+    console.log("\n" + context);
+    process.exit(0);
+  }
+
+  if (task.startsWith("debug")) {
+    const debugTask = task.replace("debug", "").trim();
+    if (!debugTask) {
+      log.error("Provide a task to debug. Example: xen debug \"add login\"");
+      process.exit(1);
+    }
+    // Debug logic is mostly internal to retriever and context engine
+    log.section("DEBUG MODE");
+    const { stack } = getContext(debugTask);
+    log.info(`Detected Stack: ${stack}`);
+    log.info("Run with --dry to see file scores in retrieve logs.");
+    process.exit(0);
+  }
 
   if (task === "undo") {
     if (!existsSync(".git")) {
@@ -64,7 +98,7 @@ async function main() {
       process.exit(0);
     }
     try {
-      undo(process.cwd());
+      undo(projectDir);
       log.ok("Reverted to last commit (git reset --hard HEAD)");
     } catch (err) {
       log.error(`Undo failed: ${err.message}`);
@@ -77,8 +111,6 @@ async function main() {
     console.log(HELP);
     process.exit(1);
   }
-
-  const projectDir = process.cwd();
 
   try {
     if (values.step) {

@@ -15,6 +15,7 @@ const defaults = {
   autoRetries: 3,
   llmTimeoutMs: 60_000,
   maxPatchChars: 10_000,
+  incrementalContext: true,
   retrieverWeights: {
     filename: 2,
     content: 1,

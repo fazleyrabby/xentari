@@ -5,6 +5,7 @@ import { loadConfig } from "./config.js";
 import { getRecentFileNames } from "./memory.js";
 import { getTierProfile } from "./tier.js";
 import { getContext } from "./context.js";
+import { loadIndex } from "./indexer.js";
 
 const IGNORE = [
   "**/node_modules/**",
@@ -96,17 +97,36 @@ function suggestNewFilePath(typeInfo, task) {
   const taskWords = task.toLowerCase().split(/\s+/);
   const name = taskWords.find(w => w.length > 2 && !["add", "create", "new", "the", "file"].includes(w)) || "item";
   
-  const singularMap = { models: "model", services: "service", controllers: "controller", routes: "route" };
-  const typeName = singularMap[config.searchDirs[0]] || type;
-  
   for (const ext of config.extensions) {
     for (const dir of config.searchDirs) {
-      const fileName = `${name}.${ext}`;
-      return { path: `${dir}/${fileName}`, isNew: true, suggestedType: type };
+      return { path: `${dir}/${name}.${ext}`, isNew: true, suggestedType: type };
     }
   }
   
   return null;
+}
+
+function tokenize(text) {
+  return text.toLowerCase()
+    .replace(/[^a-z0-9]/g, " ")
+    .split(/\s+/)
+    .filter(t => t.length > 2);
+}
+
+function semanticScore(taskTokens, fileEntry) {
+  if (!fileEntry) return 0;
+  
+  let score = 0;
+  const summaryTokens = tokenize(fileEntry.summary || "");
+  const exportTokens = (fileEntry.exports || []).flatMap(e => tokenize(e));
+  
+  // Summary overlap
+  for (const token of taskTokens) {
+    if (summaryTokens.includes(token)) score += 2;
+    if (exportTokens.includes(token)) score += 3;
+  }
+  
+  return score;
 }
 
 function filenameScore(filePath, keywords) {
@@ -142,7 +162,7 @@ function priorityScore(filePath) {
 
 function typeBoost(filePath, typeInfo) {
   if (!typeInfo) return 0;
-  const { type, config } = typeInfo;
+  const { config } = typeInfo;
   const dir = dirname(filePath).split("/").pop();
   return config.searchDirs.some(d => dir === d.split("/").pop()) ? config.priority : 0;
 }
@@ -160,13 +180,15 @@ function isSourceFile(filePath) {
 export async function retrieve(projectDir, keywords, extraBoostFiles = []) {
   const config = loadConfig();
   const profile = getTierProfile();
-  const w = config.retrieverWeights;
+  const w = config.retrieverWeights || { filename: 2, content: 1, priority: 1.5, memory: 1 };
   const recentFiles = getRecentFileNames();
+  const index = loadIndex();
 
   const maxFiles = profile.maxFiles;
   const maxChars = profile.maxFileChars;
 
   const task = keywords.join(" ");
+  const taskTokens = tokenize(task);
   const typeInfo = detectType(keywords);
 
   const { stack } = getContext(task);
@@ -193,18 +215,22 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = []) {
         content = readFileSync(fullPath, "utf-8").slice(0, maxChars);
       } catch {}
 
+      const relativeFile = stack !== "default" && basePath !== projectDir ? join(stack, file) : file;
+      const indexEntry = index?.files.find(f => f.path === relativeFile);
+
       const fnScore = filenameScore(file, keywords) * w.filename;
       const ctScore = contentScore(content, keywords) * w.content;
       const prScore = priorityScore(file) * w.priority;
-      const memScore = memoryBonus(file, recentFiles) * w.memory;
-      const boostScore = extraBoostFiles.includes(file) ? 5 : 0;
+      const memScore = memoryBonus(relativeFile, recentFiles) * w.memory;
+      const boostScore = extraBoostFiles.includes(relativeFile) ? 5 : 0;
       const typeScore = typeBoost(file, typeInfo);
+      const semScore = semanticScore(taskTokens, indexEntry);
 
       return {
-        file: stack !== "default" && basePath !== projectDir ? join(stack, file) : file,
+        file: relativeFile,
         content,
-        score: fnScore + ctScore + prScore + memScore + boostScore + typeScore,
-        hasPriority: prScore > 0 || typeScore > 0,
+        score: fnScore + ctScore + prScore + memScore + boostScore + typeScore + semScore,
+        hasPriority: prScore > 0 || typeScore > 0 || semScore > 5,
       };
     });
 

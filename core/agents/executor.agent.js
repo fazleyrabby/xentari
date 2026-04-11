@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { log, logToFile } from "../logger.js";
 import { retrieve } from "../retriever.js";
 import { generateWithRetry } from "./coder.agent.js";
@@ -59,6 +60,36 @@ function resetFailureState() {
   failureState.lastReviewRejectReason = null;
 }
 
+function validateStepResult(projectDir, fileResult) {
+  const fullPath = join(projectDir, fileResult.filePath);
+  
+  // 1. Existence check (only if not dry run, but we validate the result object)
+  if (!fileResult.content || fileResult.content.length < 10) {
+    return { valid: false, reason: "Generated content is too small or empty" };
+  }
+
+  // 2. Basic Syntax Check (JS only for now)
+  if (fileResult.filePath.endsWith(".js")) {
+    try {
+      // Use a temporary check if possible or just string analysis
+      // For now, let's check for basic unbalanced braces/parens
+      const code = fileResult.content;
+      const stack = [];
+      const pairs = { '{': '}', '(': ')', '[': ']' };
+      for (let char of code) {
+        if (pairs[char]) stack.push(char);
+        else if (Object.values(pairs).includes(char)) {
+          if (pairs[stack.pop()] !== char) return { valid: false, reason: "Unbalanced braces or parentheses detected" };
+        }
+      }
+    } catch (err) {
+      return { valid: false, reason: `Syntax check failed: ${err.message}` };
+    }
+  }
+
+  return { valid: true };
+}
+
 async function executeStep(step, index, opts, chain) {
   const { projectDir, dryRun, autoMode, maxAttempts, task } = opts;
   const stepStart = Date.now();
@@ -98,14 +129,20 @@ async function executeStep(step, index, opts, chain) {
 
   log.info(`[RETRIEVER] Found: ${files.map((f) => `${f.file}${f.isNew ? " (NEW)" : ""} (${f.score})`).join(", ") || "(none)"}`);
 
-  const targetFile = files[0];
-
   log.info(`[CODER] Generating file content...`);
   let fileResult;
   let feedback = failureState.lastReviewRejectReason || failureState.lastFailureReason;
 
   try {
     fileResult = await generateWithRetry(step.step, files, feedback, chain, maxAttempts);
+    
+    // --- VALIDATION LAYER ---
+    const validation = validateStepResult(projectDir, fileResult);
+    if (!validation.valid) {
+      log.warn(`[VALIDATOR] Result invalid: ${validation.reason}`);
+      // Trigger one retry with validator feedback if we haven't exhausted attempts
+      fileResult = await generateWithRetry(step.step, files, `Validator feedback: ${validation.reason}`, chain, 1);
+    }
   } catch (err) {
     log.error(`[CODER] Failed: ${err.message}`);
     logToFile({ task, mode, step: step.step, status: "code_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });

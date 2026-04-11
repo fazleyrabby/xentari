@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { loadIndex } from "./indexer.js";
 
 function safeRead(filePath) {
   if (!existsSync(filePath)) return "";
@@ -29,8 +30,31 @@ export function detectStack(task, config) {
   return config.defaultStack;
 }
 
+function buildProjectOverview(index) {
+  if (!index || !index.files || index.files.length === 0) return "";
+  
+  let overview = "Project contains:\n";
+  const filesByDir = {};
+  
+  for (const file of index.files) {
+    const dir = file.path.split("/")[0] || "root";
+    if (!filesByDir[dir]) filesByDir[dir] = [];
+    if (filesByDir[dir].length < 3) {
+      filesByDir[dir].push(file.path.split("/").pop());
+    }
+  }
+  
+  for (const [dir, files] of Object.entries(filesByDir)) {
+    overview += `- ${dir}/: ${files.join(", ")}${files.length === 3 ? "..." : ""}\n`;
+    if (overview.length > 400) break;
+  }
+  
+  return overview.slice(0, 500);
+}
+
 export function buildContext({ root, task }) {
   const config = loadContextConfig(root);
+  const index = loadIndex();
 
   const stackName = detectStack(task, config);
   const stack = config.stacks[stackName];
@@ -38,10 +62,14 @@ export function buildContext({ root, task }) {
   const globalCtx = safeRead(join(root, config.globalContext));
   const stackCtx = safeRead(join(root, stack.context));
   const rulesCtx = safeRead(join(root, config.rules));
+  const projectOverview = buildProjectOverview(index);
 
   const combined = `
 # GLOBAL CONTEXT
 ${globalCtx}
+
+# PROJECT OVERVIEW
+${projectOverview}
 
 # STACK CONTEXT (${stackName})
 ${stackCtx}
