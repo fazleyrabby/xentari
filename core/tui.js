@@ -7,12 +7,16 @@ import { indexProject } from "./indexer.js";
 import { getContext } from "./context.js";
 import { undo } from "./patcher.js";
 import { updateDuration } from "./metrics.js";
+import { loadPlugins, buildCommandRegistry } from "./plugins.js";
+import { loadConfig } from "./config.js";
 
 const state = {
   lastTask: null,
   lastFiles: [],
   lastPatch: null,
-  history: []
+  history: [],
+  metrics: null,
+  registry: null
 };
 
 function formatTokens(n) {
@@ -21,6 +25,7 @@ function formatTokens(n) {
 }
 
 export function renderStatus(metrics) {
+  if (!metrics) return;
   updateDuration(metrics);
 
   const line = [
@@ -37,32 +42,15 @@ export function renderStatus(metrics) {
   console.log("-".repeat(60));
 }
 
-async function handleCommand(command, rl) {
-  const cmd = command.trim().toLowerCase();
+async function handleCommand(input, rl) {
+  const [cmdName, ...args] = input.slice(1).trim().split(/\s+/);
   
-  if (cmd === "/exit" || cmd === "/quit") {
+  // Hardcoded core commands (backward compatibility)
+  if (cmdName === "exit" || cmdName === "quit") {
     process.exit(0);
   }
   
-  if (cmd === "/help") {
-    console.log(`
-    Commands:
-      /help    - Show this help
-      /exit    - Exit Xentari
-      /clear   - Clear screen
-      /undo    - Undo last git change
-      /context - Show current dynamic context
-      /index   - Re-index project
-    `);
-    return true;
-  }
-  
-  if (cmd === "/clear") {
-    console.clear();
-    return true;
-  }
-  
-  if (cmd === "/undo") {
+  if (cmdName === "undo") {
     if (!existsSync(".git")) {
       log.error("Not a git repository. Undo unavailable.");
       return true;
@@ -82,7 +70,7 @@ async function handleCommand(command, rl) {
     return true;
   }
   
-  if (cmd === "/context") {
+  if (cmdName === "context") {
     const { context, stack } = getContext("");
     log.section("DYNAMIC CONTEXT");
     log.info(`Stack: ${stack}`);
@@ -90,19 +78,41 @@ async function handleCommand(command, rl) {
     return true;
   }
   
-  if (cmd === "/index") {
+  if (cmdName === "index") {
     await indexProject(process.cwd());
     return true;
   }
+
+  // Plugin commands
+  if (state.registry && state.registry[cmdName]) {
+    try {
+      const context = {
+        projectDir: process.cwd(),
+        lastTask: state.lastTask,
+        metrics: state.metrics,
+        registry: state.registry
+      };
+      await state.registry[cmdName].fn({ args, context });
+    } catch (err) {
+      log.error(`[PLUGIN] Command /${cmdName} failed: ${err.message}`);
+    }
+    return true;
+  }
   
-  return false;
+  log.error(`Unknown command: /${cmdName}. Type /help for available commands.`);
+  return true;
 }
 
 export async function startTUI() {
+  const config = loadConfig();
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout
   });
+  
+  // Initialize plugins
+  const plugins = await loadPlugins(config.root);
+  state.registry = buildCommandRegistry(plugins);
   
   console.clear();
   log.header("Xentari Interactive Mode");
@@ -121,7 +131,7 @@ export async function startTUI() {
       
       state.lastTask = input;
       
-      const { metrics } = await runAgent({
+      const result = await runAgent({
         task: input,
         projectDir: process.cwd(),
         dryRun: false,
@@ -133,7 +143,8 @@ export async function startTUI() {
         rl: rl
       });
 
-      renderStatus(metrics);
+      state.metrics = result.metrics;
+      renderStatus(state.metrics);
       
     } catch (err) {
       log.error(`[ERROR] ${err.message}`);
