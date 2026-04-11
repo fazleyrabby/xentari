@@ -1,85 +1,92 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { loadConfig } from "./config.js";
 import { loadIndex } from "./indexer.js";
+import { retrieveKnowledge } from "./rag.js";
 
-function safeRead(filePath) {
-  if (!existsSync(filePath)) return "";
-  return readFileSync(filePath, "utf-8");
-}
-
-function trimContext(str, max = 3000) {
-  if (str.length <= max) return str;
-  return str.slice(0, max);
-}
-
-export function loadContextConfig(root) {
-  const configPath = join(root, "xen.context.json");
-  if (!existsSync(configPath)) {
-    throw new Error("xen.context.json not found");
-  }
-  return JSON.parse(readFileSync(configPath, "utf-8"));
-}
-
-export function detectStack(task, config) {
-  const lower = task.toLowerCase();
-
-  for (const [name, stack] of Object.entries(config.stacks)) {
-    if (lower.includes(name)) return name;
-  }
-
-  return config.defaultStack;
-}
-
-function buildProjectOverview(index) {
-  if (!index || !index.files || index.files.length === 0) return "";
-  
-  let overview = "Project contains:\n";
-  const filesByDir = {};
-  
-  for (const file of index.files) {
-    const dir = file.path.split("/")[0] || "root";
-    if (!filesByDir[dir]) filesByDir[dir] = [];
-    if (filesByDir[dir].length < 3) {
-      filesByDir[dir].push(file.path.split("/").pop());
-    }
-  }
-  
-  for (const [dir, files] of Object.entries(filesByDir)) {
-    overview += `- ${dir}/: ${files.join(", ")}${files.length === 3 ? "..." : ""}\n`;
-    if (overview.length > 400) break;
-  }
-  
-  return overview.slice(0, 500);
-}
-
-export function buildContext({ root, task }) {
-  const config = loadContextConfig(root);
+function buildProjectOverview() {
   const index = loadIndex();
+  if (!index) return "";
 
-  const stackName = detectStack(task, config);
-  const stack = config.stacks[stackName];
+  const files = index.files.slice(0, 10);
+  const overview = files.map(f => `- ${f.path}: ${f.summary.slice(0, 80)}...`).join("\n");
+  
+  return `\n# PROJECT OVERVIEW\nProject contains:\n${overview}\n`;
+}
 
-  const globalCtx = safeRead(join(root, config.globalContext));
-  const stackCtx = safeRead(join(root, stack.context));
-  const rulesCtx = safeRead(join(root, config.rules));
-  const projectOverview = buildProjectOverview(index);
+function trimContext(text, maxChars = 3000) {
+  if (text.length <= maxChars) return text;
+  return text.slice(0, maxChars) + "\n... [TRUNCATED]";
+}
 
-  const combined = `
-# GLOBAL CONTEXT
-${globalCtx}
+/**
+ * Task 7: Inject into Context
+ */
+function buildKnowledgeContext(task) {
+  const knowledge = retrieveKnowledge(task);
+  if (knowledge.length === 0) return "";
 
-# PROJECT OVERVIEW
-${projectOverview}
+  const context = knowledge.map(f => `- ${f.path}: ${f.summary}`).join("\n");
+  return `\n# RELEVANT PROJECT KNOWLEDGE\n${context}\n`;
+}
 
-# STACK CONTEXT (${stackName})
-${stackCtx}
+export function buildDynamicContext(task) {
+  const config = loadConfig();
+  const contextDir = join(config.root, "context");
+  const xenContextPath = join(config.root, xenContextPathName());
+  
+  let dynamicContext = "";
 
-# RULES
-${rulesCtx}
-`;
+  // Load Global Context
+  const globalPath = join(contextDir, "global.md");
+  if (existsSync(globalPath)) {
+    dynamicContext += `# GLOBAL CONTEXT\n${readFileSync(globalPath, "utf-8")}\n`;
+  }
+
+  // Project Overview
+  dynamicContext += buildProjectOverview();
+
+  // RAG Knowledge (Task 7)
+  dynamicContext += buildKnowledgeContext(task);
+
+  // Stack Detection
+  const { stack } = detectStack(task);
+  const stackPath = join(contextDir, `${stack}.md`);
+  if (existsSync(stackPath)) {
+    dynamicContext += `\n# STACK CONTEXT (${stack})\n${readFileSync(stackPath, "utf-8")}\n`;
+  }
+
+  // Rules
+  const rulesPath = join(contextDir, "rules.md");
+  if (existsSync(rulesPath)) {
+    dynamicContext += `\n# RULES\n${readFileSync(rulesPath, "utf-8")}\n`;
+  }
 
   return {
-    context: trimContext(combined.trim()),
-    stack: stackName
+    context: trimContext(dynamicContext),
+    stack
   };
+}
+
+function xenContextPathName() {
+  // Check both legacy and new names
+  return existsSync(join(process.cwd(), "xen.context.json")) ? "xen.context.json" : "xen.config.json";
+}
+
+function detectStack(task) {
+  const configPath = join(process.cwd(), xenContextPathName());
+  if (!existsSync(configPath)) return { stack: "default" };
+
+  try {
+    const contextMap = JSON.parse(readFileSync(configPath, "utf-8"));
+    const lowerTask = task.toLowerCase();
+
+    for (const [stack, info] of Object.entries(contextMap.stacks)) {
+      if (info.keywords.some(kw => lowerTask.includes(kw))) {
+        return { stack, info };
+      }
+    }
+  } catch {}
+
+  return { stack: "default" };
 }

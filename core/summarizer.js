@@ -1,6 +1,6 @@
 import { chat } from "./llm.js";
 
-export async function summarizePatch(patch) {
+export async function summarizePatch(patch, { metrics } = {}) {
   const messages = [
     {
       role: "system",
@@ -10,7 +10,7 @@ export async function summarizePatch(patch) {
   ];
 
   try {
-    return await chat(messages, { maxTokens: 60 });
+    return await chat(messages, { maxTokens: 60, metrics });
   } catch {
     // Fallback: extract file names from patch
     const files = [...patch.matchAll(/^diff --git a\/(.+?) b\//gm)].map((m) => m[1]);

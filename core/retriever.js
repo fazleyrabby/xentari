@@ -6,6 +6,8 @@ import { getRecentFileNames } from "./memory.js";
 import { getTierProfile } from "./tier.js";
 import { getContext } from "./context.js";
 import { loadIndex } from "./indexer.js";
+import { chunkText, selectRelevantChunks, buildContextWindow } from "./chunker.js";
+import { retrieveKnowledge } from "./rag.js";
 
 const IGNORE = [
   "**/node_modules/**",
@@ -129,12 +131,23 @@ function semanticScore(taskTokens, fileEntry) {
   return score;
 }
 
-function filenameScore(filePath, keywords) {
-  const name = basename(filePath).toLowerCase();
-  return keywords.reduce(
-    (s, kw) => s + (name.includes(kw.toLowerCase()) ? 1 : 0),
-    0
-  );
+function filenameScore(file, keywords) {
+  let score = 0;
+  const lowerFile = file.toLowerCase();
+  const lowerBase = basename(file).toLowerCase();
+  
+  for (const kw of keywords) {
+    const lowerKw = kw.toLowerCase();
+    if (lowerKw.length < 2) continue;
+    if (lowerBase === lowerKw) {
+      score += 10;
+    } else if (lowerBase.includes(lowerKw)) {
+      score += 5;
+    } else if (lowerFile.includes(lowerKw)) {
+      score += 3;
+    }
+  }
+  return score;
 }
 
 function contentScore(content, keywords) {
@@ -177,7 +190,7 @@ function isSourceFile(filePath) {
   return sourceExts.includes(ext);
 }
 
-export async function retrieve(projectDir, keywords, extraBoostFiles = []) {
+export async function retrieve(projectDir, keywords, extraBoostFiles = [], { metrics } = {}) {
   const config = loadConfig();
   const profile = getTierProfile();
   const w = config.retrieverWeights || { filename: 2, content: 1, priority: 1.5, memory: 1 };
@@ -190,6 +203,10 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = []) {
   const task = keywords.join(" ");
   const taskTokens = tokenize(task);
   const typeInfo = detectType(keywords);
+  
+  // Task 8: Retrieve RAG knowledge for boosting
+  const ragKnowledge = retrieveKnowledge(task);
+  const ragFiles = ragKnowledge.map(f => f.path);
 
   const { stack } = getContext(task);
   let basePath = projectDir;
@@ -206,37 +223,78 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = []) {
     nodir: true,
   });
 
-  const scored = files
+  // Pass 1: Quick scoring based on metadata
+  const candidates = files
     .filter(isSourceFile)
     .map((file) => {
-      const fullPath = join(basePath, file);
-      let content = "";
-      try {
-        content = readFileSync(fullPath, "utf-8").slice(0, maxChars);
-      } catch {}
-
       const relativeFile = stack !== "default" && basePath !== projectDir ? join(stack, file) : file;
       const indexEntry = index?.files.find(f => f.path === relativeFile);
 
       const fnScore = filenameScore(file, keywords) * w.filename;
-      const ctScore = contentScore(content, keywords) * w.content;
       const prScore = priorityScore(file) * w.priority;
       const memScore = memoryBonus(relativeFile, recentFiles) * w.memory;
       const boostScore = extraBoostFiles.includes(relativeFile) ? 5 : 0;
+      
+      // RAG Boost (Task 8)
+      const ragBoost = ragFiles.includes(relativeFile) ? 10 : 0;
+      
       const typeScore = typeBoost(file, typeInfo);
       const semScore = semanticScore(taskTokens, indexEntry);
 
       return {
         file: relativeFile,
-        content,
-        score: fnScore + ctScore + prScore + memScore + boostScore + typeScore + semScore,
-        hasPriority: prScore > 0 || typeScore > 0 || semScore > 5,
+        fullPath: join(basePath, file),
+        score: fnScore + prScore + memScore + boostScore + ragBoost + typeScore + semScore,
+        hasPriority: prScore > 0 || typeScore > 0 || semScore > 5 || ragBoost > 0,
       };
     });
 
-  scored.sort((a, b) => b.score - a.score);
+  // Sort and take top candidates for content analysis
+  candidates.sort((a, b) => b.score - a.score);
+  const topCandidates = candidates.slice(0, maxFiles * 2);
 
+  // Pass 2: Content analysis and chunking for top candidates
+  const scored = topCandidates.map((c) => {
+    let content = "";
+    let ctScore = 0;
+    try {
+      const rawContent = readFileSync(c.fullPath, "utf-8");
+      
+      if (rawContent.length > maxChars) {
+        const chunks = chunkText(rawContent, 800);
+        const selected = selectRelevantChunks(chunks, task, profile.maxChunks);
+        content = buildContextWindow(selected);
+        // Score content based on selected chunks
+        ctScore = contentScore(content, keywords) * w.content;
+      } else {
+        content = rawContent;
+        ctScore = contentScore(content, keywords) * w.content;
+      }
+    } catch {}
+
+    return {
+      ...c,
+      content,
+      score: c.score + ctScore,
+    };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, maxFiles);
+
+  if (metrics) {
+    metrics.filesUsed = top.length;
+    metrics.files = top.map(f => f.file);
+    // Track chunks only for final selected files
+    metrics.chunksUsed = top.reduce((sum, f) => {
+      if (f.content.includes("... [CHUNK BOUNDARY] ...")) {
+        return sum + f.content.split("... [CHUNK BOUNDARY] ...").length;
+      }
+      return sum;
+    }, 0);
+    // Track RAG matches
+    metrics.ragMatches = top.filter(f => ragFiles.includes(f.file)).map(f => f.file);
+  }
 
   const hasPriorityFile = top.some((f) => f.hasPriority);
   if (!hasPriorityFile) {

@@ -3,21 +3,17 @@ import { getContext } from "./context.js";
 import { detectTier, getTierProfile } from "./tier.js";
 import { log } from "./logger.js";
 import { loadConfig } from "./config.js";
+import { enforceConstraints, validateFileOutput } from "./constraints.js";
 
-const BASE_SYSTEM = `You are a code editor. You output the FULL UPDATED FILE content only.
+const BASE_SYSTEM = `You are a code editor.
 
-IMPORTANT (STRICT):
-- Modify ONLY ONE file
-- Return ONLY ONE file
-- Do NOT include multiple files
-- Do NOT include explanations
-- Output ONLY the complete file content
-- Include ALL existing code - do not remove unless explicitly requested
-- If adding new code, integrate it properly with existing code
-- If creating a new file, output the full file content
-- Use correct file paths relative to project root
-- Every function and import MUST be complete
-- NO prose, NO markdown fences, NO comments outside the code
+STRICT RULES:
+- Output ONLY full file content
+- NO markdown fences (unless explicitly asked for a non-code file)
+- NO explanations
+- NO comments outside code
+- Modify ONLY necessary parts
+- Start with "=== FILE: <filename> ===" on its own line.
 
 PROJECT STRUCTURE RULES:
 - Models go in models/ or src/models/ directory
@@ -69,18 +65,24 @@ function buildPrompt(step, files, feedback, chainContext) {
 
   let fileList = files;
   if (config.incrementalContext && files.length > 2) {
-    // Keep only the first file (target) and one more for context
     fileList = files.slice(0, 2);
     log.info(`[CODER] Incremental context active: sending only 2/${files.length} files`);
   }
 
   const fileContext = fileList
-    .map((f) => `=== FILE: ${f.file} ===\n${f.content}`)
+    .map((f) => {
+      const isPartial = f.content.includes("... [CHUNK BOUNDARY] ...");
+      let header = `=== FILE: ${f.file} ===`;
+      if (isPartial) {
+        header += `\n[NOTE: This is a PARTIAL file. Context may not include full content. Only modify visible parts.]`;
+      }
+      return `${header}\n${f.content}`;
+    })
     .join("\n\n---\n\n");
 
   return [
     { role: "system", content: system },
-    { role: "user", content: `Task: ${step}\n\nFiles to modify:\n${fileContext}\n\nOutput the FULL updated content for the file. Start with "=== FILE: <filename> ===" on its own line.` },
+    { role: "user", content: `Task: ${step}\n\nFiles to modify:\n${fileContext}\n\nOutput the FULL updated content for the file.` },
   ];
 }
 
@@ -110,12 +112,11 @@ function extractFileContent(raw, maxFiles = 1) {
     files.push({ file: currentFile, content: currentContent.join("\n") });
   }
 
+  // Fallback for models that don't use the marker properly
   if (files.length === 0) {
     const fenced = raw.match(/```(?:js|javascript|ts|typescript)?\s*([\s\S]*?)```/);
     if (fenced) {
-      const content = fenced[1].trim();
-      const firstFile = files.length > 0 ? files[0].file : null;
-      return [{ file: firstFile, content }];
+      return [{ file: null, content: fenced[1].trim() }];
     }
     return [{ file: null, content: raw.trim() }];
   }
@@ -123,55 +124,49 @@ function extractFileContent(raw, maxFiles = 1) {
   return files.slice(0, maxFiles);
 }
 
-function cleanOutput(content) {
-  if (!content) return "";
-
-  content = content.replace(/```[\w]*\n([\s\S]*?)```/g, "$1");
-  content = content.replace(/```/g, "");
-
-  return content.trim();
-}
-
-function validateGeneratedContent(content) {
-  if (!content || content.length < 10) {
-    throw new Error("Generated content is empty or too small");
-  }
-
-  if (
-    content.includes("Here is") ||
-    content.includes("Explanation") ||
-    content.includes("This code")
-  ) {
-    throw new Error("LLM returned explanation instead of raw code");
-  }
-
-  return true;
-}
-
-function validateContent(content) {
-  if (!content || content.length === 0) {
-    throw new Error("Invalid content: empty response from LLM");
-  }
-  if (content.includes("```")) {
-    throw new Error("Invalid content: LLM returned markdown fences. Output raw code only.");
-  }
-  const lower = content.toLowerCase();
-  if (lower.includes("here is the") || lower.includes("here's the") || lower.startsWith("based on")) {
-    throw new Error("Invalid content: LLM included prose explanation. Output only code.");
-  }
-}
-
-export async function generatePatch(step, files, feedback, chainContext) {
+export async function generatePatch(step, files, feedback, chainContext, { onToken, metrics } = {}) {
   const tier = detectTier();
   const profile = getTierProfile();
+  const config = loadConfig();
   const maxFiles = tier === "small" ? 1 : profile.maxPatchFiles;
-  
+
+  // Task 6: Multi-pass processing for large files
+  const largeFiles = files.filter(f => f.content.includes("... [CHUNK BOUNDARY] ..."));
+  let analysis = "";
+
+  if (largeFiles.length > 0 && tier !== "small") {
+    log.info(`[CODER] Analyzing ${largeFiles.length} large file(s)...`);
+    const analysisPrompt = [
+      { role: "system", content: "You are a code analyst. Analyze the following partial file chunks and summarize how they relate to the task." },
+      { role: "user", content: `Task: ${step}\n\nChunks:\n${largeFiles.map(f => f.content).join("\n\n---\n\n")}` }
+    ];
+    analysis = await chat(analysisPrompt, { maxTokens: 300, metrics });
+    log.info(`[CODER] Analysis complete.`);
+  }
+
   const messages = buildPrompt(step, files, feedback, chainContext);
-  const raw = await chat(messages, { maxTokens: profile.maxTokens });
+  if (analysis) {
+    messages[messages.length - 1].content += `\n\nFile Analysis:\n${analysis}`;
+  }
+
+  const raw = await chat(messages, { 
+    maxTokens: profile.maxTokens,
+    stream: !!onToken,
+    onToken,
+    metrics
+  });
+
+  if (onToken) process.stdout.write("\n");
+
+  // Apply Constraint Engine
+  const constraintRules = [
+    { type: "no_markdown" },
+    { type: "no_explanations" },
+    { type: "trim" }
+  ];
+  const cleaned = enforceConstraints(raw, constraintRules, metrics);
   
-  const fileUpdates = extractFileContent(raw, maxFiles);
-  
-  log.info("[CODER] Cleaned markdown artifacts");
+  const fileUpdates = extractFileContent(cleaned, maxFiles);
   
   if (fileUpdates.length === 0) {
     throw new Error("No valid file content extracted from LLM response");
@@ -182,8 +177,21 @@ export async function generatePatch(step, files, feedback, chainContext) {
   }
 
   for (const update of fileUpdates) {
-    update.content = cleanOutput(update.content);
-    validateGeneratedContent(update.content);
+    // Basic validation
+    const validation = validateFileOutput(update.content);
+    if (!validation.valid) {
+      throw new Error(`Output validation failed: ${validation.reason}`);
+    }
+
+    // Size guard
+    if (update.content.length > config.maxPatchChars * 2) { // Allow some headroom for full file
+      throw new Error("Generated content too large");
+    }
+
+    if (!update.file && files.length > 0) {
+      update.file = files[0].file; // Use first file if marker missing but we have context
+    }
+    
     if (!update.file) {
       throw new Error("Missing file path in generated content");
     }

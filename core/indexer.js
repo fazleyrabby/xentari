@@ -18,25 +18,11 @@ const IGNORE = [
   "**/*.log",
 ];
 
-function extractExports(content, ext) {
-  const exports = [];
-  if (ext === ".js" || ext === ".ts") {
-    // Basic regex for named exports
-    const matches = content.matchAll(/export\s+(?:async\s+)?(?:function|const|class|let|var)\s+([a-zA-Z0-9_]+)/g);
-    for (const match of matches) {
-      exports.push(match[1]);
-    }
-    // Default export
-    const defaultMatch = content.match(/export\s+default\s+([a-zA-Z0-9_]+|function|class)/);
-    if (defaultMatch) {
-      exports.push("default");
-    }
-  }
-  return exports;
-}
-
-function generateSummary(content, filePath) {
-  // Heuristic: Take the first few lines of comments or code
+/**
+ * Task 3: Lightweight Summarizer
+ * Extracts the first 200 chars or meaningful comments.
+ */
+function summarizeFile(content, filePath) {
   const lines = content.split("\n")
     .map(l => l.trim())
     .filter(l => l.length > 0);
@@ -55,9 +41,42 @@ function generateSummary(content, filePath) {
   return summary.slice(0, 200).trim() || `Source file: ${basename(filePath)}`;
 }
 
+/**
+ * Task 4: Keyword Extractor
+ * Extracts unique words of at least 4 characters.
+ */
+function extractKeywords(content) {
+  const words = content.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+  return [...new Set(words)].slice(0, 15);
+}
+
+/**
+ * Task 5: Export Extractor
+ */
+function extractExports(content, ext) {
+  const exports = [];
+  if (ext === ".js" || ext === ".ts" || ext === ".tsx" || ext === ".jsx") {
+    // Basic regex for named exports
+    const matches = content.matchAll(/export\s+(?:async\s+)?(?:function|const|class|let|var)\s+([a-zA-Z0-9_]+)/g);
+    for (const match of matches) {
+      exports.push(match[1]);
+    }
+    // Default export
+    const defaultMatch = content.match(/export\s+default\s+([a-zA-Z0-9_]+|function|class)/);
+    if (defaultMatch) {
+      exports.push("default");
+    }
+  }
+  return exports;
+}
+
+/**
+ * Task 2: Build Indexer
+ * Scans project and builds knowledge.json
+ */
 export async function indexProject(projectDir) {
   const config = loadConfig();
-  log.info("[INDEXER] Scanning project...");
+  log.info("[INDEXER] Building knowledge index...");
   
   const files = await glob("**/*.*", {
     cwd: projectDir,
@@ -65,7 +84,7 @@ export async function indexProject(projectDir) {
     nodir: true,
   });
 
-  const index = {
+  const knowledge = {
     files: [],
     timestamp: new Date().toISOString(),
     projectDir
@@ -82,30 +101,40 @@ export async function indexProject(projectDir) {
     }
 
     const fileExports = extractExports(content, ext);
-    const summary = generateSummary(content, file);
+    const summary = summarizeFile(content, file);
+    const keywords = extractKeywords(content);
 
-    index.files.push({
+    knowledge.files.push({
       path: file,
       type: ext.slice(1) || "unknown",
       summary,
+      keywords,
       exports: fileExports
     });
   }
 
+  const knowledgePath = join(config.logsDir, "knowledge.json");
+  // Also keep index.json for backward compatibility or refactor later
   const indexPath = join(config.logsDir, "index.json");
-  mkdirSync(config.logsDir, { recursive: true });
-  writeFileSync(indexPath, JSON.stringify(index, null, 2));
   
-  log.ok(`[INDEXER] Indexed ${index.files.length} files to logs/index.json`);
-  return index;
+  mkdirSync(config.logsDir, { recursive: true });
+  writeFileSync(knowledgePath, JSON.stringify(knowledge, null, 2));
+  writeFileSync(indexPath, JSON.stringify(knowledge, null, 2));
+  
+  log.ok(`[INDEXER] Indexed ${knowledge.files.length} files to logs/knowledge.json`);
+  return knowledge;
 }
 
 export function loadIndex() {
   const config = loadConfig();
+  const knowledgePath = join(config.logsDir, "knowledge.json");
   const indexPath = join(config.logsDir, "index.json");
-  if (!existsSync(indexPath)) return null;
+  
+  const path = existsSync(knowledgePath) ? knowledgePath : indexPath;
+  if (!existsSync(path)) return null;
+  
   try {
-    return JSON.parse(readFileSync(indexPath, "utf-8"));
+    return JSON.parse(readFileSync(path, "utf-8"));
   } catch {
     return null;
   }

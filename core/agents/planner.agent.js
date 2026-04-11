@@ -13,8 +13,10 @@ IMPORTANT CONTEXT:
 - DO NOT create .rb, .py, or other non-JS files
 
 Each step has:
+- "id": unique integer starting from 1
 - "step": a short implementation-focused description
 - "files": array of keyword hints for relevant files
+- "dependsOn": array of step IDs that MUST be completed before this step
 
 STRICT RULES:
 - Only include backend/server-side steps (models, services, routes, controllers, schemas, migrations, APIs)
@@ -24,6 +26,10 @@ STRICT RULES:
 - Each step must target a DIFFERENT file when possible
 - Each step must be a concrete code change, not a plan or review
 - Output ONLY valid JSON, no explanation, no markdown
+
+DEPENDENCY RULES:
+- If Step B adds logic that depends on an export from Step A → B dependsOn [A]
+- If steps are independent → dependsOn must be []
 
 FILE TARGETING RULES:
 - User model → models/User.ts or src/models/User.ts
@@ -56,7 +62,7 @@ function extractJSON(raw) {
   return fenced ? fenced[1].trim() : raw.trim();
 }
 
-export async function plan(task) {
+export async function plan(task, { metrics } = {}) {
   const tier = detectTier();
   const complexity = detectComplexity(task);
   const maxSteps = tier === "small" ? 2 : tier === "medium" ? 3 : 4;
@@ -76,17 +82,19 @@ export async function plan(task) {
     { role: "user", content: task },
   ];
 
-  const raw = await chat(messages, { maxTokens: 400 });
+  const raw = await chat(messages, { maxTokens: 400, metrics });
 
   try {
     const steps = JSON.parse(extractJSON(raw));
     if (!Array.isArray(steps)) throw new Error("Not an array");
     return steps.slice(0, maxSteps).map((s) => ({
+      id: Number(s.id || 0),
       step: String(s.step || ""),
       files: Array.isArray(s.files) ? s.files.map(String) : [],
+      dependsOn: Array.isArray(s.dependsOn) ? s.dependsOn.map(Number) : [],
     }));
   } catch {
-    return [{ step: task, files: [] }];
+    return [{ id: 1, step: task, files: [], dependsOn: [] }];
   }
 }
 

@@ -39,6 +39,7 @@ const TIER_PROFILES = {
     maxRetries: 2,
     maxPatchFiles: 1,
     maxPatchChars: 5000,
+    maxChunks: 2,
   },
   medium: {
     maxFiles: 3,
@@ -48,6 +49,7 @@ const TIER_PROFILES = {
     maxRetries: 3,
     maxPatchFiles: 2,
     maxPatchChars: 8000,
+    maxChunks: 3,
   },
   large: {
     maxFiles: 5,
@@ -57,6 +59,7 @@ const TIER_PROFILES = {
     maxRetries: 4,
     maxPatchFiles: 10,
     maxPatchChars: 15000,
+    maxChunks: 6,
   },
 };
 

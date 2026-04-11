@@ -1,7 +1,7 @@
 import { chat } from "./llm.js";
 import { loadConfig } from "./config.js";
 
-export async function advisorFix({ task, patch, feedback }) {
+export async function advisorFix({ task, patch, feedback, metrics }) {
   const prompt = `
 You are a senior engineer fixing a broken patch.
 
@@ -26,7 +26,8 @@ STRICT RULES:
   // We use a lower temperature for the advisor to ensure deterministic and correct patch generation
   const res = await chat([{ role: "user", content: prompt }], {
     temperature: 0.2,
-    maxTokens: 1000
+    maxTokens: 1000,
+    metrics
   });
 
   return res;

@@ -16,6 +16,8 @@ const defaults = {
   llmTimeoutMs: 60_000,
   maxPatchChars: 10_000,
   incrementalContext: true,
+  parallelExecution: true,
+  maxParallelSteps: 2,
   retrieverWeights: {
     filename: 2,
     content: 1,

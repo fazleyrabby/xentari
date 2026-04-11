@@ -21,13 +21,13 @@ Your response must be EITHER:
 
 No other output format is allowed.`;
 
-export async function review(patch) {
+export async function review(patch, { metrics } = {}) {
   const { context } = getContext("");
   const messages = [
     { role: "system", content: `${context}\n\n${SYSTEM}` },
     { role: "user", content: patch },
   ];
-  return chat(messages, { maxTokens: 300 });
+  return chat(messages, { maxTokens: 300, metrics });
 }
 
 export function isApproved(result) {

@@ -9,12 +9,15 @@ import { confirm } from "../core/prompt.js";
 import { log } from "../core/logger.js";
 import { indexProject } from "../core/indexer.js";
 import { getContext } from "../core/context.js";
+import { startTUI } from "../core/tui.js";
+import { updateDuration } from "../core/metrics.js";
 
 async function main() {
   const HELP = `
     xen — local AI coding assistant
 
     Usage:
+      xen                     Launch interactive TUI mode
       xen "task"              Full pipeline (plan → code → review → apply)
       xen "task" --plan       Only generate plan, print steps
       xen "task" --code       Skip planning, generate patch directly
@@ -29,6 +32,7 @@ async function main() {
       xen --help, xen -h       Show this help
 
     Examples:
+      xen
       xen "add a login endpoint"
       xen "fix the auth bug" --auto
       xen "refactor utils" --dry
@@ -78,11 +82,45 @@ async function main() {
       log.error("Provide a task to debug. Example: xen debug \"add login\"");
       process.exit(1);
     }
-    // Debug logic is mostly internal to retriever and context engine
+    
     log.section("DEBUG MODE");
     const { stack } = getContext(debugTask);
     log.info(`Detected Stack: ${stack}`);
-    log.info("Run with --dry to see file scores in retrieve logs.");
+    
+    // Run a dry agent run to get real metrics
+    log.info("Running diagnostic session...");
+    const { metrics } = await runAgent({
+      task: debugTask,
+      projectDir,
+      dryRun: true,
+      autoMode: false
+    });
+
+    updateDuration(metrics);
+
+    console.log(`
+Tokens:
+  input: ${metrics.inputTokens}
+  output: ${metrics.outputTokens}
+  total: ${metrics.tokens}
+
+Time:
+  total: ${(metrics.duration / 1000).toFixed(2)}s
+
+Files Used:
+  ${metrics.files.join("\n  ") || "(none)"}
+
+RAG:
+  matched files: ${metrics.ragMatches?.length > 0 ? "\n    - " + metrics.ragMatches.join("\n    - ") : "(none)"}
+
+Chunks:
+  selected: ${metrics.chunksUsed || 0}
+  size: 800 chars each
+
+Constraint Engine:
+  fixes applied: ${metrics.constraintFixes || 0}
+  retries: ${metrics.retries}
+    `);
     process.exit(0);
   }
 
@@ -92,19 +130,32 @@ async function main() {
       process.exit(1);
     }
     log.warn("This will run: git reset --hard HEAD");
-    const yes = await confirm("  Are you sure?");
-    if (!yes) {
+    const answer = await confirm("  Are you sure?");
+    if (answer) {
+      try {
+        undo(projectDir);
+        log.ok("Reverted to last commit.");
+      } catch (err) {
+        log.error(`Undo failed: ${err.message}`);
+      }
+    } else {
       log.info("Aborted.");
-      process.exit(0);
-    }
-    try {
-      undo(projectDir);
-      log.ok("Reverted to last commit (git reset --hard HEAD)");
-    } catch (err) {
-      log.error(`Undo failed: ${err.message}`);
-      process.exit(1);
     }
     process.exit(0);
+  }
+
+  if (!task && process.stdin.isTTY) {
+    await startTUI();
+    return;
+  }
+
+  if (values.review && !task) {
+    let patch = "";
+    process.stdin.on("data", (chunk) => { patch += chunk; });
+    process.stdin.on("end", async () => {
+      await runReviewOnly({ patch });
+    });
+    return;
   }
 
   if (!task) {
@@ -112,34 +163,25 @@ async function main() {
     process.exit(1);
   }
 
-  try {
-    if (values.step) {
-      await runAgentStep({ task, projectDir });
-    } else if (values.plan) {
-      await runPlanOnly({ task });
-    } else if (values.code) {
-      await runCodeOnly({ task, projectDir });
-    } else if (values.review) {
-      let patch = task;
-      if (!process.stdin.isTTY) {
-        patch = readFileSync("/dev/stdin", "utf-8");
-      }
-      await runReviewOnly({ patch });
-    } else {
-      await runAgent({
-        task,
-        projectDir,
-        dryRun: values.dry,
-        autoMode: values.auto,
-      });
-    }
-  } catch (err) {
-    console.error(`\n\x1b[31mFatal: ${err.message}\x1b[0m`);
-    process.exit(1);
+  if (values.plan) {
+    await runPlanOnly({ task });
+  } else if (values.code) {
+    await runCodeOnly({ task, projectDir });
+  } else if (values.review) {
+    await runReviewOnly({ task });
+  } else if (values.step) {
+    await runAgentStep({ task, projectDir });
+  } else {
+    await runAgent({
+      task,
+      projectDir,
+      dryRun: values.dry,
+      autoMode: values.auto
+    });
   }
 }
 
-main().catch(err => {
-  console.error(err);
+main().catch((err) => {
+  log.error(err.message);
   process.exit(1);
 });
