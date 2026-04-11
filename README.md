@@ -7,6 +7,7 @@ Xentari is a high-performance, local-first CLI tool designed to automate complex
 ## 🚀 Key Features
 
 - **Multi-Phase Pipeline:** Autonomous task planning, context-aware file retrieval, patch generation, and automated review.
+- **Dynamic Context Engine:** Automatically detects the project stack (Backend, Frontend, etc.) from user intent and loads task-specific rules and context files.
 - **Advisor Escalation:** Hybrid intelligence layer that escalates complex or failing tasks to a stronger model (e.g., Claude) for resolution.
 - **Smart Context:** Weighted composite scoring for file retrieval (filename, content, priority, and history).
 - **Execution Memory:** Intelligence store that tracks successful patterns and frequently modified files to improve subsequent turns.
@@ -49,14 +50,14 @@ Xentari operates as an orchestrator across several specialized modules:
 
 ---
 
-## 🏗 Development Status (Phase 7 Complete)
+## 🏗 Development Status (Phase 8 Complete)
 
-The project has successfully reached Phase 7, introducing the **Hybrid Advisor System**. Current focus:
+The project has successfully reached Phase 8, introducing the **Dynamic Context Engine**.
 - [x] Core Implementation (P1-P1.5)
 - [x] Usability & Mode Upgrades (P2)
 - [x] Intelligence & Context Engine (P3)
 - [x] Advisor Escalation (P7)
-- [ ] Multi-Stack Detection (P8 - In Progress)
+- [x] Dynamic Context & Multi-Stack (P8)
 
 ---
 
