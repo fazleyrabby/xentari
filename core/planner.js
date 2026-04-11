@@ -1,5 +1,5 @@
 import { chat } from "./llm.js";
-import { getSummary } from "./context.js";
+import { getContext } from "./context.js";
 import { detectTier, getTierProfile } from "./tier.js";
 
 const BASE_SYSTEM = `You are a backend-focused planner. Given a coding task, produce a JSON array of steps.
@@ -30,7 +30,8 @@ function extractJSON(raw) {
 export async function plan(task) {
   const tier = detectTier();
   const profile = getTierProfile();
-  const system = `${getSummary()}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
+  const { context } = getContext(task);
+  const system = `${context}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
 
   const messages = [
     { role: "system", content: system },

@@ -1,6 +1,7 @@
 import { chat } from "../llm.js";
-import { getSummary } from "../context.js";
+import { getContext } from "../context.js";
 import { detectTier } from "../tier.js";
+import { log } from "../logger.js";
 
 const BASE_SYSTEM = `You are a Node.js backend planner. Given a coding task, produce a JSON array of steps.
 
@@ -60,7 +61,11 @@ export async function plan(task) {
   const complexity = detectComplexity(task);
   const maxSteps = tier === "small" ? 2 : tier === "medium" ? 3 : 4;
 
-  let system = `${getSummary()}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
+  const { context, stack } = getContext(task);
+  log.section("CONTEXT");
+  log.info(`Stack detected: ${stack}`);
+
+  let system = `${context}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
 
   if (complexity === "complex" && tier === "small") {
     system += `\n\nNOTE: This is a complex task. Create the smallest possible atomic steps with different target files.`;

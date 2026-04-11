@@ -40,6 +40,6 @@ export function loadConfig() {
   }
   _config.root = ROOT;
   _config.logsDir = join(ROOT, "logs");
-  _config.logFile = join(ROOT, "logs", "ai.log");
+  _config.logFile = join(ROOT, "logs", "xen.log");
   return _config;
 }

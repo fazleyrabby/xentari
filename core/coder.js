@@ -1,5 +1,5 @@
 import { chat } from "./llm.js";
-import { getSummary } from "./context.js";
+import { getContext } from "./context.js";
 import { detectTier, getTierProfile } from "./tier.js";
 
 const BASE_SYSTEM = `You are a code editor. You output the FULL UPDATED FILE content only.
@@ -44,7 +44,8 @@ Ensure all cross-file dependencies (imports, exports) are consistent.`,
 
 function buildPrompt(step, files, feedback, chainContext) {
   const tier = detectTier();
-  let system = `${getSummary()}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
+  const { context } = getContext(step);
+  let system = `${context}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
 
   if (chainContext) {
     system += `\n\nPrevious changes in this session:`;

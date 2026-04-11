@@ -1,5 +1,5 @@
 import { chat } from "./llm.js";
-import { getSummary } from "./context.js";
+import { getContext } from "./context.js";
 
 const SYSTEM = `You are a strict code reviewer. You review unified diff patches for production readiness.
 
@@ -22,8 +22,9 @@ Your response must be EITHER:
 No other output format is allowed.`;
 
 export async function review(patch) {
+  const { context } = getContext("");
   const messages = [
-    { role: "system", content: `${getSummary()}\n\n${SYSTEM}` },
+    { role: "system", content: `${context}\n\n${SYSTEM}` },
     { role: "user", content: patch },
   ];
   return chat(messages, { maxTokens: 300 });

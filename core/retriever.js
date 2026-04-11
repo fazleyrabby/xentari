@@ -4,6 +4,7 @@ import { glob } from "glob";
 import { loadConfig } from "./config.js";
 import { getRecentFileNames } from "./memory.js";
 import { getTierProfile } from "./tier.js";
+import { getContext } from "./context.js";
 
 const IGNORE = [
   "**/node_modules/**",
@@ -14,7 +15,7 @@ const IGNORE = [
   "**/context/**",
   "**/*.lock",
   "**/temp.patch",
-  "**/ai.config.json",
+  "**/xen.config.json",
   "**/config.json",
   "**/*.md",
   "**/*.log",
@@ -168,8 +169,17 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = []) {
   const task = keywords.join(" ");
   const typeInfo = detectType(keywords);
 
+  const { stack } = getContext(task);
+  let basePath = projectDir;
+
+  if (stack === "backend" && existsSync(join(projectDir, "backend"))) {
+    basePath = join(projectDir, "backend");
+  } else if (stack === "frontend" && existsSync(join(projectDir, "frontend"))) {
+    basePath = join(projectDir, "frontend");
+  }
+
   const files = await glob("**/*.*", {
-    cwd: projectDir,
+    cwd: basePath,
     ignore: IGNORE,
     nodir: true,
   });
@@ -177,7 +187,7 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = []) {
   const scored = files
     .filter(isSourceFile)
     .map((file) => {
-      const fullPath = join(projectDir, file);
+      const fullPath = join(basePath, file);
       let content = "";
       try {
         content = readFileSync(fullPath, "utf-8").slice(0, maxChars);
@@ -191,7 +201,7 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = []) {
       const typeScore = typeBoost(file, typeInfo);
 
       return {
-        file,
+        file: stack !== "default" && basePath !== projectDir ? join(stack, file) : file,
         content,
         score: fnScore + ctScore + prScore + memScore + boostScore + typeScore,
         hasPriority: prScore > 0 || typeScore > 0,

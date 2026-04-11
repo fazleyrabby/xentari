@@ -43,10 +43,10 @@ Xentari operates as an orchestrator across several specialized modules:
 4. Link the binary: `npm link`.
 
 ### Basic Commands
-- `ai "task description"` — Run full pipeline.
-- `ai "task" --dry` — Generate patch and review without applying.
-- `ai "task" --auto` — Enable autonomous retry and advisor mode.
-- `ai undo` — Revert the last applied patch.
+- `xen "task description"` — Run full pipeline.
+- `xen "task" --dry` — Generate patch and review without applying.
+- `xen "task" --auto` — Enable autonomous retry and advisor mode.
+- `xen undo` — Revert the last applied patch.
 
 ---
 

@@ -8,7 +8,7 @@ import { getTierProfile } from "./tier.js";
 
 function tmpPatchPath() {
   const id = randomBytes(6).toString("hex");
-  return join(tmpdir(), `ai-tool-${id}.patch`);
+  return join(tmpdir(), `xentari-${id}.patch`);
 }
 
 export function validatePatch(patch) {

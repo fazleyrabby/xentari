@@ -61,7 +61,7 @@ export const log = {
   },
 };
 
-// Append structured JSON entry to logs/ai.log
+// Append structured JSON entry to logs/xen.log
 export function logToFile(entry) {
   try {
     const config = loadConfig();

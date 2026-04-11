@@ -10,26 +10,26 @@ import { log } from "../core/logger.js";
 
 async function main() {
   const HELP = `
-    ai — local AI coding assistant
+    xen — local AI coding assistant
 
     Usage:
-      ai "task"              Full pipeline (plan → code → review → apply)
-      ai "task" --plan       Only generate plan, print steps
-      ai "task" --code       Skip planning, generate patch directly
-      ai "task" --review     Review the patch (reads stdin if no task)
-      ai "task" --dry        Generate and validate patch, do not apply
-      ai "task" --auto       Auto-retry up to 3x using reviewer feedback
-      ai "task" --step       Execute single step (no planning, direct execution)
-      ai undo                Revert last change (git reset --hard HEAD)
-      ai --help, ai -h       Show this help
+      xen "task"              Full pipeline (plan → code → review → apply)
+      xen "task" --plan       Only generate plan, print steps
+      xen "task" --code       Skip planning, generate patch directly
+      xen "task" --review     Review the patch (reads stdin if no task)
+      xen "task" --dry        Generate and validate patch, do not apply
+      xen "task" --auto       Auto-retry up to 3x using reviewer feedback
+      xen "task" --step       Execute single step (no planning, direct execution)
+      xen undo                Revert last change (git reset --hard HEAD)
+      xen --help, xen -h       Show this help
 
     Examples:
-      ai "add a login endpoint"
-      ai "fix the auth bug" --auto
-      ai "refactor utils" --dry
-      ai "add tests for user model" --plan
-      ai "add hello route" --step
-      ai undo
+      xen "add a login endpoint"
+      xen "fix the auth bug" --auto
+      xen "refactor utils" --dry
+      xen "add tests for user model" --plan
+      xen "add hello route" --step
+      xen undo
   `;
 
   const { values, positionals } = parseArgs({

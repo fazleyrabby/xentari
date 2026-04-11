@@ -1,12 +1,12 @@
 {
-  "name": "ai-tool",
+  "name": "xentari",
   "version": "1.0.0",
   "type": "module",
   "bin": {
-    "ai": "./bin/ai.js"
+    "xen": "./bin/xen.js"
   },
   "scripts": {
-    "start": "node bin/ai.js"
+    "start": "node bin/xen.js"
   },
   "dependencies": {
     "diff": "^7.0.0",

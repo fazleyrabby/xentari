@@ -1,18 +1,17 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { buildContext } from "./context-engine.js";
 import { loadConfig } from "./config.js";
 
-let _summary;
+export function getContext(task) {
+  const config = loadConfig();
+  const root = config.root;
 
+  const { context, stack } = buildContext({ root, task });
+
+  return { context, stack };
+}
+
+// Keep getSummary for backward compatibility during transition if needed
 export function getSummary() {
-  if (_summary !== undefined) return _summary;
-  try {
-    _summary = readFileSync(
-      join(loadConfig().root, "context", "summary.md"),
-      "utf-8"
-    );
-  } catch {
-    _summary = "";
-  }
-  return _summary;
+  const { context } = getContext("");
+  return context;
 }
