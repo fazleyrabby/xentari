@@ -1,0 +1,17 @@
+{
+  "baseURL": "http://localhost:8081/v1",
+  "model": "qwen",
+  "modelTier": "auto",
+  "maxFiles": 3,
+  "maxFileChars": 1500,
+  "maxTokens": 600,
+  "maxPatchChars": 8000,
+  "temperature": 0.2,
+  "dryRun": false,
+  "retrieverWeights": {
+    "filename": 2,
+    "content": 1,
+    "priority": 1.5,
+    "memory": 1
+  }
+}

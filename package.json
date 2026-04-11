@@ -1,0 +1,15 @@
+{
+  "name": "ai-tool",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "ai": "./bin/ai.js"
+  },
+  "scripts": {
+    "start": "node bin/ai.js"
+  },
+  "dependencies": {
+    "diff": "^7.0.0",
+    "glob": "^10.3.10"
+  }
+}
