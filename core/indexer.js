@@ -20,55 +20,61 @@ const IGNORE = [
 ];
 
 /**
- * Task 3: Lightweight Summarizer
- * Extracts the first 200 chars or meaningful comments.
+ * Task 1: Extended Analyzer
  */
-function summarizeFile(content, filePath) {
-  const lines = content.split("\n")
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
-  
-  let summary = "";
-  for (const line of lines) {
-    if (line.startsWith("//") || line.startsWith("/*") || line.startsWith("*")) {
-      summary += line.replace(/[\/\*]/g, "").trim() + " ";
-    } else {
-      summary += line;
-      break;
-    }
-    if (summary.length > 150) break;
-  }
-  
-  return summary.slice(0, 200).trim() || `Source file: ${basename(filePath)}`;
+export function analyzeFile(filePath, projectDir) {
+  const fullPath = join(projectDir, filePath);
+  const content = readFileSync(fullPath, "utf-8");
+
+  const functions = content.match(/function\s+(\w+)|(\w+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>|(\w+)\s*:\s*(?:async\s*)?function/g) || [];
+  const classes = content.match(/class\s+(\w+)/g) || [];
+  const exports = content.match(/export\s+|module\.exports|exports\./g) || [];
+
+  return {
+    path: filePath,
+    functions: functions.slice(0, 10), // Cap for index size
+    classes: classes.slice(0, 5),
+    hasExports: exports.length > 0,
+    size: content.length
+  };
 }
 
 /**
- * Task 4: Keyword Extractor
- * Extracts unique words of at least 4 characters.
+ * Task 2: Entry Point Detection
  */
-function extractKeywords(content) {
-  const words = content.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
-  return [...new Set(words)].slice(0, 15);
+export function detectEntryPoints(files) {
+  return files
+    .filter(f => 
+      f.path.includes("app.js") || f.path.includes("app.ts") ||
+      f.path.includes("server.js") || f.path.includes("server.ts") ||
+      f.path.includes("main.js") || f.path.includes("main.ts") ||
+      f.path.includes("index.js") || f.path.includes("index.ts")
+    )
+    .map(f => f.path);
 }
 
 /**
- * Task 5: Export Extractor
+ * Task 3: Framework Detection (Light)
  */
-function extractExports(content, ext) {
-  const exports = [];
-  if (ext === ".js" || ext === ".ts" || ext === ".tsx" || ext === ".jsx") {
-    // Basic regex for named exports
-    const matches = content.matchAll(/export\s+(?:async\s+)?(?:function|const|class|let|var)\s+([a-zA-Z0-9_]+)/g);
-    for (const match of matches) {
-      exports.push(match[1]);
-    }
-    // Default export
-    const defaultMatch = content.match(/export\s+default\s+([a-zA-Z0-9_]+|function|class)/);
-    if (defaultMatch) {
-      exports.push("default");
-    }
-  }
-  return exports;
+export function detectFramework(projectDir) {
+  const exists = (f) => existsSync(join(projectDir, f));
+  if (exists("artisan")) return "laravel";
+  if (exists("next.config.js") || exists("next.config.mjs")) return "nextjs";
+  if (exists("manage.py")) return "django";
+  if (exists("package.json")) return "node";
+  return null;
+}
+
+/**
+ * Task 4: Domain Grouping
+ */
+function getDomain(filePath) {
+  const lower = filePath.toLowerCase();
+  if (lower.includes("auth") || lower.includes("login") || lower.includes("user")) return "authentication";
+  if (lower.includes("todo") || lower.includes("task")) return "todos";
+  if (lower.includes("api") || lower.includes("route")) return "api";
+  if (lower.includes("db") || lower.includes("model") || lower.includes("schema")) return "database";
+  return "general";
 }
 
 /**
@@ -86,39 +92,29 @@ export async function indexProject(projectDir) {
   });
 
   const knowledge = {
+    framework: detectFramework(projectDir),
+    entryPoints: [],
     files: [],
+    domains: {},
     timestamp: new Date().toISOString(),
     projectDir
   };
 
   for (const file of files) {
-    let fullPath;
     try {
-      fullPath = safePath(projectDir, file);
+      const analysis = analyzeFile(file, projectDir);
+      const domain = getDomain(file);
+      
+      knowledge.files.push(analysis);
+      
+      if (!knowledge.domains[domain]) knowledge.domains[domain] = [];
+      knowledge.domains[domain].push(file);
     } catch {
       continue;
     }
-    
-    const ext = extname(file);
-    let content = "";
-    try {
-      content = readFileSync(fullPath, "utf-8");
-    } catch {
-      continue;
-    }
-
-    const fileExports = extractExports(content, ext);
-    const summary = summarizeFile(content, file);
-    const keywords = extractKeywords(content);
-
-    knowledge.files.push({
-      path: file,
-      type: ext.slice(1) || "unknown",
-      summary,
-      keywords,
-      exports: fileExports
-    });
   }
+
+  knowledge.entryPoints = detectEntryPoints(knowledge.files);
 
   const knowledgePath = join(config.logsDir, "knowledge.json");
   // Also keep index.json for backward compatibility or refactor later
@@ -128,7 +124,7 @@ export async function indexProject(projectDir) {
   writeFileSync(knowledgePath, JSON.stringify(knowledge, null, 2));
   writeFileSync(indexPath, JSON.stringify(knowledge, null, 2));
   
-  log.ok(`[INDEXER] Indexed ${knowledge.files.length} files to logs/knowledge.json`);
+  log.ok(`[INDEXER] Indexed ${knowledge.files.length} files. Framework: ${knowledge.framework || 'unknown'}`);
   return knowledge;
 }
 

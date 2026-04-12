@@ -114,7 +114,8 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
     return;
   }
 
-  log.step(index + 1, step.step);
+  log.info(`\n→ ${step.type.toUpperCase()}: ${step.target}`);
+  log.step(index + 1, step.target);
 
   let files;
   let finalContext;
@@ -153,22 +154,22 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
     }];
   } catch (e) {
     log.warn(`[RETRIEVAL] Fallback to legacy: ${e.message}`);
-    log.info(`[RETRIEVER] Searching for: ${step.files.join(", ") || step.step}`);
+    log.info(`[RETRIEVER] Searching for: ${step.files.join(", ") || step.target}`);
 
-    const keywords = [...(step.files || []), ...step.step.split(/\s+/)];
+    const keywords = [...(step.files || []), ...step.target.split(/\s+/)];
     try {
       files = await retrieve(projectDir, keywords, chain?.modifiedFiles || [], { metrics });
     } catch (err) {
       log.error(`[RETRIEVER] Failed: ${err.message}`);
-      logBug({ task: step.step, type: "retrieval", severity: "high", description: err.message, fix_area: "retriever.js" });
-      logToFile({ task, mode, step: step.step, status: "retrieval_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task, step: step.step, status: "retrieval_failed" });
+      logBug({ task: step.target, type: "retrieval", severity: "high", description: err.message, fix_area: "retriever.js" });
+      logToFile({ task, mode, step: step.target, status: "retrieval_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+      remember({ task, step: step.target, status: "retrieval_failed" });
       return;
     }
 
     if (files.length > 0 && files[0].score === 0) {
       log.warn(`[RETRIEVER] Low confidence — broadening search`);
-      const broader = [...keywords, ...step.step.split(/[^a-zA-Z]+/).filter((w) => w.length > 3)];
+      const broader = [...keywords, ...step.target.split(/[^a-zA-Z]+/).filter((w) => w.length > 3)];
       try {
         files = await retrieve(projectDir, broader, chain?.modifiedFiles || [], { metrics });
       } catch {}
@@ -195,24 +196,24 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
     let feedback = failureState.lastReviewRejectReason || failureState.lastFailureReason;
 
     try {
-      fileUpdates = await generateWithRetry(step.step, files, feedback, chain, maxAttempts, { onToken, metrics });
+      fileUpdates = await generateWithRetry(step.target, files, feedback, chain, maxAttempts, { onToken, metrics });
       
       for (const update of fileUpdates) {
         const validation = validateStepResult(projectDir, update);
         if (!validation.valid) {
           if (metrics) metrics.retries++;
           log.warn(`[VALIDATOR] Result invalid: ${validation.reason}`);
-          fileUpdates = await generateWithRetry(step.step, files, `Validator feedback: ${validation.reason}`, chain, 1, { onToken, metrics });
+          fileUpdates = await generateWithRetry(step.target, files, `Validator feedback: ${validation.reason}`, chain, 1, { onToken, metrics });
           break;
         }
       }
     } catch (err) {
       log.error(`[CODER] Failed: ${err.message}`);
-      logBug({ task: step.step, type: "generation", severity: "high", description: err.message, fix_area: "coder.agent.js" });
-      logToFile({ task, mode, step: step.step, status: "code_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task, step: step.step, status: "code_failed" });
-      recordPattern(step.step, "fail");
-      handleFailure(step.step, err.message, chain, opts);
+      logBug({ task: step.target, type: "generation", severity: "high", description: err.message, fix_area: "coder.agent.js" });
+      logToFile({ task, mode, step: step.target, status: "code_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+      remember({ task, step: step.target, status: "code_failed" });
+      recordPattern(step.target, "fail");
+      handleFailure(step.target, err.message, chain, opts);
     }
 
     let patch;
@@ -230,14 +231,14 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
         patch = patchToUnified(projectDir, fileUpdates.map(u => ({ file: u.file, content: u.content })));
       } catch (err) {
         log.error(`[DIFF] Failed: ${err.message}`);
-        handleFailure(step.step, err.message, chain, opts);
+        handleFailure(step.target, err.message, chain, opts);
       }
 
       if (patch) {
         const validation = validatePatch(patch);
         if (!validation.valid) {
           log.error(`[VALIDATE] Invalid patch: ${validation.errors.join(", ")}`);
-          handleFailure(step.step, `Invalid patch: ${validation.errors.join(", ")}`, chain, opts);
+          handleFailure(step.target, `Invalid patch: ${validation.errors.join(", ")}`, chain, opts);
           patch = null;
         }
       }
@@ -255,13 +256,13 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
           } else {
             if (metrics) metrics.retries++;
             log.warn(`[REVIEWER] Issue: ${reviewResult}`);
-            logBug({ task: step.step, type: "generation", severity: "medium", description: reviewResult, fix_area: "reviewer.agent.js" });
-            handleReviewFailure(step.step, reviewResult, chain, opts);
+            logBug({ task: step.target, type: "generation", severity: "medium", description: reviewResult, fix_area: "reviewer.agent.js" });
+            handleReviewFailure(step.target, reviewResult, chain, opts);
           }
         } catch (err) {
           log.warn(`[REVIEWER] Failed: ${err.message}`);
-          logBug({ task: step.step, type: "execution", severity: "low", description: err.message, fix_area: "reviewer.agent.js" });
-          handleReviewFailure(step.step, err.message, chain, opts);
+          logBug({ task: step.target, type: "execution", severity: "low", description: err.message, fix_area: "reviewer.agent.js" });
+          handleReviewFailure(step.target, err.message, chain, opts);
         }
       }
     }
@@ -269,14 +270,14 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
     // --- ESCALATION TO ADVISOR ---
     const shouldEscalate = !approved && (failureState.consecutiveFailures >= 2 || !patch);
 
-    if (shouldEscalate && !failureState.advisorCalled && isAdvisorCallAllowed(step.step, { projectDir })) {
+    if (shouldEscalate && !failureState.advisorCalled && isAdvisorCallAllowed(step.target, { projectDir })) {
       log.section("ADVISOR");
       log.warn("[ADVISOR] Escalating to stronger model...");
       failureState.advisorCalled = true;
 
       try {
         const fixedPatch = await advisorFix({
-          task: step.step,
+          task: step.target,
           patch,
           feedback: reviewResult || failureState.lastFailureReason,
           metrics
@@ -291,7 +292,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
               log.ok("[ADVISOR] Patch approved");
               patch = fixedPatch;
               approved = true;
-              logToFile({ task, mode, step: step.step, status: "success", advisor_used: true, timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+              logToFile({ task, mode, step: step.target, status: "success", advisor_used: true, timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
             } else {
               log.error(`[ADVISOR] Patch still not approved: ${review}`);
               failureState.advisorFailureCount++;
@@ -308,7 +309,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
     }
 
     if (!approved) {
-      logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+      logToFile({ task, mode, step: step.target, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
       return;
     }
 
@@ -320,12 +321,12 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       const result = await applyPatch(projectDir, patch, true);
       if (result.valid) {
         log.ok(`[PATCHER] Valid (dry-run)`);
-        logToFile({ task, mode, step: step.step, status: "success", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-        remember({ task, step: step.step, status: "dry_run_ok" });
+        logToFile({ task, mode, step: step.target, status: "success", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+        remember({ task, step: step.target, status: "dry_run_ok" });
       } else {
         log.error(`[PATCHER] Invalid: ${result.reason}`);
-        logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-        remember({ task, step: step.step, status: "apply_failed", reason: result.reason });
+        logToFile({ task, mode, step: step.target, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+        remember({ task, step: step.target, status: "apply_failed", reason: result.reason });
       }
       const affectedFiles = extractPatchFiles(patch);
       chain.modifiedFiles.push(...affectedFiles);
@@ -343,9 +344,9 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
 
     if (result.applied) {
       log.ok(`[PATCHER] Applied`);
-      logToFile({ task, mode, step: step.step, status: "success", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task, step: step.step, status: "applied" });
-      recordPattern(step.step, "success");
+      logToFile({ task, mode, step: step.target, status: "success", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+      remember({ task, step: step.target, status: "applied" });
+      recordPattern(step.target, "success");
 
       const affectedFiles = extractPatchFiles(patch);
       chain.modifiedFiles.push(...affectedFiles);
@@ -358,11 +359,11 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       } catch {}
     } else {
       log.error(`[PATCHER] Failed: ${result.reason}`);
-      logBug({ task: step.step, type: "patch", severity: "high", description: result.reason, fix_area: "patcher.js" });
-      logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task, step: step.step, status: "apply_failed", reason: result.reason });
-      recordPattern(step.step, "fail");
-      handleFailure(step.step, result.reason, chain, opts);
+      logBug({ task: step.target, type: "patch", severity: "high", description: result.reason, fix_area: "patcher.js" });
+      logToFile({ task, mode, step: step.target, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+      remember({ task, step: step.target, status: "apply_failed", reason: result.reason });
+      recordPattern(step.target, "fail");
+      handleFailure(step.target, result.reason, chain, opts);
     }
   } finally {
     lockedFiles.forEach(releaseLock);
@@ -389,43 +390,33 @@ async function executePipeline(opts, { onToken, rl } = {}) {
   ux.showStage("PLAN");
   log.info(`[PLANNER] Analyzing task...`);
   const steps = await plannerPlan(task, { metrics, projectDir });
-  log.info(`[PLANNER] ${steps.length} step(s):`);
-  steps.forEach((s, i) => log.info(`  ${i + 1}. [ID:${s.id}] ${s.step} (Depends: ${s.dependsOn.join(",") || "none"})`));
+  
+  // Phase 31: Plan Preview and User Approval (Safety Check)
+  log.info(`[PLANNER] Execution Plan:`);
+  steps.forEach((s, i) => log.info(`  ${i + 1}. ${s.type.toUpperCase()} → ${s.target}`));
+
+  if (steps.length > 6) {
+    ux.warn(`Plan contains ${steps.length} steps. Large operations may be less reliable.`);
+  }
+
+  const approved = await confirm("Execute this plan?");
+  if (!approved) {
+    ux.warn("Plan rejected by user.");
+    return { metrics, chain: createChain() };
+  }
 
   const chain = createChain();
   const maxAttempts = autoMode ? profile.maxRetries : 1;
 
-  if (config.parallelExecution && steps.length > 1) {
-    log.section("PARALLEL SCHEDULER");
-    const batches = buildExecutionBatches(steps);
-    log.info(`[SCHEDULER] Grouped steps into ${batches.length} batch(es)`);
-
-    for (let b = 0; b < batches.length; b++) {
-      const batch = batches[b];
-      log.header(`Parallel Batch ${b + 1} (${batch.length} step(s))`);
-      
-      const limitedBatch = batch.slice(0, config.maxParallelSteps);
-      if (batch.length > config.maxParallelSteps) {
-        log.warn(`[SCHEDULER] Batch too large, limited to ${config.maxParallelSteps} steps`);
-      }
-
-      await Promise.all(
-        limitedBatch.map((step, idx) => 
-          executeStep(step, idx, { projectDir, dryRun, autoMode, maxAttempts, task }, chain, { onToken, rl, metrics })
-            .catch(err => log.error(`[BATCH] Step ${step.id} failed: ${err.message}`))
-        )
-      );
-      
-      if (batch.length > config.maxParallelSteps) {
-        const remaining = batch.slice(config.maxParallelSteps);
-        for (const step of remaining) {
-          await executeStep(step, 0, { projectDir, dryRun, autoMode, maxAttempts, task }, chain, { onToken, rl, metrics });
-        }
-      }
-    }
-  } else {
-    for (let i = 0; i < steps.length; i++) {
-      await executeStep(steps[i], i, { projectDir, dryRun, autoMode, maxAttempts, task }, chain, { onToken, rl, metrics });
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    try {
+      await executeStep(step, i, { projectDir, dryRun, autoMode, maxAttempts, task }, chain, { onToken, rl, metrics });
+    } catch (err) {
+      log.error(`[EXECUTOR] Step ${step.id} failed: ${err.message}`);
+      // Retry once if failed
+      log.info(`[EXECUTOR] Retrying step ${step.id}...`);
+      await executeStep(step, i, { projectDir, dryRun, autoMode, maxAttempts, task }, chain, { onToken, rl, metrics });
     }
   }
 
@@ -539,7 +530,7 @@ export async function runAgentStep({ task, projectDir }, { onToken, rl } = {}) {
   log.info(`Mode: ${tier.toUpperCase()} model`);
 
   const chain = createChain();
-  const step = { id: 1, step: task, files: task.split(/\s+/), dependsOn: [] };
+  const step = { id: 1, type: "modify", target: task, files: task.split(/\s+/), dependsOn: [] };
 
   await executeStep(step, 0, { projectDir, dryRun: true, autoMode: false, maxAttempts: 2, task }, chain, { onToken, rl, metrics });
 
