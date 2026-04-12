@@ -43,6 +43,8 @@ export function renderSideBySide(oldStr, newStr) {
 
 export async function interactiveApprove() {
   const rl = readline.createInterface({
+
+
     input: process.stdin,
     output: process.stdout
   });

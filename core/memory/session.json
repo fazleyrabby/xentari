@@ -1,6 +1,36 @@
 {
   "history": [
     {
+      "task": "create todo CRUD api",
+      "files": [
+        "app.js",
+        "models/todo.js"
+      ],
+      "timestamp": 1776014712137
+    },
+    {
+      "task": "create todo api",
+      "files": [
+        "app.js"
+      ],
+      "timestamp": 1776014284371
+    },
+    {
+      "task": "create todo api",
+      "files": [
+        "routes/todo.js",
+        "app.js"
+      ],
+      "timestamp": 1776013984260
+    },
+    {
+      "task": "create todo api",
+      "files": [
+        "app.js"
+      ],
+      "timestamp": 1776013702663
+    },
+    {
       "task": "add a function to multiply two numbers in src/math.js",
       "files": [
         "src/math.js"

@@ -4,6 +4,10 @@ export function confirm(question) {
   return new Promise((resolve) => {
     process.stdout.write(`${question} (y/n) `);
 
+
+
+
+
     readline.emitKeypressEvents(process.stdin);
     const wasRaw = process.stdin.isRaw;
     if (process.stdin.isTTY) {

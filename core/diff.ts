@@ -43,12 +43,20 @@ export function generateDiff(projectDir: string, filePath: string, newContent: s
   // Remove the 'Index: ...' and '====' lines added by `diff` package
   patch = patch.replace(/^Index: [^\n]+\n=+\n/gm, "");
 
+  // Fix the --- and +++ headers to be Git-compatible
+  const oldPathHeader = isNew ? "/dev/null" : "a/" + filePath;
+  const newPathHeader = "b/" + filePath;
+  
+  patch = patch.replace(/^--- [^\n]+\n/m, `--- ${oldPathHeader}\n`);
+  patch = patch.replace(/^\+\+\+ [^\n]+\n/m, `+++ ${newPathHeader}\n`);
+
   // Add git headers
-  const gitHeader = \`diff --git a/\${filePath} b/\${filePath}\n\` +
-                    (isNew ? \`new file mode 100644\n\` : \`index 0000000..0000000 100644\n\`);
+  const gitHeader = `diff --git a/${filePath} b/${filePath}\n` +
+                    (isNew ? `new file mode 100644\n` : `index 0000000..0000000 100644\n`);
 
   return gitHeader + patch;
 }
+
 
 /**
  * Higher level function to generate a multi-file unified patch.

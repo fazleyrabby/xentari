@@ -93,6 +93,8 @@ async function handleMissingFile(projectDir, errorPath) {
         });
       });
 
+
+
       const selectedDir = options[choice] !== undefined ? options[choice] : "root";
       selectedRelativePath = selectedDir === "root" ? fileName : join(selectedDir, fileName);
     }
@@ -186,6 +188,8 @@ export async function applyPatch(projectDir, patch, dryRun = false, newContent =
     let finalPatch = currentPatch;
 
     try {
+
+
       // Phase 51: Side-by-Side Diff Viewer (Colored)
       const parsed = parseDiff(currentPatch);
       const aligned = alignDiff(parsed);
