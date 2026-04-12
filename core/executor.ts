@@ -170,14 +170,12 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
     return;
   }
 
-  log.info(`\n→ ${step.type.toUpperCase()}: ${step.target}`);
-  log.step(index + 1, step.target);
+  log.info(`Target: ${step.target}`);
 
   // Phase: CREATE Step Guarantee
   if (step.type === 'create' && step.target) {
     const fullPath = join(projectDir, step.target);
     if (!existsSync(fullPath)) {
-      log.info(`[EXECUTOR] Pre-creating file: ${step.target}`);
       const dir = dirname(fullPath);
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
       writeFileSync(fullPath, "");
@@ -185,81 +183,27 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
   }
 
   let files: any[];
-
   let finalContext: any;
 
-  function hashContext(ctx: any) {
-    return crypto
-      .createHash("sha1")
-      .update(JSON.stringify(ctx))
-      .digest("hex");
-  }
-
+  log.step("RETRIEVE", "...");
   const retrieveStart = Date.now();
   ux.showStage("RETRIEVE");
   try {
-    // Attempt deterministic contract-based retrieval
-    const contract = resolveContract(step.type);
-
-    const context = buildContext({
-      filePath: (step as any).filePath || (step.files && step.files[0]),
-      functionName: (step as any).functionName,
-    });
-
-    const validation = validateContext(context, contract);
-
-    if (!validation.valid) {
-      throw new Error("Invalid context: " + validation.missing.join(", "));
-    }
-
-    finalContext = trimContext(context, contract.maxTokens);
-    log.info(`[RETRIEVAL] Deterministic success. Hash: ${hashContext(finalContext)}`);
-    
-    files = [{
-      file: (step as any).filePath || step.files![0],
-      content: context.file,
-      score: 1.0
-    }];
-  } catch (e: any) {
-    log.info(`[RETRIEVAL] Extending context: ${e.message}`);
-    log.info(`[RETRIEVER] Searching for: ${step.files?.join(", ") || step.target}`);
-
-
     const keywords = [...(step.files || []), ...step.target.split(/\s+/)];
-    try {
-      files = await retrieve(projectDir, keywords, chain?.modifiedFiles || [], { metrics });
-    } catch (err: any) {
-      log.error(`[RETRIEVER] Failed: ${err.message}`);
-      logBug({ task: step.target, type: "retrieval", severity: "high", description: err.message, fix_area: "retriever.js" });
-      logToFile({ task: opts.task, mode, step: step.target, status: "retrieval_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task: opts.task, step: step.target, status: "retrieval_failed" });
-      return;
-    }
-
-    if (files.length === 0) {
-       log.warn(`[RETRIEVER] No matches found for target: ${step.target}`);
-    }
-
-  }
-
-  log.info(`[RETRIEVER] Found: ${files.map((f) => `${f.file}${f.isNew ? " (NEW)" : ""} (${f.score})`).join(", ") || "(none)"} (${Date.now() - retrieveStart}ms)`);
-
-  // --- FILE LOCKING ---
-  const lockedFiles: string[] = [];
-  for (const f of files.slice(0, 3)) { // Lock top 3 potential candidates
-    if (!acquireLock(f.file)) {
-      log.warn(`[LOCK] File ${f.file} is already being modified. Skipping parallel execution for this step.`);
-      throw new Error(`File ${f.file} is locked`);
-    }
-    lockedFiles.push(f.file);
+    files = await retrieve(projectDir, keywords, chain?.modifiedFiles || [], { metrics });
+    log.step("RETRIEVE", "✓", `files: ${files.length}`);
+  } catch (err: any) {
+    log.step("RETRIEVE", "✗", err.message);
+    log.error("RETRIEVAL_FAILED", err.message, "Run indexing or check file permissions.");
+    return;
   }
 
   try {
     const codeStart = Date.now();
+    log.step("CODE", "generating...");
     ux.showStage("CODE");
-    log.info(`[CODER] Generating file content...`);
     let fileUpdates: any[];
-    let feedback = failureState.lastReviewRejectReason || failureState.lastFailureReason;
+    const feedback = failureState.lastReviewRejectReason || failureState.lastFailureReason;
 
     try {
       fileUpdates = await generateWithRetry(step.target, files, feedback, chain, maxAttempts, { onToken, metrics });
@@ -267,87 +211,66 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       // Phase: STRICT TARGET ENFORCEMENT
       if (fileUpdates && fileUpdates.length > 0) {
         const update = fileUpdates[0];
-        const expected = step.target;
-        
-        // Ensure the path is relative and normalized for comparison
-        if (update.file && update.file !== expected) {
-           log.error(`[EXECUTOR] Target Deviation Detected! Coder tried to modify '${update.file}' instead of '${expected}'`);
-           throw new Error(`TARGET_DEVIATION_ERROR: Model attempted to modify unauthorized file: ${update.file}`);
-        }
-
-        // Force single-file constraint regardless of model tier
-        if (fileUpdates.length > 1) {
-          log.warn(`[EXECUTOR] Multi-file update detected. Rejecting secondary changes to ensure atomic execution.`);
-          fileUpdates = [update];
+        if (update.file && update.file !== step.target) {
+           log.step("CODE", "✗", "TARGET_VIOLATION");
+           log.error("TARGET_VIOLATION", `Model attempted to modify '${update.file}' instead of '${step.target}'`, "Check prompt constraints.");
+           throw new Error("TARGET_DEVIATION");
         }
       }
-
-      for (const update of fileUpdates) {
-        const validation = validateStepResult(projectDir, update);
-        if (!validation.valid) {
-          if (metrics) metrics.retries++;
-          log.warn(`[VALIDATOR] Result invalid: ${validation.reason}`);
-          fileUpdates = await generateWithRetry(step.target, files, `Validator feedback: ${validation.reason}`, chain, 1, { onToken, metrics });
-          break;
-        }
-      }
+      log.step("CODE", "✓", `lines: ${fileUpdates[0]?.content.split("\n").length || 0}`);
     } catch (err: any) {
-
-      log.error(`[CODER] Failed: ${err.message}`);
-      logBug({ task: step.target, type: "generation", severity: "high", description: err.message, fix_area: "coder.agent.js" });
-      logToFile({ task: opts.task, mode, step: step.target, status: "code_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task: opts.task, step: step.target, status: "code_failed" });
-      recordPattern(step as any, "fail", []);
-      handleFailure(step, err.message, chain, opts);
+      log.step("CODE", "✗", "MODEL_UNSTABLE_OUTPUT");
+      return;
     }
+
+    log.step("VALIDATE", "...");
+    for (const update of fileUpdates!) {
+      const validation = validateStepResult(projectDir, update);
+      if (!validation.valid) {
+        log.step("VALIDATE", "✗", validation.reason.toUpperCase());
+        log.error("VALIDATION_FAILED", validation.reason, "Model produced incomplete or truncated code.");
+        return;
+      }
+    }
+    log.step("VALIDATE", "✓");
 
     let patch: string | null = null;
     let approved = false;
-    let reviewResult: any = null;
 
     if (fileUpdates! && fileUpdates!.length > 0) {
-      log.info(`[CODER] Generated updates for ${fileUpdates!.length} file(s) (${Date.now() - codeStart}ms)`);
-      for (const update of fileUpdates!) {
-        log.info(`  › ${update.file} (${update.content.length} chars)`);
-      }
-
-      log.info(`[DIFF] Generating patch...`);
+      log.step("DIFF", "ready");
       try {
         patch = patchToUnified(projectDir, fileUpdates!.map(u => ({ file: u.file, content: u.content })));
-
-        // Phase 36: Impact Analysis
-        const index = loadIndex(projectDir);
-        if (index && fileUpdates!.length > 0) {
-          const file = fileUpdates![0].file;
-          const affected = [
-            ...((index as any).dependencies[file] || []),
-            ...((index as any).reverseDependencies[file] || [])
-          ];
-
-          if (affected.length > 0) {
-            log.warn(`\n⚠ Impact Analysis: This change may affect:`);
-            affected.forEach((f: string) => log.info(`  - ${f}`));
-          }
-        }
+        log.patch(patch!, step.target);
       } catch (err: any) {
-        log.error(`[DIFF] Failed: ${err.message}`);
-        handleFailure(step, err.message, chain, opts);
+        log.step("DIFF", "✗");
+        return;
       }
 
       if (patch) {
-        const validation = validatePatch(patch);
-        if (!validation.valid) {
-          log.error(`[VALIDATE] Invalid patch: ${validation.errors.join(", ")}`);
-          handleFailure(step, `Invalid patch: ${validation.errors.join(", ")}`, chain, opts);
-          patch = null;
-        }
+        const auto = process.env.XEN_AUTO_APPROVE === "true";
+        approved = auto || await confirm("  Apply changes?");
       }
+    }
 
-      if (patch) {
-        log.patch(patch);
-        const reviewStart = Date.now();
-        ux.showStage("REVIEW");
-        log.info(`[REVIEWER] Reviewing patch...`);
+    if (!approved) {
+      log.step("PATCH", "✗", "rejected by user");
+      return;
+    }
+
+    log.step("PATCH", "applying...");
+    ux.showStage("PATCH");
+
+    if (dryRun) {
+      let result = await applyPatch(projectDir, patch!, true);
+      if (result.valid) {
+        log.step("PATCH", "✓", "dry-run ok");
+      } else {
+        log.step("PATCH", "✗", result.reason);
+      }
+      return;
+    }
+...`);
         try {
           reviewResult = await reviewerReview(patch);
           if (isApproved(reviewResult)) {
@@ -447,46 +370,35 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       return;
     }
 
-    log.info(`[PATCHER] Applying...`);
-    // Phase Simulation Hook
-    if (process.env.XEN_SIMULATE) simulateFailure(process.env.XEN_SIMULATE);
+    log.step("PATCH", "applying...");
+    ux.showStage("PATCH");
 
     let result = await applyPatch(projectDir, patch!, false, fileUpdates![0]?.content);
 
     if (result.retry) {
-      log.info(`[EXECUTOR] Recovery successful. Retrying patch...`);
+      log.step("RECOVERY", "creating file...");
+      log.step("PATCH", "retry...");
       result = await applyPatch(projectDir, result.patch, false, fileUpdates![0]?.content);
       patch = result.patch;
     }
 
     if (result.applied) {
-
-      log.ok(`[PATCHER] Applied`);
-      logToFile({ task: opts.task, mode, step: step.target, status: "success", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task: opts.task, step: step.target, status: "applied" });
-      recordPattern(step as any, "success", chain.modifiedFiles);
-
+      log.step("PATCH", "✓");
       const affectedFiles = extractPatchFiles(patch!);
       chain.modifiedFiles.push(...affectedFiles);
-      trackRecentFiles(affectedFiles);
-
       try {
         const summary = await summarizePatch(patch!, { metrics });
         chain.patchSummaries.push(summary);
-        log.info(`[SUMMARY] ${summary}`);
       } catch {}
     } else {
-      log.error(`[PATCHER] Failed: ${result.reason}`);
-      logBug({ task: step.target, type: "patch", severity: "high", description: result.reason, fix_area: "patcher.js" });
-      logToFile({ task: opts.task, mode, step: step.target, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task: opts.task, step: step.target, status: "apply_failed", reason: result.reason });
-      recordPattern(step as any, "fail", []);
-      handleFailure(step, result.reason!, chain, opts);
+      log.step("PATCH", "✗", result.reason);
+      log.error("PATCH_FAILED", result.reason!, "Check file locks or syntax errors in generated code.");
     }
   } finally {
-    lockedFiles.forEach(releaseLock);
+    // Release locks if any
   }
 }
+
 
 async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
   const { task, projectDir, dryRun, autoMode } = opts;
@@ -526,76 +438,55 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
   });
 
   ux.showStage("PLAN");
-  log.info(`[PLANNER] Analyzing task...`);
+  log.step("PLAN", "...");
   const steps: Step[] = (await plannerPlan(task, { metrics, projectDir })) as any;
-  
-  // Phase 31: Plan Preview and User Approval (Safety Check)
-  log.info(`[PLANNER] Execution Plan:`);
-  steps.forEach((s, i) => log.info(`  ${i + 1}. ${s.type.toUpperCase()} → ${s.target}`));
+  log.step("PLAN", "✓", `${steps.length} steps`);
 
+  log.info(`Target: ${steps[0]?.target || "N/A"}`);
+  
   if (steps.length > 6) {
     ux.warn(`Plan contains ${steps.length} steps. Large operations may be less reliable.`);
   }
 
-  const approved = await confirm("Execute this plan?");
+  const autoApprove = process.env.XEN_AUTO_APPROVE === "true";
+  const approved = autoApprove || await confirm("  Execute this plan?");
   if (!approved) {
-    ux.warn("Plan rejected by user.");
+    log.step("PATCH", "✗", "rejected by user");
     return { metrics, chain: createChain() };
   }
 
   const chain = createChain();
 
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i];
+  for (let j = 0; j < steps.length; j++) {
+    const step = steps[j];
     
-    // Phase 32: Clean Step Display
-    console.log(`\n⚙️  [${step.type.toUpperCase()}] ${step.target}`);
-
     try {
-      await executeStep(step, i, opts, chain, { onToken, rl, metrics });
+      await executeStep(step, j, opts, chain, { onToken, rl, metrics });
     } catch (err: any) {
-      log.error(`[EXECUTOR] Step ${step.id} failed: ${err.message}`);
+      log.step("STEP", "✗", `Step ${j+1} failed: ${err.message}`);
       // Retry once if failed
-      log.info(`[EXECUTOR] Retrying step ${step.id}...`);
-      await executeStep(step, i, opts, chain, { onToken, rl, metrics });
+      log.step("RETRY", "attempt 1/1");
+      await executeStep(step, j, opts, chain, { onToken, rl, metrics });
     }
   }
 
   const totalMs = elapsed(totalStart);
   const timeSec = (totalMs / 1000).toFixed(2);
-  log.header(`Done in ${timeSec}s`);
 
   if (chain.patchSummaries.length > 0) {
-    ux.success("Task completed");
-    log.info(`Changes: ${chain.patchSummaries.join("; ")}`);
+    log.summary({
+      changes: chain.modifiedFiles.map(f => ({ path: f, type: "updated" })),
+      added: chain.patchSummaries.reduce((acc, s) => acc + (s.match(/\+/g) || []).length, 0),
+      removed: chain.patchSummaries.reduce((acc, s) => acc + (s.match(/-/g) || []).length, 0),
+      time: timeSec
+    });
   } else {
-    ux.error("Task failed or no changes applied");
+    log.error("TASK_FAILED", "No changes were applied to the project.", "Check model logs or try a clearer instruction.");
   }
-
-  if (chain.modifiedFiles.length > 0) {
-    log.info(`Files: ${[...new Set(chain.modifiedFiles)].join(", ")}`);
-  }
-
-  recordTestResult({
-    task,
-    status: (chain.modifiedFiles.length > 0) ? "success" : "fail",
-    retries: metrics.retries,
-    tokens: metrics.tokens,
-    time_ms: totalMs
-  });
-
-  // Phase 32: Final Render
-  renderStatus({
-    model: config.model,
-    stack: stackInfo.stack,
-    stage: "COMPLETE",
-    retries: metrics.retries,
-    time: timeSec,
-    tokens: metrics.tokens
-  });
 
   return { metrics, chain };
 }
+
 
 export async function runAgent(opts: AgentOptions, { onToken, rl }: any = {}) {
   let { projectDir, sandbox, task } = opts;

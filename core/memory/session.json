@@ -1,6 +1,13 @@
 {
   "history": [
     {
+      "task": "create src/utils.js with a sum function",
+      "files": [
+        "src/utils.js"
+      ],
+      "timestamp": 1776020183258
+    },
+    {
       "task": "move todo logic to models/todo.js and routes/todo.js then connect to app.js",
       "files": [
         "app.js"

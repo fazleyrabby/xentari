@@ -20,46 +20,71 @@ function fmt(color, label, msg) {
 }
 
 export const log = {
-  // Section headers matching spec: [PLAN] [STEP] [PATCH] [REVIEW] [RESULT]
-  section(name) {
-    console.log(`\n${C.bold}${C.cyan}[${name}]${C.reset}`);
-  },
-
-  step(n, msg) {
-    console.log(`\n${C.bold}${C.cyan}[STEP ${n}]${C.reset} ${msg}`);
+  header(msg) {
+    console.log(`\n${C.bold}${C.cyan}[xentari]${C.reset} ${msg}`);
   },
 
   info(msg) {
-    console.log(fmt("dim", "  ›", msg));
+    console.log(`${C.dim}  •${C.reset} ${msg}`);
+  },
+
+  // → <STEP_NAME> <STATE> [metadata]
+  // Colors: ... (dim), ✓ (green), ✗ (red)
+  step(name, state, metadata = "") {
+    let stateSymbol = state;
+    if (state === "...") stateSymbol = `${C.dim}...${C.reset}`;
+    if (state === "✓") stateSymbol = `${C.green}✓${C.reset}`;
+    if (state === "✗") stateSymbol = `${C.red}✗${C.reset}`;
+    
+    const meta = metadata ? ` ${C.dim}(${metadata})${C.reset}` : "";
+    console.log(`${C.cyan}→ ${name.toUpperCase().padEnd(10)}${C.reset} ${stateSymbol}${meta}`);
   },
 
   ok(msg) {
-    console.log(fmt("green", "  ✓", msg));
+    console.log(`${C.green}  ✓${C.reset} ${msg}`);
   },
 
   warn(msg) {
-    console.log(fmt("yellow", "  ⚠", msg));
+    console.log(`${C.yellow}  ⚠${C.reset} ${msg}`);
   },
 
-  error(msg) {
-    console.error(fmt("red", "  ✗", msg));
+  // Strict Error Format
+  // ✗ <ERROR_CODE>
+  // Reason: <reason>
+  // Action: <action>
+  error(code, reason, action) {
+    console.error(`\n${C.red}✗ ${code.toUpperCase()}${C.reset}`);
+    if (reason) console.error(`${C.dim}Reason:${C.reset}\n- ${reason}`);
+    if (action) console.error(`${C.dim}Action:${C.reset}\n- ${action}`);
   },
 
-  patch(content) {
-    console.log(`\n${C.bold}${C.magenta}[PATCH PREVIEW]${C.reset}`);
-    console.log(LINE);
+  patch(content, targetPath) {
+    console.log(`\n${C.dim}--- ${targetPath}${C.reset}`);
+    console.log(`${C.dim}+++ ${targetPath}${C.reset}\n`);
     console.log(content);
-    console.log(LINE);
   },
 
-  header(msg) {
-    console.log(`\n${C.bold}${C.cyan}=> ${msg}${C.reset}`);
+  summary(stats) {
+    console.log(`\n${C.green}✔ Completed${C.reset}`);
+    console.log(`\nChanges:`);
+    stats.changes.forEach(c => console.log(`- ${c.path} (${c.type})`));
+    console.log(`\nStats:`);
+    console.log(`- lines added: ${stats.added}`);
+    console.log(`- lines removed: ${stats.removed}`);
+    console.log(`- time: ${stats.time}s`);
   },
 
-  result(msg) {
-    console.log(`\n${C.bold}${C.green}[RESULT]${C.reset} ${msg}`);
-  },
+  debug(ctx) {
+    console.log(`\n${C.dim}--- DEBUG CONTEXT ---${C.reset}`);
+    console.log(`Target: ${ctx.target}`);
+    console.log(`\nRetrieved Files:`);
+    ctx.files.forEach(f => console.log(`- ${f}`));
+    console.log(`\nDependencies:`);
+    ctx.deps.forEach(d => console.log(`- ${d}`));
+    console.log(`${C.dim}----------------------${C.reset}`);
+  }
 };
+
 
 // Append structured JSON entry to logs/xen.log
 export function logToFile(entry) {
