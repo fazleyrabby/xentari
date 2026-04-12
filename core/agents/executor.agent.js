@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { log, logToFile } from "../logger.js";
 import { retrieve } from "../retriever.js";
@@ -18,12 +18,17 @@ import { acquireLock, releaseLock } from "../locks.js";
 import { loadConfig } from "../config.js";
 import { createMetrics } from "../metrics.js";
 import { logBug, recordTestResult } from "../analytics.js";
-import { resolveContract } from "../retrieval/resolver.js";
-import { buildContext } from "../retrieval/contextBuilder.js";
-import { validateContext } from "../retrieval/validator.js";
-import { trimContext } from "../retrieval/tokenLimiter.js";
+import { resolveContract } from "../retrieval/resolver.ts";
+import { buildContext } from "../retrieval/contextBuilder.ts";
+import { validateContext } from "../retrieval/validator.ts";
+import { trimContext } from "../retrieval/tokenLimiter.ts";
 import { stage, statusBar, diffInteractive } from "../tui/index.js";
 import crypto from "crypto";
+import { createSandbox } from "../sandbox/manager.js";
+import { cleanupSandbox } from "../sandbox/cleanup.js";
+import { getChangedFiles } from "../sandbox/diff.js";
+import * as ux from "../tui/ux.js";
+import { addToSession } from "../memory/session.js";
 
 let failureState = {
   consecutiveFailures: 0,
@@ -122,7 +127,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
   }
 
   const retrieveStart = Date.now();
-  stage.showStage("RETRIEVE");
+  ux.showStage("RETRIEVE");
   try {
     // Attempt deterministic contract-based retrieval
     const contract = resolveContract(step.type);
@@ -184,7 +189,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
 
   try {
     const codeStart = Date.now();
-    stage.showStage("CODE");
+    ux.showStage("CODE");
     log.info(`[CODER] Generating file content...`);
     let fileUpdates;
     let feedback = failureState.lastReviewRejectReason || failureState.lastFailureReason;
@@ -240,7 +245,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       if (patch) {
         log.patch(patch);
         const reviewStart = Date.now();
-        stage.showStage("REVIEW");
+        ux.showStage("REVIEW");
         log.info(`[REVIEWER] Reviewing patch...`);
         try {
           reviewResult = await reviewerReview(patch, { metrics });
@@ -308,7 +313,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
     }
 
     log.section("RESULT");
-    stage.showStage("PATCH");
+    ux.showStage("PATCH");
 
     if (dryRun) {
       log.info(`[PATCHER] Validating (dry-run)...`);
@@ -334,7 +339,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
     }
 
     log.info(`[PATCHER] Applying...`);
-    const result = await applyPatch(projectDir, patch, false);
+    const result = await applyPatch(projectDir, patch, false, fileUpdates[0]?.content);
 
     if (result.applied) {
       log.ok(`[PATCHER] Applied`);
@@ -364,7 +369,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
   }
 }
 
-export async function runAgent(opts, { onToken, rl } = {}) {
+async function executePipeline(opts, { onToken, rl } = {}) {
   const { task, projectDir, dryRun, autoMode } = opts;
   const config = loadConfig();
   const profile = getTierProfile();
@@ -381,9 +386,9 @@ export async function runAgent(opts, { onToken, rl } = {}) {
   log.section("MODEL");
   log.info(`  › ${tier.toUpperCase()} model`);
 
-  log.section("PLANNER");
+  ux.showStage("PLAN");
   log.info(`[PLANNER] Analyzing task...`);
-  const steps = await plannerPlan(task, { metrics });
+  const steps = await plannerPlan(task, { metrics, projectDir });
   log.info(`[PLANNER] ${steps.length} step(s):`);
   steps.forEach((s, i) => log.info(`  ${i + 1}. [ID:${s.id}] ${s.step} (Depends: ${s.dependsOn.join(",") || "none"})`));
 
@@ -428,8 +433,12 @@ export async function runAgent(opts, { onToken, rl } = {}) {
   log.header(`Done in ${(totalMs / 1000).toFixed(1)}s`);
 
   if (chain.patchSummaries.length > 0) {
+    ux.success("Task completed");
     log.info(`Changes: ${chain.patchSummaries.join("; ")}`);
+  } else {
+    ux.error("Task failed or no changes applied");
   }
+
   if (chain.modifiedFiles.length > 0) {
     log.info(`Files: ${[...new Set(chain.modifiedFiles)].join(", ")}`);
   }
@@ -451,6 +460,70 @@ export async function runAgent(opts, { onToken, rl } = {}) {
   });
 
   return { metrics, chain };
+}
+
+export async function runAgent(opts, { onToken, rl } = {}) {
+  let { projectDir, sandbox } = opts;
+  let originalRoot = projectDir;
+  let sandboxRoot = null;
+
+  if (sandbox) {
+    try {
+      sandboxRoot = createSandbox(projectDir);
+      log.info(`🧪 Running in sandbox: ${sandboxRoot}`);
+      projectDir = sandboxRoot;
+      opts.projectDir = sandboxRoot;
+    } catch (err) {
+      log.warn(`Sandbox creation failed: ${err.message}. Falling back to normal mode.`);
+      sandbox = false;
+    }
+  }
+
+  const result = await executePipeline(opts, { onToken, rl });
+
+  if (sandboxRoot) {
+    const changes = getChangedFiles(originalRoot, sandboxRoot);
+
+    if (changes.length > 0) {
+      log.section("SANDBOX CHANGES");
+      changes.forEach(c => {
+        log.info(`📄 ${c.file}`);
+      });
+
+      const approved = await confirm("  Apply sandbox changes to real project?");
+      if (approved) {
+        changes.forEach(c => {
+          const target = join(originalRoot, c.file);
+          writeFileSync(target, c.newContent);
+        });
+        ux.success("Changes applied to real project.");
+
+        // Task 3: Store after task (Phase 25)
+        addToSession({
+          task: opts.task,
+          files: changes.map(c => c.file),
+          timestamp: Date.now()
+        });
+      } else {
+        log.info("Changes discarded.");
+      }
+    } else {
+      log.info("No changes detected in sandbox.");
+    }
+
+    cleanupSandbox(sandboxRoot);
+  } else {
+    // If not in sandbox, and successful, also store
+    if (result.chain && result.chain.modifiedFiles.length > 0) {
+      addToSession({
+        task: opts.task,
+        files: [...new Set(result.chain.modifiedFiles)],
+        timestamp: Date.now()
+      });
+    }
+  }
+
+  return result;
 }
 
 export async function runAgentStep({ task, projectDir }, { onToken, rl } = {}) {

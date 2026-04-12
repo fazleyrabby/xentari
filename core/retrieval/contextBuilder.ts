@@ -1,6 +1,7 @@
 import fs from "fs";
+import { Context } from "../types/index.ts";
 
-export function buildContext({ filePath, functionName }) {
+export function buildContext({ filePath, functionName }: { filePath: string; functionName?: string }): Context {
   const content = fs.readFileSync(filePath, "utf-8");
 
   return {
@@ -12,7 +13,7 @@ export function buildContext({ filePath, functionName }) {
   };
 }
 
-function extractFunction(code, fnName) {
+function extractFunction(code: string, fnName: string): string | null {
   const regex = new RegExp(
     `function\\s+${fnName}\\s*\\([^)]*\\)\\s*{[\\s\\S]*?}`,
     "m"
@@ -20,8 +21,8 @@ function extractFunction(code, fnName) {
   return code.match(regex)?.[0] || null;
 }
 
-function extractImports(code) {
+function extractImports(code: string): string[] {
   return code
     .split("\n")
-    .filter((l) => l.startsWith("import") || l.startsWith("use"));
+    .filter((l: string) => l.startsWith("import") || l.startsWith("use"));
 }

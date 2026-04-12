@@ -1,4 +1,6 @@
-export const CONTRACTS = {
+import { RetrievalContract } from "../types/index.ts";
+
+export const CONTRACTS: Record<string, RetrievalContract> = {
   modify_function: {
     required: ["file", "functionBlock", "imports"],
     optional: ["dependencies"],

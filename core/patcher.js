@@ -1,17 +1,30 @@
-import { writeFileSync, unlinkSync } from "node:fs";
+import { writeFileSync, unlinkSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { loadConfig } from "./config.js";
 import { getTierProfile } from "./tier.js";
-import { askApproval } from "./approval/approver.js";
-import { APPROVAL_TYPES } from "./approval/approvalTypes.js";
+import { askApproval } from "./approval/approver.ts";
+import { APPROVAL_TYPES } from "./approval/approvalTypes.ts";
 import { diffInteractive } from "./tui/index.js";
+import { safePath } from "./project/guard.js";
+import { interactiveDiff, simpleDiffPreview } from "./tui/diffViewerInteractive.js";
+import { splitDiff, rebuildDiff } from "./patch/partial.js";
+import readline from "node:readline";
 
 function tmpPatchPath() {
   const id = randomBytes(6).toString("hex");
   return join(tmpdir(), `xentari-${id}.patch`);
+}
+
+function extractFilesFromPatch(patch) {
+  const files = [];
+  const matches = patch.matchAll(/^diff --git a\/(.+?) b\//gm);
+  for (const match of matches) {
+    files.push(match[1]);
+  }
+  return files;
 }
 
 export function validatePatch(patch) {
@@ -40,7 +53,17 @@ export function validatePatch(patch) {
   return { valid: errors.length === 0, errors };
 }
 
-export async function applyPatch(projectDir, patch, dryRun = false) {
+export async function applyPatch(projectDir, patch, dryRun = false, newContent = null) {
+  // Task 4: Safe Path Guard
+  const files = extractFilesFromPatch(patch);
+  for (const file of files) {
+    try {
+      safePath(projectDir, file);
+    } catch (err) {
+      return { applied: false, valid: false, reason: `Safety Error: ${err.message} (${file})` };
+    }
+  }
+
   const patchPath = tmpPatchPath();
   writeFileSync(patchPath, patch, "utf-8");
 
@@ -56,9 +79,11 @@ export async function applyPatch(projectDir, patch, dryRun = false) {
 
     // Try to extract old content for side-by-side preview
     const filePathMatch = patch.match(/^--- a\/(.+)$/m);
-    let oldContent = "(empty/new file)";
+    let oldContent = "";
+    let targetPath = "Unknown File";
     if (filePathMatch) {
-      const originalPath = join(projectDir, filePathMatch[1]);
+      targetPath = filePathMatch[1];
+      const originalPath = safePath(projectDir, targetPath);
       if (existsSync(originalPath)) {
         try {
           oldContent = readFileSync(originalPath, "utf-8");
@@ -66,15 +91,65 @@ export async function applyPatch(projectDir, patch, dryRun = false) {
       }
     }
 
-    // Simple heuristic to extract "new" content from a single-file unified diff for preview
-    // Note: In Xentari, the LLM provides full file content, but here we only have the patch.
-    // We'll show the side-by-side of the patch itself or a simplified view.
-    // Given the task rules, we'll render the side-by-side using the patch if we can't reconstruct.
-    // For now, we'll use the existing patch string as details but use the new UI.
-    
-    diffInteractive.renderSideBySide(oldContent.slice(0, 5000), patch.slice(0, 5000));
+    let approved = false;
+    let finalPatch = patch;
 
-    const approved = await diffInteractive.interactiveApprove();
+    try {
+      // Use the new interactive diff viewer
+      if (newContent) {
+        approved = await interactiveDiff(oldContent, newContent, targetPath);
+      } else {
+        diffInteractive.renderSideBySide(oldContent.slice(0, 5000), patch.slice(0, 5000));
+        approved = await diffInteractive.interactiveApprove();
+      }
+
+      // Phase 28: Partial Apply logic
+      if (approved) {
+        const hunks = splitDiff(patch);
+        if (hunks.length > 1) {
+          console.log(`\nDetected ${hunks.length} changes (hunks).`);
+          const wantPartial = await new Promise(res => {
+            const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+            rl.question("Apply all changes? (y) or select specific hunks? (s): ", (ans) => {
+              rl.close();
+              res(ans.trim().toLowerCase() === 's');
+            });
+          });
+
+          if (wantPartial) {
+            hunks.forEach((h, i) => {
+              console.log(`\n[${i}] ------------------`);
+              console.log(h.content.slice(0, 300) + (h.content.length > 300 ? "..." : ""));
+            });
+
+            const selectedIds = await new Promise(res => {
+              const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+              rl.question("\nSelect hunk IDs to apply (comma separated, e.g. 0,2): ", (ans) => {
+                rl.close();
+                res(ans.split(",").map(n => parseInt(n.trim())).filter(n => !isNaN(n)));
+              });
+            });
+
+            const selectedHunks = hunks.filter(h => selectedIds.includes(h.id));
+            if (selectedHunks.length > 0) {
+              finalPatch = rebuildDiff(selectedHunks);
+              // Save the new partial patch
+              writeFileSync(patchPath, finalPatch, "utf-8");
+            } else {
+              console.log("No hunks selected. Aborting.");
+              return { applied: false, valid: true, reason: "user_rejected_all_hunks" };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Fallback to simple diff");
+      simpleDiffPreview(oldContent, newContent || patch);
+      approved = await askApproval({
+        type: APPROVAL_TYPES.PATCH,
+        message: "Apply changes?"
+      });
+    }
 
     if (!approved) {
       return { applied: false, valid: true, reason: "user_rejected_patch" };

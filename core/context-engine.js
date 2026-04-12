@@ -31,10 +31,10 @@ function buildKnowledgeContext(task) {
   return `\n# RELEVANT PROJECT KNOWLEDGE\n${context}\n`;
 }
 
-export function buildDynamicContext(task) {
+export function buildDynamicContext(task, projectDir = process.cwd()) {
   const config = loadConfig();
-  const contextDir = join(config.root, "context");
-  const xenContextPath = join(config.root, xenContextPathName());
+  const contextDir = join(projectDir, "context");
+  const xenContextPath = join(projectDir, xenContextPathName(projectDir));
   
   let dynamicContext = "";
 
@@ -51,7 +51,7 @@ export function buildDynamicContext(task) {
   dynamicContext += buildKnowledgeContext(task);
 
   // Stack Detection
-  const { stack } = detectStack(task);
+  const { stack } = detectStack(task, projectDir);
   const stackPath = join(contextDir, `${stack}.md`);
   if (existsSync(stackPath)) {
     dynamicContext += `\n# STACK CONTEXT (${stack})\n${readFileSync(stackPath, "utf-8")}\n`;
@@ -69,13 +69,13 @@ export function buildDynamicContext(task) {
   };
 }
 
-function xenContextPathName() {
+function xenContextPathName(projectDir) {
   // Check both legacy and new names
-  return existsSync(join(process.cwd(), "xen.context.json")) ? "xen.context.json" : "xen.config.json";
+  return existsSync(join(projectDir, "xen.context.json")) ? "xen.context.json" : "xen.config.json";
 }
 
-function detectStack(task) {
-  const configPath = join(process.cwd(), xenContextPathName());
+function detectStack(task, projectDir) {
+  const configPath = join(projectDir, xenContextPathName(projectDir));
   if (!existsSync(configPath)) return { stack: "default" };
 
   try {
@@ -83,7 +83,7 @@ function detectStack(task) {
     const lowerTask = task.toLowerCase();
 
     for (const [stack, info] of Object.entries(contextMap.stacks)) {
-      if (info.keywords.some(kw => lowerTask.includes(kw))) {
+      if (info.keywords && info.keywords.some(kw => lowerTask.includes(kw))) {
         return { stack, info };
       }
     }

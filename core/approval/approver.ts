@@ -1,7 +1,8 @@
 import readline from "readline";
 import { loadConfig } from "../config.js";
+import { ApprovalRequest } from "../types/approval.ts";
 
-export async function askApproval({ type, message, details }) {
+export async function askApproval({ type, message, details }: ApprovalRequest): Promise<boolean> {
   const config = loadConfig();
   
   // NON-INTERACTIVE MODE (SAFE DEFAULT)

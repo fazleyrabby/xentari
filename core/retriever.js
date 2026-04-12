@@ -9,6 +9,7 @@ import { getContext } from "./context.js";
 import { loadIndex } from "./indexer.js";
 import { chunkText, selectRelevantChunks, buildContextWindow } from "./chunker.js";
 import { retrieveKnowledge } from "./rag.js";
+import { safePath } from "./project/guard.js";
 
 const IGNORE = [
   "**/node_modules/**",
@@ -209,7 +210,7 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
   const ragKnowledge = retrieveKnowledge(task);
   const ragFiles = ragKnowledge.map(f => f.path);
 
-  const { stack } = getContext(task);
+  const { stack } = getContext(task, projectDir);
   let basePath = projectDir;
 
   if (stack === "backend" && existsSync(join(projectDir, "backend"))) {
@@ -242,13 +243,20 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
       const typeScore = typeBoost(file, typeInfo);
       const semScore = semanticScore(taskTokens, indexEntry);
 
+      let fullPath;
+      try {
+        fullPath = safePath(basePath, file);
+      } catch {
+        return null;
+      }
+
       return {
         file: relativeFile,
-        fullPath: join(basePath, file),
+        fullPath,
         score: fnScore + prScore + memScore + boostScore + ragBoost + typeScore + semScore,
         hasPriority: prScore > 0 || typeScore > 0 || semScore > 5 || ragBoost > 0,
       };
-    });
+    }).filter(c => c !== null);
 
   // Sort and take top candidates for content analysis
   candidates.sort((a, b) => b.score - a.score);

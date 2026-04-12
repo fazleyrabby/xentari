@@ -3,6 +3,7 @@ import { join, basename, extname } from "node:path";
 import { glob } from "glob";
 import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
+import { safePath } from "./project/guard.js";
 
 const IGNORE = [
   "**/node_modules/**",
@@ -91,7 +92,13 @@ export async function indexProject(projectDir) {
   };
 
   for (const file of files) {
-    const fullPath = join(projectDir, file);
+    let fullPath;
+    try {
+      fullPath = safePath(projectDir, file);
+    } catch {
+      continue;
+    }
+    
     const ext = extname(file);
     let content = "";
     try {

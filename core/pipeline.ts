@@ -11,31 +11,33 @@ import { remember, trackRecentFiles, recordPattern } from "./memory.js";
 import { summarizePatch } from "./summarizer.js";
 import { confirm } from "./prompt.js";
 import { detectTier, getTierProfile } from "./tier.js";
+import { resolveContract } from "./retrieval/resolver.ts";
+import { buildContext } from "./retrieval/contextBuilder.ts";
+import { validateContext } from "./retrieval/validator.ts";
+import { trimContext } from "./retrieval/tokenLimiter.ts";
+import { stage, statusBar } from "./tui/index.js";
+import { Task, Context, PipelineResult } from "./types/index.ts";
+import crypto from "crypto";
 
-function elapsed(start) {
+function elapsed(start: number): number {
   return Date.now() - start;
 }
 
-// Extract file paths from a unified diff
-function extractPatchFiles(patch) {
+function extractPatchFiles(patch: string): string[] {
   return [...patch.matchAll(/^diff --git a\/(.+?) b\//gm)].map((m) => m[1]);
 }
 
-// --- Context chain: tracks state across steps ---
 function createChain() {
   return {
     modifiedFiles: [],
     patchSummaries: [],
     get patchSummary() {
-      return this.patchSummaries.length
-        ? this.patchSummaries.join("; ")
-        : null;
+      return this.patchSummaries.length ? this.patchSummaries.join("; ") : null;
     },
   };
 }
 
-// --- Code + Review with smart retries ---
-async function codeAndReview(step, files, maxAttempts, chainContext, projectDir) {
+async function codeAndReview(step: any, files: any[], maxAttempts: number, chainContext: any, projectDir: string): Promise<{ patch: string | null; approved: boolean; review?: string | null }> {
   let feedback = null;
   let consecutiveReviewFails = 0;
 
@@ -46,7 +48,7 @@ async function codeAndReview(step, files, maxAttempts, chainContext, projectDir)
     let fileUpdates;
     try {
       fileUpdates = await generatePatch(step.step, files, feedback, chainContext);
-    } catch (err) {
+    } catch (err: any) {
       log.error(`Code generation failed: ${err.message}`);
       return { patch: null, approved: false };
     }
@@ -57,67 +59,55 @@ async function codeAndReview(step, files, maxAttempts, chainContext, projectDir)
       return { patch: null, approved: false };
     }
 
-    log.info(`Generated: ${fileUpdates.map(f => `${f.file} (${f.content.length} chars)`).join(", ")}`);
+    log.info(`Generated: ${fileUpdates.map((f: any) => `${f.file} (${f.content.length} chars)`).join(", ")}`);
 
-    // Convert file content to unified diff
     let patch;
     try {
       patch = patchToUnified(projectDir, fileUpdates);
-    } catch (err) {
+    } catch (err: any) {
       log.error(`Diff generation failed: ${err.message}`);
       feedback = `Diff generation failed: ${err.message}. Ensure the file path is correctly specified at the start of each file content.`;
-      if (attempt === maxAttempts) {
-        return { patch: null, approved: false, review: feedback };
-      }
+      if (attempt === maxAttempts) return { patch: null, approved: false, review: feedback };
       continue;
     }
 
-    // Validate patch structure
     const validation = validatePatch(patch);
     if (!validation.valid) {
       log.error("Invalid patch:");
-      validation.errors.forEach((e) => log.error(`  ${e}`));
+      validation.errors.forEach((e: string) => log.error(`  ${e}`));
       feedback = `Invalid patch structure: ${validation.errors.join("; ")}. Generate correct file content.`;
-      if (attempt === maxAttempts) {
-        return { patch: null, approved: false, review: feedback };
-      }
+      if (attempt === maxAttempts) return { patch: null, approved: false, review: feedback };
       continue;
     }
 
     log.patch(patch);
-
     log.section("REVIEW");
     log.info("Reviewing...");
     let result;
     try {
       result = await review(patch);
-    } catch (err) {
+    } catch (err: any) {
       log.warn(`Review failed: ${err.message}`);
       return { patch, approved: false, review: err.message };
     }
 
     if (isApproved(result)) {
       log.ok("Review passed");
-      consecutiveReviewFails = 0;
       return { patch, approved: true, review: result };
     }
 
     consecutiveReviewFails++;
     log.warn(`Review: ${result}`);
-
     if (consecutiveReviewFails >= 2) {
       log.error("Reviewer failed twice consecutively — stopping retries");
       return { patch: null, approved: false, review: result };
     }
-
     feedback = `Previous attempt failed review:\n${result}\n\nFix the issues and regenerate the file content.`;
   }
-
   return { patch: null, approved: false, review: feedback };
 }
 
-// --- Process a single step ---
-async function processStep(step, index, opts, chain) {
+async function processStep(step: Task, index: number, opts: any, chain: any): Promise<void> {
   const { projectDir, dryRun, autoMode, maxAttempts, task } = opts;
   const stepStart = Date.now();
   const mode = dryRun ? "dry" : autoMode ? "auto" : "normal";
@@ -127,73 +117,47 @@ async function processStep(step, index, opts, chain) {
   let files;
   let finalContext;
 
-  function hashContext(ctx) {
-    return crypto
-      .createHash("sha1")
-      .update(JSON.stringify(ctx))
-      .digest("hex");
+  function hashContext(ctx: any): string {
+    return crypto.createHash("sha1").update(JSON.stringify(ctx)).digest("hex");
   }
 
   try {
-    // Attempt deterministic contract-based retrieval
     const contract = resolveContract(step.type);
-
     const context = buildContext({
-      filePath: step.filePath || (step.files && step.files[0]),
+      filePath: (step.filePath || (step.files && step.files[0]) || "") as string,
       functionName: step.functionName,
     });
 
     const validation = validateContext(context, contract);
-
-    if (!validation.valid) {
-      throw new Error("Invalid context: " + validation.missing.join(", "));
-    }
+    if (!validation.valid) throw new Error("Invalid context: " + validation.missing.join(", "));
 
     finalContext = trimContext(context, contract.maxTokens);
     log.info(`New retrieval success. Context hash: ${hashContext(finalContext)}`);
     
-    // For compatibility with codeAndReview which expects file objects
     files = [{
-      file: step.filePath || step.files[0],
+      file: (step.filePath || (step.files && step.files[0]) || "") as string,
       content: context.file,
       score: 1.0
     }];
-  } catch (e) {
+  } catch (e: any) {
     log.warn(`Fallback to legacy retrieval: ${e.message}`);
-    // Legacy retrieval flow
     log.info("Retrieving files...");
     const keywords = [...(step.files || []), ...step.step.split(/\s+/)];
     try {
       files = await retrieve(projectDir, keywords, chain.modifiedFiles);
-    } catch (err) {
+    } catch (err: any) {
       log.error(`Retrieval failed: ${err.message}`);
       logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
       remember({ task, step: step.step, status: "retrieval_failed" });
       return;
     }
-
-    // Low confidence check
-    if (files.length > 0 && files[0].score === 0) {
-      log.warn("Low retriever confidence — broadening search");
-      const broader = [...keywords, ...step.step.split(/[^a-zA-Z]+/).filter((w) => w.length > 3)];
-      try {
-        files = await retrieve(projectDir, broader, chain.modifiedFiles);
-      } catch {}
-    }
   }
 
   if (files && files.length > 0) {
-    log.info(`Files: ${files.map((f) => `${f.file} (${f.score})`).join(", ") || "(none)"}`);
+    log.info(`Files: ${files.map((f: any) => `${f.file} (${f.score})`).join(", ") || "(none)"}`);
   }
 
-  // Code + Review
-  const { patch, approved, review: reviewText } = await codeAndReview(
-    step,
-    files,
-    maxAttempts,
-    chain,
-    projectDir
-  );
+  const { patch, approved, review: reviewText } = await codeAndReview(step, files, maxAttempts, chain, projectDir);
 
   if (!patch) {
     logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
@@ -210,9 +174,7 @@ async function processStep(step, index, opts, chain) {
     return;
   }
 
-  // Apply
   log.section("RESULT");
-
   if (dryRun) {
     log.info("Validating patch (dry-run)...");
     const result = await applyPatch(projectDir, patch, true);
@@ -225,7 +187,6 @@ async function processStep(step, index, opts, chain) {
       logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
       remember({ task, step: step.step, status: "apply_failed", reason: result.reason });
     }
-    // Still update chain for context continuity in dry-run
     const patchFiles = extractPatchFiles(patch);
     chain.modifiedFiles.push(...patchFiles);
     trackRecentFiles(patchFiles);
@@ -246,7 +207,6 @@ async function processStep(step, index, opts, chain) {
     remember({ task, step: step.step, status: "applied" });
     recordPattern(step.step, "success");
 
-    // Update chain context for next step
     const patchFiles = extractPatchFiles(patch);
     chain.modifiedFiles.push(...patchFiles);
     trackRecentFiles(patchFiles);
@@ -264,21 +224,19 @@ async function processStep(step, index, opts, chain) {
   }
 }
 
-// --- Mode runners ---
-
-export async function runPlanOnly({ task }) {
+export async function runPlanOnly({ task, projectDir }: { task: string; projectDir?: string }): Promise<any[]> {
   log.section("PLAN");
-  const steps = await plan(task);
+  const steps = await plan(task, projectDir || process.cwd());
   steps.forEach((s, i) => log.info(`${i + 1}. ${s.step} [${s.files.join(", ")}]`));
   return steps;
 }
 
-export async function runCodeOnly({ task, projectDir }) {
+export async function runCodeOnly({ task, projectDir }: { task: string; projectDir: string }): Promise<string | null> {
   log.section("PATCH");
   log.info("Retrieving files...");
   const keywords = task.split(/\s+/);
   const files = await retrieve(projectDir, keywords);
-  log.info(`Files: ${files.map((f) => `${f.file} (${f.score})`).join(", ") || "(none)"}`);
+  log.info(`Files: ${files.map((f: any) => `${f.file} (${f.score})`).join(", ") || "(none)"}`);
 
   log.info("Generating updated file content...");
   const fileUpdates = await generatePatch(task, files, null, null);
@@ -287,7 +245,7 @@ export async function runCodeOnly({ task, projectDir }) {
   let patch;
   try {
     patch = patchToUnified(projectDir, fileUpdates);
-  } catch (err) {
+  } catch (err: any) {
     log.error(`Diff generation failed: ${err.message}`);
     return null;
   }
@@ -295,30 +253,26 @@ export async function runCodeOnly({ task, projectDir }) {
   const validation = validatePatch(patch);
   if (!validation.valid) {
     log.error("Invalid patch:");
-    validation.errors.forEach((e) => log.error(`  ${e}`));
+    validation.errors.forEach((e: string) => log.error(`  ${e}`));
     return null;
   }
   log.patch(patch);
   return patch;
 }
 
-export async function runReviewOnly({ patch }) {
+export async function runReviewOnly({ patch }: { patch: string }): Promise<string | null> {
   log.section("REVIEW");
   if (!patch) {
     log.error("No patch provided. Pipe a patch or pass it as the task argument.");
     return null;
   }
   const result = await review(patch);
-  if (isApproved(result)) {
-    log.ok("Review: OK");
-  } else {
-    log.warn(`Review:\n${result}`);
-  }
+  if (isApproved(result)) log.ok("Review: OK");
+  else log.warn(`Review:\n${result}`);
   return result;
 }
 
-// --- Full pipeline ---
-export async function run({ task, projectDir, dryRun, autoMode }) {
+export async function run({ task, projectDir, dryRun, autoMode }: { task: string; projectDir: string; dryRun: boolean; autoMode: boolean }): Promise<void> {
   const config = loadConfig();
   const profile = getTierProfile();
   const tier = detectTier();
@@ -327,33 +281,26 @@ export async function run({ task, projectDir, dryRun, autoMode }) {
 
   log.header(`Task: ${task}`);
   log.info(`Mode: ${dryRun ? "dry-run" : "live"} | Auto: ${autoMode}`);
-
   log.section("MODEL");
   log.info(`  › ${config.model} (${tier.toUpperCase()})`);
 
-  // Plan
   log.section("PLAN");
   log.info("Planning...");
-  const steps = await plan(task);
+  const steps = await plan(task, projectDir);
   log.info(`${steps.length} step(s):`);
   steps.forEach((s, i) => log.info(`  ${i + 1}. ${s.step}`));
 
-  // Execute steps with shared chain context
   const chain = createChain();
   const maxAttempts = autoMode ? profile.maxRetries : 1;
   for (let i = 0; i < steps.length; i++) {
-    await processStep(steps[i], i, { projectDir, dryRun, autoMode, maxAttempts, task }, chain);
+    await processStep(steps[i] as any as Task, i, { projectDir, dryRun, autoMode, maxAttempts, task }, chain);
   }
 
   const totalMs = elapsed(totalStart);
   log.header(`Done in ${(totalMs / 1000).toFixed(1)}s`);
 
-  if (chain.patchSummaries.length > 0) {
-    log.info(`Changes: ${chain.patchSummaries.join("; ")}`);
-  }
-  if (chain.modifiedFiles.length > 0) {
-    log.info(`Files touched: ${[...new Set(chain.modifiedFiles)].join(", ")}`);
-  }
+  if (chain.patchSummaries.length > 0) log.info(`Changes: ${chain.patchSummaries.join("; ")}`);
+  if (chain.modifiedFiles.length > 0) log.info(`Files touched: ${[...new Set(chain.modifiedFiles)].join(", ")}`);
 
   statusBar.renderStatusBar({
     task,

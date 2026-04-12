@@ -1,9 +1,9 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --import=tsx
 
 import { parseArgs } from "node:util";
 import { readFileSync, existsSync } from "node:fs";
 import { runAgent, runAgentStep } from "../core/agents/index.js";
-import { run, runPlanOnly, runCodeOnly, runReviewOnly } from "../core/pipeline.js";
+import { run, runPlanOnly, runCodeOnly, runReviewOnly } from "../core/pipeline.ts";
 import { undo } from "../core/patcher.js";
 import { confirm } from "../core/prompt.js";
 import { log } from "../core/logger.js";
@@ -13,6 +13,7 @@ import { startTUI } from "../core/tui.js";
 import { updateDuration } from "../core/metrics.js";
 import { loadPlugins, buildCommandRegistry } from "../core/plugins.js";
 import { loadConfig } from "../core/config.js";
+import { resolveProjectRoot } from "../core/project/resolver.js";
 
 async function main() {
   const HELP = `
@@ -21,6 +22,8 @@ async function main() {
     Usage:
       xen                     Launch interactive TUI mode
       xen "task"              Full pipeline (plan → code → review → apply)
+      xen "task" --project=./path Specify project directory (defaults to cwd)
+      xen "task" --sandbox    Run in a temporary sandbox directory
       xen "task" --plan       Only generate plan, print steps
       xen "task" --code       Skip planning, generate patch directly
       xen "task" --review     Review the patch (reads stdin if no task)
@@ -35,7 +38,7 @@ async function main() {
 
     Examples:
       xen
-      xen "add a login endpoint"
+      xen "add a login endpoint" --project=../test-project --sandbox
       xen "fix the auth bug" --auto
       xen "refactor utils" --dry
       xen index
@@ -47,13 +50,15 @@ async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
-      plan:   { type: "boolean", default: false },
-      code:   { type: "boolean", default: false },
-      review: { type: "boolean", default: false },
-      dry:    { type: "boolean", default: false },
-      auto:   { type: "boolean", default: false },
-      step:   { type: "boolean", default: false },
-      help:   { type: "boolean", short: "h", default: false },
+      plan:    { type: "boolean", default: false },
+      code:    { type: "boolean", default: false },
+      review:  { type: "boolean", default: false },
+      dry:     { type: "boolean", default: false },
+      auto:    { type: "boolean", default: false },
+      step:    { type: "boolean", default: false },
+      sandbox: { type: "boolean", default: false },
+      project: { type: "string", short: "p" },
+      help:    { type: "boolean", short: "h", default: false },
     },
   });
 
@@ -63,7 +68,20 @@ async function main() {
   }
 
   const task = positionals.join(" ");
-  const projectDir = process.cwd();
+  const projectRoot = resolveProjectRoot(values.project);
+
+  // Danger Zone Check
+  const cwd = process.cwd();
+  if (cwd.includes("xentari") || projectRoot.includes("xentari")) {
+    log.warn("⚠ Running inside Xentari project");
+    const approved = await confirm("  You are modifying Xentari itself. Continue?");
+    if (!approved) {
+      log.info("Aborted.");
+      process.exit(1);
+    }
+  }
+
+  const projectDir = projectRoot;
 
   if (task.startsWith("/")) {
     const config = loadConfig();
@@ -92,7 +110,7 @@ async function main() {
   }
 
   if (task === "context") {
-    const { context, stack } = getContext("");
+    const { context, stack } = getContext("", projectDir);
     log.section("DYNAMIC CONTEXT");
     log.info(`Stack: ${stack}`);
     console.log("\n" + context);
@@ -107,7 +125,7 @@ async function main() {
     }
     
     log.section("DEBUG MODE");
-    const { stack } = getContext(debugTask);
+    const { stack } = getContext(debugTask, projectDir);
     log.info(`Detected Stack: ${stack}`);
     
     // Run a dry agent run to get real metrics
@@ -116,7 +134,8 @@ async function main() {
       task: debugTask,
       projectDir,
       dryRun: true,
-      autoMode: false
+      autoMode: false,
+      sandbox: values.sandbox
     });
 
     updateDuration(metrics);
@@ -187,7 +206,7 @@ Constraint Engine:
   }
 
   if (values.plan) {
-    await runPlanOnly({ task });
+    await runPlanOnly({ task, projectDir });
   } else if (values.code) {
     await runCodeOnly({ task, projectDir });
   } else if (values.review) {
@@ -199,7 +218,8 @@ Constraint Engine:
       task,
       projectDir,
       dryRun: values.dry,
-      autoMode: values.auto
+      autoMode: values.auto,
+      sandbox: values.sandbox
     });
   }
 }
