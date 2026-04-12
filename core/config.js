@@ -18,6 +18,7 @@ const defaults = {
   incrementalContext: true,
   parallelExecution: true,
   maxParallelSteps: 2,
+  interactive: true,
   retrieverWeights: {
     filename: 2,
     content: 1,

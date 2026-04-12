@@ -38,7 +38,7 @@ const TIER_PROFILES = {
     maxSteps: 3,
     maxRetries: 2,
     maxPatchFiles: 1,
-    maxPatchChars: 5000,
+    maxPatchChars: 12000,
     maxChunks: 2,
   },
   medium: {
@@ -48,7 +48,7 @@ const TIER_PROFILES = {
     maxSteps: 4,
     maxRetries: 3,
     maxPatchFiles: 2,
-    maxPatchChars: 8000,
+    maxPatchChars: 20000,
     maxChunks: 3,
   },
   large: {
@@ -58,7 +58,7 @@ const TIER_PROFILES = {
     maxSteps: 5,
     maxRetries: 4,
     maxPatchFiles: 10,
-    maxPatchChars: 15000,
+    maxPatchChars: 50000,
     maxChunks: 6,
   },
 };

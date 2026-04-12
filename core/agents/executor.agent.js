@@ -17,6 +17,13 @@ import { buildExecutionBatches } from "../scheduler.js";
 import { acquireLock, releaseLock } from "../locks.js";
 import { loadConfig } from "../config.js";
 import { createMetrics } from "../metrics.js";
+import { logBug, recordTestResult } from "../analytics.js";
+import { resolveContract } from "../retrieval/resolver.js";
+import { buildContext } from "../retrieval/contextBuilder.js";
+import { validateContext } from "../retrieval/validator.js";
+import { trimContext } from "../retrieval/tokenLimiter.js";
+import { stage, statusBar, diffInteractive } from "../tui/index.js";
+import crypto from "crypto";
 
 let failureState = {
   consecutiveFailures: 0,
@@ -104,28 +111,66 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
 
   log.step(index + 1, step.step);
 
-  log.info(`[RETRIEVER] Searching for: ${step.files.join(", ") || step.step}`);
-
-  const keywords = [...step.files, ...step.step.split(/\s+/)];
   let files;
+  let finalContext;
+
+  function hashContext(ctx) {
+    return crypto
+      .createHash("sha1")
+      .update(JSON.stringify(ctx))
+      .digest("hex");
+  }
+
+  const retrieveStart = Date.now();
+  stage.showStage("RETRIEVE");
   try {
-    files = await retrieve(projectDir, keywords, chain?.modifiedFiles || [], { metrics });
-  } catch (err) {
-    log.error(`[RETRIEVER] Failed: ${err.message}`);
-    logToFile({ task, mode, step: step.step, status: "retrieval_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-    remember({ task, step: step.step, status: "retrieval_failed" });
-    return;
-  }
+    // Attempt deterministic contract-based retrieval
+    const contract = resolveContract(step.type);
 
-  if (files.length > 0 && files[0].score === 0) {
-    log.warn(`[RETRIEVER] Low confidence — broadening search`);
-    const broader = [...keywords, ...step.step.split(/[^a-zA-Z]+/).filter((w) => w.length > 3)];
+    const context = buildContext({
+      filePath: step.filePath || (step.files && step.files[0]),
+      functionName: step.functionName,
+    });
+
+    const validation = validateContext(context, contract);
+
+    if (!validation.valid) {
+      throw new Error("Invalid context: " + validation.missing.join(", "));
+    }
+
+    finalContext = trimContext(context, contract.maxTokens);
+    log.info(`[RETRIEVAL] Deterministic success. Hash: ${hashContext(finalContext)}`);
+    
+    files = [{
+      file: step.filePath || step.files[0],
+      content: context.file,
+      score: 1.0
+    }];
+  } catch (e) {
+    log.warn(`[RETRIEVAL] Fallback to legacy: ${e.message}`);
+    log.info(`[RETRIEVER] Searching for: ${step.files.join(", ") || step.step}`);
+
+    const keywords = [...(step.files || []), ...step.step.split(/\s+/)];
     try {
-      files = await retrieve(projectDir, broader, chain?.modifiedFiles || [], { metrics });
-    } catch {}
+      files = await retrieve(projectDir, keywords, chain?.modifiedFiles || [], { metrics });
+    } catch (err) {
+      log.error(`[RETRIEVER] Failed: ${err.message}`);
+      logBug({ task: step.step, type: "retrieval", severity: "high", description: err.message, fix_area: "retriever.js" });
+      logToFile({ task, mode, step: step.step, status: "retrieval_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+      remember({ task, step: step.step, status: "retrieval_failed" });
+      return;
+    }
+
+    if (files.length > 0 && files[0].score === 0) {
+      log.warn(`[RETRIEVER] Low confidence — broadening search`);
+      const broader = [...keywords, ...step.step.split(/[^a-zA-Z]+/).filter((w) => w.length > 3)];
+      try {
+        files = await retrieve(projectDir, broader, chain?.modifiedFiles || [], { metrics });
+      } catch {}
+    }
   }
 
-  log.info(`[RETRIEVER] Found: ${files.map((f) => `${f.file}${f.isNew ? " (NEW)" : ""} (${f.score})`).join(", ") || "(none)"}`);
+  log.info(`[RETRIEVER] Found: ${files.map((f) => `${f.file}${f.isNew ? " (NEW)" : ""} (${f.score})`).join(", ") || "(none)"} (${Date.now() - retrieveStart}ms)`);
 
   // --- FILE LOCKING ---
   const lockedFiles = [];
@@ -138,6 +183,8 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
   }
 
   try {
+    const codeStart = Date.now();
+    stage.showStage("CODE");
     log.info(`[CODER] Generating file content...`);
     let fileUpdates;
     let feedback = failureState.lastReviewRejectReason || failureState.lastFailureReason;
@@ -156,6 +203,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       }
     } catch (err) {
       log.error(`[CODER] Failed: ${err.message}`);
+      logBug({ task: step.step, type: "generation", severity: "high", description: err.message, fix_area: "coder.agent.js" });
       logToFile({ task, mode, step: step.step, status: "code_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
       remember({ task, step: step.step, status: "code_failed" });
       recordPattern(step.step, "fail");
@@ -167,7 +215,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
     let reviewResult = null;
 
     if (fileUpdates && fileUpdates.length > 0) {
-      log.info(`[CODER] Generated updates for ${fileUpdates.length} file(s)`);
+      log.info(`[CODER] Generated updates for ${fileUpdates.length} file(s) (${Date.now() - codeStart}ms)`);
       for (const update of fileUpdates) {
         log.info(`  › ${update.file} (${update.content.length} chars)`);
       }
@@ -191,19 +239,23 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
 
       if (patch) {
         log.patch(patch);
+        const reviewStart = Date.now();
+        stage.showStage("REVIEW");
         log.info(`[REVIEWER] Reviewing patch...`);
         try {
           reviewResult = await reviewerReview(patch, { metrics });
           if (isApproved(reviewResult)) {
             approved = true;
-            log.ok(`[REVIEWER] Passed`);
+            log.ok(`[REVIEWER] Passed (${Date.now() - reviewStart}ms)`);
           } else {
             if (metrics) metrics.retries++;
             log.warn(`[REVIEWER] Issue: ${reviewResult}`);
+            logBug({ task: step.step, type: "generation", severity: "medium", description: reviewResult, fix_area: "reviewer.agent.js" });
             handleReviewFailure(step.step, reviewResult, chain, opts);
           }
         } catch (err) {
           log.warn(`[REVIEWER] Failed: ${err.message}`);
+          logBug({ task: step.step, type: "execution", severity: "low", description: err.message, fix_area: "reviewer.agent.js" });
           handleReviewFailure(step.step, err.message, chain, opts);
         }
       }
@@ -255,13 +307,12 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       return;
     }
 
-    resetFailureState();
-
     log.section("RESULT");
+    stage.showStage("PATCH");
 
     if (dryRun) {
       log.info(`[PATCHER] Validating (dry-run)...`);
-      const result = applyPatch(projectDir, patch, true);
+      const result = await applyPatch(projectDir, patch, true);
       if (result.valid) {
         log.ok(`[PATCHER] Valid (dry-run)`);
         logToFile({ task, mode, step: step.step, status: "success", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
@@ -282,16 +333,8 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       return;
     }
 
-    const yes = await confirm("\n  Apply patch?", rl);
-    if (!yes) {
-      log.warn(`[PATCHER] Skipped by user`);
-      logToFile({ task, mode, step: step.step, status: "skipped", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task, step: step.step, status: "skipped" });
-      return;
-    }
-
     log.info(`[PATCHER] Applying...`);
-    const result = applyPatch(projectDir, patch, false);
+    const result = await applyPatch(projectDir, patch, false);
 
     if (result.applied) {
       log.ok(`[PATCHER] Applied`);
@@ -310,6 +353,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       } catch {}
     } else {
       log.error(`[PATCHER] Failed: ${result.reason}`);
+      logBug({ task: step.step, type: "patch", severity: "high", description: result.reason, fix_area: "patcher.js" });
       logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
       remember({ task, step: step.step, status: "apply_failed", reason: result.reason });
       recordPattern(step.step, "fail");
@@ -389,6 +433,22 @@ export async function runAgent(opts, { onToken, rl } = {}) {
   if (chain.modifiedFiles.length > 0) {
     log.info(`Files: ${[...new Set(chain.modifiedFiles)].join(", ")}`);
   }
+
+  recordTestResult({
+    task,
+    status: (chain.modifiedFiles.length > 0) ? "success" : "fail",
+    retries: metrics.retries,
+    tokens: metrics.tokens,
+    time_ms: totalMs
+  });
+
+  statusBar.renderStatusBar({
+    task,
+    stage: "COMPLETE",
+    tokens: metrics.tokens,
+    time: (totalMs / 1000).toFixed(1),
+    retries: metrics.retries
+  });
 
   return { metrics, chain };
 }

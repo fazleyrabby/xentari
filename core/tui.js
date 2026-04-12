@@ -9,6 +9,8 @@ import { undo } from "./patcher.js";
 import { updateDuration } from "./metrics.js";
 import { loadPlugins, buildCommandRegistry } from "./plugins.js";
 import { loadConfig } from "./config.js";
+import { renderDashboard } from "./dashboard.js";
+import { loadSummary } from "./analytics.js";
 
 const state = {
   lastTask: null,
@@ -144,7 +146,8 @@ export async function startTUI() {
       });
 
       state.metrics = result.metrics;
-      renderStatus(state.metrics);
+      const summary = loadSummary();
+      renderDashboard(state.metrics, summary);
       
     } catch (err) {
       log.error(`[ERROR] ${err.message}`);

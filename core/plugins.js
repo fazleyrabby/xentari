@@ -1,13 +1,13 @@
 import { existsSync, readdirSync } from "node:fs";
-import { join, pathToFileURL } from "node:url";
-import path from "node:path";
+import { pathToFileURL } from "node:url";
+import path, { join } from "node:path";
 
 /**
  * Task 3: Plugin Loader
  * Loads all plugins from the plugins/ directory.
  */
 export async function loadPlugins(root) {
-  const pluginDir = path.join(root, "plugins");
+  const pluginDir = join(root, "plugins");
 
   if (!existsSync(pluginDir)) return [];
 
@@ -15,7 +15,7 @@ export async function loadPlugins(root) {
   const folders = readdirSync(pluginDir);
 
   for (const folder of folders) {
-    const pluginPath = path.join(pluginDir, folder, "plugin.js");
+    const pluginPath = join(pluginDir, folder, "plugin.js");
 
     if (existsSync(pluginPath)) {
       try {

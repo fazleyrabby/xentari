@@ -24,6 +24,7 @@ STRICT RULES:
 - DO NOT include testing steps unless the task explicitly asks for tests
 - DO NOT include deployment, CI/CD, or infrastructure steps
 - Each step must target a DIFFERENT file when possible
+- If a task is to create a new file, combine creation and content generation into ONE step.
 - Each step must be a concrete code change, not a plan or review
 - Output ONLY valid JSON, no explanation, no markdown
 

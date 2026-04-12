@@ -1,64 +1,11 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { diffLines } from "diff";
+import { createPatch } from "diff";
 
-function buildNewFileDiff(newContent, filePath) {
-  const lines = newContent.split("\n").filter(l => l !== "");
-  const lineCount = lines.length;
-  
-  const hunkLines = lines.map(line => "+" + line);
-  
-  return `diff --git a/${filePath} b/${filePath}
-new file mode 100644
---- /dev/null
-+++ b/${filePath}
-@@ -0,0 +1,${lineCount} @@
-${hunkLines.join("\n")}
-`;
-}
-
-function buildUnifiedDiff(oldContent, newContent, filePath) {
-  const changes = diffLines(oldContent, newContent);
-  
-  let oldLines = 0;
-  let newLines = 0;
-  const hunkLines = [];
-  
-  for (const change of changes) {
-    const lines = change.value.split("\n");
-    const lineCount = lines[lines.length - 1] === "" ? lines.length - 1 : lines.length;
-    
-    for (let i = 0; i < lineCount; i++) {
-      const line = lines[i];
-      if (change.added) {
-        hunkLines.push("+" + line);
-        newLines++;
-      } else if (change.removed) {
-        hunkLines.push("-" + line);
-        oldLines++;
-      } else {
-        hunkLines.push(" " + line);
-        oldLines++;
-        newLines++;
-      }
-    }
-  }
-
-  const hasChanges = oldLines !== newLines || hunkLines.some(l => l.startsWith("+") || l.startsWith("-"));
-  if (!hasChanges) {
-    return null;
-  }
-
-  const hunkHeader = `@@ -1,${oldLines || 1} +1,${newLines || 1} @@`;
-  
-  return `diff --git a/${filePath} b/${filePath}
---- a/${filePath}
-+++ b/${filePath}
-${hunkHeader}
-${hunkLines.join("\n")}
-`;
-}
-
+/**
+ * Generates a standard unified diff patch for a file.
+ * Handles both new file creation and modifications to existing files.
+ */
 export function generateDiff(projectDir, filePath, newContent) {
   if (typeof newContent !== "string" || newContent.length === 0) {
     throw new Error(`Invalid generated file content for ${filePath}`);
@@ -68,7 +15,6 @@ export function generateDiff(projectDir, filePath, newContent) {
   const fileExists = existsSync(fullPath);
 
   let oldContent = "";
-  
   if (fileExists) {
     try {
       oldContent = readFileSync(fullPath, "utf-8");
@@ -77,22 +23,42 @@ export function generateDiff(projectDir, filePath, newContent) {
     }
   }
 
-  const isNewFile = !fileExists || (oldContent.trim() === "" && !fileExists);
+  // Use the diff library's createPatch for robust hunk management
+  const patch = createPatch(filePath, oldContent, newContent, "", "", { context: 3 });
 
-  let patch;
-  if (isNewFile) {
-    patch = buildNewFileDiff(newContent, filePath);
+  // Post-process the patch to match Zentari's expected git diff format
+  const lines = patch.split("\n");
+  const header = `diff --git a/${filePath} b/${filePath}`;
+  
+  const resultLines = [header];
+  if (!fileExists) {
+    resultLines.push("new file mode 100644");
+    resultLines.push("--- /dev/null");
   } else {
-    patch = buildUnifiedDiff(oldContent, newContent, filePath);
+    resultLines.push(`--- a/${filePath}`);
   }
-  
-  if (!patch) {
-    throw new Error(`No changes detected for ${filePath}`);
+  resultLines.push(`+++ b/${filePath}`);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.startsWith("@@")) {
+      resultLines.push(...lines.slice(i));
+      break;
+    }
   }
-  
-  return patch;
+
+  const finalPatch = resultLines.join("\n").trim() + "\n";
+
+  if (!finalPatch.includes("@@")) {
+    return null; 
+  }
+
+  return finalPatch;
 }
 
+/**
+ * Converts multiple file updates into a single unified diff string.
+ */
 export function patchToUnified(projectDir, fileUpdates) {
   if (!fileUpdates || fileUpdates.length === 0) {
     throw new Error("No file updates provided");
@@ -106,7 +72,13 @@ export function patchToUnified(projectDir, fileUpdates) {
     }
 
     const diff = generateDiff(projectDir, file, content);
-    diffs.push(diff);
+    if (diff) {
+      diffs.push(diff);
+    }
+  }
+
+  if (diffs.length === 0) {
+    throw new Error("No changes detected in any of the provided files");
   }
 
   return diffs.join("\n");

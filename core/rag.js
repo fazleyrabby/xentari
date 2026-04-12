@@ -2,6 +2,7 @@
  * Task 6: RAG Retriever
  * Lightweight retrieval from knowledge index.
  */
+// ⚠️ LEGACY MODULE — scheduled for deprecation after retrieval stabilization
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "./config.js";

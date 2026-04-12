@@ -1,4 +1,4 @@
-/**
+ /**
  * Constraint Engine to clean and validate LLM outputs.
  */
 
@@ -43,6 +43,12 @@ export function enforceConstraints(output, rules = [], metrics = null) {
         result = trimmed;
         fixes++;
       }
+    }
+    
+    // Explicitly remove chunk boundary markers if they leaked into output
+    if (result.includes("... [CHUNK BOUNDARY] ...")) {
+      result = result.replace(/\n*\.\.\. \[CHUNK BOUNDARY\] \.\.\.\n*/g, "\n\n").trim();
+      fixes++;
     }
   }
 

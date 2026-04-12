@@ -1,3 +1,4 @@
+// ⚠️ LEGACY MODULE — scheduled for deprecation after retrieval stabilization
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { glob } from "glob";

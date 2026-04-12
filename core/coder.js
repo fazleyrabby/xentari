@@ -29,6 +29,7 @@ const TIER_RULES = {
 - Modify ONLY ONE file
 - Keep changes minimal - fewest lines possible
 - Do NOT refactor or restructure existing code
+- Do NOT delete existing code unless requested. Ensure the FULL file content is returned.
 - Short, simple implementations`,
 
   medium: `\n\nCONSTRAINTS (medium model):

@@ -5,6 +5,9 @@ import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { loadConfig } from "./config.js";
 import { getTierProfile } from "./tier.js";
+import { askApproval } from "./approval/approver.js";
+import { APPROVAL_TYPES } from "./approval/approvalTypes.js";
+import { diffInteractive } from "./tui/index.js";
 
 function tmpPatchPath() {
   const id = randomBytes(6).toString("hex");
@@ -37,7 +40,7 @@ export function validatePatch(patch) {
   return { valid: errors.length === 0, errors };
 }
 
-export function applyPatch(projectDir, patch, dryRun = false) {
+export async function applyPatch(projectDir, patch, dryRun = false) {
   const patchPath = tmpPatchPath();
   writeFileSync(patchPath, patch, "utf-8");
 
@@ -49,6 +52,32 @@ export function applyPatch(projectDir, patch, dryRun = false) {
 
     if (dryRun) {
       return { applied: false, reason: "dry-run", valid: true };
+    }
+
+    // Try to extract old content for side-by-side preview
+    const filePathMatch = patch.match(/^--- a\/(.+)$/m);
+    let oldContent = "(empty/new file)";
+    if (filePathMatch) {
+      const originalPath = join(projectDir, filePathMatch[1]);
+      if (existsSync(originalPath)) {
+        try {
+          oldContent = readFileSync(originalPath, "utf-8");
+        } catch {}
+      }
+    }
+
+    // Simple heuristic to extract "new" content from a single-file unified diff for preview
+    // Note: In Xentari, the LLM provides full file content, but here we only have the patch.
+    // We'll show the side-by-side of the patch itself or a simplified view.
+    // Given the task rules, we'll render the side-by-side using the patch if we can't reconstruct.
+    // For now, we'll use the existing patch string as details but use the new UI.
+    
+    diffInteractive.renderSideBySide(oldContent.slice(0, 5000), patch.slice(0, 5000));
+
+    const approved = await diffInteractive.interactiveApprove();
+
+    if (!approved) {
+      return { applied: false, valid: true, reason: "user_rejected_patch" };
     }
 
     execSync(`git apply --ignore-whitespace "${patchPath}"`, { cwd: projectDir, stdio: "pipe" });

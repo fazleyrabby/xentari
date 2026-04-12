@@ -11,6 +11,8 @@ import { indexProject } from "../core/indexer.js";
 import { getContext } from "../core/context.js";
 import { startTUI } from "../core/tui.js";
 import { updateDuration } from "../core/metrics.js";
+import { loadPlugins, buildCommandRegistry } from "../core/plugins.js";
+import { loadConfig } from "../core/config.js";
 
 async function main() {
   const HELP = `
@@ -62,6 +64,27 @@ async function main() {
 
   const task = positionals.join(" ");
   const projectDir = process.cwd();
+
+  if (task.startsWith("/")) {
+    const config = loadConfig();
+    const plugins = await loadPlugins(config.root);
+    const registry = buildCommandRegistry(plugins);
+    const [cmdName, ...args] = task.slice(1).trim().split(/\s+/);
+
+    if (registry[cmdName]) {
+      const context = {
+        projectDir,
+        lastTask: null,
+        metrics: null,
+        registry
+      };
+      await registry[cmdName].fn({ args, context });
+      process.exit(0);
+    } else {
+      log.error(`Unknown command: /${cmdName}`);
+      process.exit(1);
+    }
+  }
 
   if (task === "index") {
     await indexProject(projectDir);

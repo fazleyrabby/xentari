@@ -124,29 +124,67 @@ async function processStep(step, index, opts, chain) {
 
   log.step(index + 1, step.step);
 
-  // Retrieve with context-aware boost
-  log.info("Retrieving files...");
-  const keywords = [...step.files, ...step.step.split(/\s+/)];
   let files;
+  let finalContext;
+
+  function hashContext(ctx) {
+    return crypto
+      .createHash("sha1")
+      .update(JSON.stringify(ctx))
+      .digest("hex");
+  }
+
   try {
-    files = await retrieve(projectDir, keywords, chain.modifiedFiles);
-  } catch (err) {
-    log.error(`Retrieval failed: ${err.message}`);
-    logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-    remember({ task, step: step.step, status: "retrieval_failed" });
-    return;
-  }
+    // Attempt deterministic contract-based retrieval
+    const contract = resolveContract(step.type);
 
-  // Low confidence check: if best score is 0, re-run with broader keywords
-  if (files.length > 0 && files[0].score === 0) {
-    log.warn("Low retriever confidence — broadening search");
-    const broader = [...keywords, ...step.step.split(/[^a-zA-Z]+/).filter((w) => w.length > 3)];
+    const context = buildContext({
+      filePath: step.filePath || (step.files && step.files[0]),
+      functionName: step.functionName,
+    });
+
+    const validation = validateContext(context, contract);
+
+    if (!validation.valid) {
+      throw new Error("Invalid context: " + validation.missing.join(", "));
+    }
+
+    finalContext = trimContext(context, contract.maxTokens);
+    log.info(`New retrieval success. Context hash: ${hashContext(finalContext)}`);
+    
+    // For compatibility with codeAndReview which expects file objects
+    files = [{
+      file: step.filePath || step.files[0],
+      content: context.file,
+      score: 1.0
+    }];
+  } catch (e) {
+    log.warn(`Fallback to legacy retrieval: ${e.message}`);
+    // Legacy retrieval flow
+    log.info("Retrieving files...");
+    const keywords = [...(step.files || []), ...step.step.split(/\s+/)];
     try {
-      files = await retrieve(projectDir, broader, chain.modifiedFiles);
-    } catch {}
+      files = await retrieve(projectDir, keywords, chain.modifiedFiles);
+    } catch (err) {
+      log.error(`Retrieval failed: ${err.message}`);
+      logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
+      remember({ task, step: step.step, status: "retrieval_failed" });
+      return;
+    }
+
+    // Low confidence check
+    if (files.length > 0 && files[0].score === 0) {
+      log.warn("Low retriever confidence — broadening search");
+      const broader = [...keywords, ...step.step.split(/[^a-zA-Z]+/).filter((w) => w.length > 3)];
+      try {
+        files = await retrieve(projectDir, broader, chain.modifiedFiles);
+      } catch {}
+    }
   }
 
-  log.info(`Files: ${files.map((f) => `${f.file} (${f.score})`).join(", ") || "(none)"}`);
+  if (files && files.length > 0) {
+    log.info(`Files: ${files.map((f) => `${f.file} (${f.score})`).join(", ") || "(none)"}`);
+  }
 
   // Code + Review
   const { patch, approved, review: reviewText } = await codeAndReview(
@@ -177,7 +215,7 @@ async function processStep(step, index, opts, chain) {
 
   if (dryRun) {
     log.info("Validating patch (dry-run)...");
-    const result = applyPatch(projectDir, patch, true);
+    const result = await applyPatch(projectDir, patch, true);
     if (result.valid) {
       log.ok("Patch valid (dry-run, not applied)");
       logToFile({ task, mode, step: step.step, status: "success", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
@@ -199,17 +237,8 @@ async function processStep(step, index, opts, chain) {
     return;
   }
 
-  // Interactive confirmation
-  const yes = await confirm("\n  Apply patch?");
-  if (!yes) {
-    log.warn("Skipped by user");
-    logToFile({ task, mode, step: step.step, status: "skipped", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-    remember({ task, step: step.step, status: "skipped" });
-    return;
-  }
-
   log.info("Applying patch...");
-  const result = applyPatch(projectDir, patch, false);
+  const result = await applyPatch(projectDir, patch, false);
 
   if (result.applied) {
     log.ok("Patch applied");
@@ -325,4 +354,12 @@ export async function run({ task, projectDir, dryRun, autoMode }) {
   if (chain.modifiedFiles.length > 0) {
     log.info(`Files touched: ${[...new Set(chain.modifiedFiles)].join(", ")}`);
   }
+
+  statusBar.renderStatusBar({
+    task,
+    stage: "COMPLETE",
+    tokens: "N/A",
+    time: (totalMs / 1000).toFixed(1),
+    retries: 0
+  });
 }
