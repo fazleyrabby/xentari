@@ -375,11 +375,13 @@ The ultimate safety feature.
     *   **Automation Hooks:** Successfully verified that the system can be automated via environment variables (e.g., `XEN_AUTO_APPROVE`) for CI/CD and remote testing.
     *   **Regression Fixes:** Identified and fixed a critical syntax error in `diff.ts` discovered during the E2E execution loop.
 
-### Phase 57 — Zero-Configuration Auto-Indexing
+### Phase 57 — Zero-Configuration Auto-Indexing (Strict Enforcement)
 *   **Goal:** Ensure the system always operates with fresh project knowledge without manual intervention.
 *   **Result:**
-    *   **Startup Check:** Added a logic gate in the execution pipeline to detect missing indices.
-    *   **Just-in-Time Indexing:** Automatically triggers `indexProject` on the first task run if no `.xentari/` directory is present.
+    *   **Strict Startup Check:** Implemented a mandatory indexing gate in the execution pipeline and TUI loop.
+    *   **No Fallback Policy:** Eliminated "Fallback to legacy" retrieval modes; the system now guarantees a high-fidelity index is available before any planning or code generation starts.
+    *   **Just-in-Time Indexing:** Automatically triggers `indexProject` on session start if no `.xentari/` index is found.
+
 
 ### Phase 58 — Anti-Hallucination Dependency Injection
 *   **Goal:** Prevent models from assuming the existence of libraries not present in the project.

@@ -209,8 +209,9 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       score: 1.0
     }];
   } catch (e: any) {
-    log.warn(`[RETRIEVAL] Fallback to legacy: ${e.message}`);
+    log.info(`[RETRIEVAL] Extending context: ${e.message}`);
     log.info(`[RETRIEVER] Searching for: ${step.files?.join(", ") || step.target}`);
+
 
     const keywords = [...(step.files || []), ...step.target.split(/\s+/)];
     try {
@@ -475,14 +476,17 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
   log.header("🧠 Xentari CLI");
   log.info(`Project: ${projectDir}`);
 
-  // Auto-Index on first run (UX Critical)
-  const existingIndex = loadIndex(projectDir);
-  if (!existingIndex) {
-    log.info("Index missing. Initializing...");
+  // Phase 57: Auto-Index Enforce
+  const xentariDir = join(projectDir, ".xentari");
+  const indexPath = join(xentariDir, "index.json");
+  if (!existsSync(indexPath)) {
+    log.info("[EXECUTOR] Index missing. Initializing project analysis...");
     await indexProject(projectDir);
   }
 
   const stackInfo = detectStack(projectDir);
+
+
 
   log.info(`Stack:   ${stackInfo.stack}${stackInfo.framework ? ` (${stackInfo.framework})` : ""}\n`);
 

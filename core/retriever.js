@@ -208,6 +208,10 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
   const w = config.retrieverWeights || { filename: 2, content: 1, priority: 1.5, memory: 1 };
   const recentFiles = getRecentFileNames();
   const index = loadIndex();
+  if (!index) {
+    throw new Error("System Index missing. Please run 'xen index' or restart the session.");
+  }
+
 
   const maxFiles = profile.maxFiles;
   const maxChars = profile.maxFileChars;

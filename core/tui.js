@@ -89,7 +89,15 @@ export async function startTUI() {
   const plugins = await loadPlugins(config.root);
   state.registry = buildCommandRegistry(plugins);
 
+  // Phase 57: Auto-Index Enforce
+  const xentariDir = join(process.cwd(), ".xentari");
+  if (!existsSync(join(xentariDir, "index.json"))) {
+    log.info("Project index missing. Initializing Xentari...");
+    await indexProject(process.cwd());
+  }
+
   console.clear();
+
   renderHeader({ projectRoot: process.cwd(), stack: "node", mode: "normal" });
   console.log("Type your task or /help for commands.\n");
   console.log("Hotkeys: Ctrl+P (Palette)\n");
