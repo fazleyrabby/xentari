@@ -1,5 +1,7 @@
 import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
+import { simulateFailure } from "./utils/simulation.js";
+
 
 function estimateTokens(str) {
   if (!str) return 0;
@@ -7,7 +9,22 @@ function estimateTokens(str) {
 }
 
 export async function chat(messages, { maxTokens, temperature, stream = false, onToken, metrics } = {}) {
+  // Phase Simulation Hook
+  if (process.env.XEN_SIMULATE_LLM) {
+    const simulation = simulateFailure(process.env.XEN_SIMULATE_LLM);
+    if (simulation && (simulation.content !== undefined)) {
+      if (onToken && stream) {
+         for (const char of simulation.content) {
+           onToken(char);
+           await new Promise(r => setTimeout(r, 5));
+         }
+      }
+      return simulation.content;
+    }
+  }
+
   const config = loadConfig();
+
   const url = `${config.baseURL}/chat/completions`;
   
   // Track input tokens

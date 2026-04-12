@@ -29,7 +29,17 @@ export function simulateFailure(type) {
     case "PARTIAL_OUTPUT":
        return { content: "function partial() {", error: "truncated_code" };
 
+    case "MARKDOWN_OUTPUT":
+      return { content: "```javascript\nconsole.log('leaked markdown');\n```" };
+
+    case "EMPTY_OUTPUT":
+      return { content: "" };
+
+    case "RAW_DIFF":
+      return { content: "diff --git a/app.js b/app.js\n--- a/app.js\n+++ b/b/app.js\n@@ -1,1 +1,2 @@\n+const leakedDiff = true;" };
+
     default:
       log.info(`[SIMULATION] No failure injected for type: ${type}`);
+
   }
 }
