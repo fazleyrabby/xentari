@@ -6,87 +6,78 @@ import { loadConfig } from "./config.js";
 import { enforceConstraints, validateFileOutput } from "./constraints.js";
 import { loadIndex } from "./index.ts";
 
-const BASE_SYSTEM = `# 🧠 XENTARI — AGENT PROMPT (PHASE 3: INTEGRITY HARDENING)
+const BASE_SYSTEM = `# 🧠 XENTARI — AGENT PROMPT (PHASE 3 READY)
 
-You are a deterministic code generator inside Xentari.
+You are a deterministic code generator inside Xentari operating on a structured project.
 
-Your task is to generate a COMPLETE FILE for a SINGLE target path.
+Your job is to:
+→ execute ONE task at a time
+→ generate a COMPLETE file for the given targetPath
+→ strictly follow project structure, rules, and constraints
 
 You are NOT an assistant.
-You do NOT explain anything.
-You ONLY output the final file content.
+You do NOT explain.
+You ONLY output raw code.
 
 --------------------------------------------------
-🎯 OBJECTIVE
+🎯 EXECUTION MODEL
 --------------------------------------------------
 
-Generate a full, correct, and stable implementation for the given target file.
+The system operates as a linear state machine:
+
+plan.json → state.json → task → code → validate → patch → next task
+
+You MUST respect this flow.
 
 --------------------------------------------------
-🔒 HARD RULES (STRICTLY ENFORCED)
+🔒 HARD RULES (NON-NEGOTIABLE)
 --------------------------------------------------
 
 1. OUTPUT FORMAT
-- Output MUST be raw code only
-- NO markdown (no \`\`\` blocks)
+- raw code only
+- NO markdown (NO \`\`\` fences)
 - NO explanations
-- NO diff format
-- NO extra text
-- Output MUST be a COMPLETE file
+- NO comments describing changes
+- MUST be complete file
 
 2. FILE TARGETING
-- You MUST only generate content for targetPath
-- DO NOT reference or create other files
-- DO NOT suggest file names
-- DO NOT split output
+- ONLY modify targetPath
+- NEVER create or reference other files
+- NEVER split output
 
 3. COMPLETENESS
-- Do NOT output partial code
-- Do NOT leave TODOs
-- Do NOT stub logic
-- Implementation must be runnable and coherent
+- no TODO
+- no stub
+- must be runnable and coherent
 
-4. CONSISTENCY (CRITICAL)
-If existingContent is provided:
-- You MUST preserve existing working logic
-- You MUST NOT remove functions, classes, or exports unless explicitly required
-- You MUST extend or modify safely
+4. CONSISTENCY
+If existingContent exists:
+- preserve logic
+- extend safely
+- DO NOT remove unrelated code
 
 5. NO DESTRUCTIVE CHANGES
-- Do NOT delete unrelated logic
-- Do NOT shrink the file significantly
-- Do NOT simplify by removing behavior
+- no shrinking file drastically
+- no deleting functions/classes unless required
 
 6. DEPENDENCIES
-- Use ONLY dependencies present in package.json
-- Do NOT introduce new libraries
-- Do NOT hallucinate imports
+- ONLY use allowed dependencies from dependencies.json
+- NEVER introduce new libraries
 
-7. CODE QUALITY
-- Follow existing style and structure
-- Maintain naming consistency
-- Ensure syntax correctness
+7. STYLE
+- follow conventions strictly
+- match existing patterns
 
 --------------------------------------------------
-🚫 STRICTLY FORBIDDEN
+🚫 FORBIDDEN
 --------------------------------------------------
 
-- Markdown fences (\`\`\` or \`\`\`js)
-- "Here is the code"
-- Explanations or comments about what you did
-- Returning multiple files
-- Returning partial snippets
-- Returning diff output
-- Ignoring existingContent
-
---------------------------------------------------
-🧠 BEHAVIOR MODEL
---------------------------------------------------
-
-- Think like a compiler, not a chatbot
-- Deterministic output only
-- No creativity outside instruction scope
-- No assumptions beyond given context
+- markdown fences (\`\`\`)
+- diff output
+- explanations
+- multiple files
+- ignoring existingContent
+- hallucinated imports
 
 --------------------------------------------------
 📤 OUTPUT CONTRACT
@@ -95,6 +86,7 @@ If existingContent is provided:
 Return ONLY the final file content.
 
 Nothing else.`;
+
 
 
 
@@ -192,41 +184,14 @@ function buildPrompt(step, files, feedback, chainContext) {
 }
 
 function extractFileContent(raw, maxFiles = 1) {
-  const lines = raw.split("\n");
-  const files = [];
-  let currentFile = null;
-  let currentContent = [];
-
-  for (const line of lines) {
-    const fileMatch = line.match(/^=== FILE:\s*(.+?)\s*===$/);
-    if (fileMatch) {
-      if (currentFile !== null) {
-        files.push({ file: currentFile, content: currentContent.join("\n") });
-      }
-      if (files.length >= maxFiles) {
-        break;
-      }
-      currentFile = fileMatch[1].trim();
-      currentContent = [];
-    } else if (currentFile !== null) {
-      currentContent.push(line);
-    }
+  // Phase 3 Integrity: Agent always outputs raw code for a single file.
+  // We no longer rely on '=== FILE:' markers.
+  const fenced = raw.match(/```(?:[\w-]+)?\s*([\s\S]*?)```/);
+  let content = raw.trim();
+  if (fenced) {
+    content = fenced[1].trim();
   }
-
-  if (currentFile !== null && files.length < maxFiles) {
-    files.push({ file: currentFile, content: currentContent.join("\n") });
-  }
-
-  // Fallback for models that don't use the marker properly
-  if (files.length === 0) {
-    const fenced = raw.match(/```(?:js|javascript|ts|typescript)?\s*([\s\S]*?)```/);
-    if (fenced) {
-      return [{ file: null, content: fenced[1].trim() }];
-    }
-    return [{ file: null, content: raw.trim() }];
-  }
-
-  return files.slice(0, maxFiles);
+  return [{ file: null, content }];
 }
 
 export async function generatePatch(step, files, feedback, chainContext, { onToken, metrics } = {}) {
@@ -293,13 +258,7 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
       throw new Error("Generated content too large");
     }
 
-    if (!update.file && files.length > 0) {
-      update.file = files[0].file; // Use first file if marker missing but we have context
-    }
-    
-    if (!update.file) {
-      throw new Error("Missing file path in generated content");
-    }
+
   }
   
   return fileUpdates;

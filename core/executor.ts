@@ -43,6 +43,8 @@ export type Step = {
   id: number;
   type: StepType;
   target: string;
+  description?: string;
+  constraints?: string[];
   files?: string[];
   dependsOn: number[];
   status?: StepStatus;
@@ -206,11 +208,16 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
     const feedback = failureState.lastReviewRejectReason || failureState.lastFailureReason;
 
     try {
-      fileUpdates = await generateWithRetry(step.target, files, feedback, chain, maxAttempts, { onToken, metrics });
+      const taskInstruction = typeof (step as any).description === 'string' && (step as any).description.length > 0 
+        ? `${(step as any).description}\nConstraints: ${((step as any).constraints || []).join(', ')}`
+        : step.target;
+        
+      fileUpdates = await generateWithRetry(taskInstruction, files, feedback, chain, maxAttempts, { onToken, metrics });
       
       // Phase: STRICT TARGET ENFORCEMENT
       if (fileUpdates && fileUpdates.length > 0) {
         const update = fileUpdates[0];
+        if (!update.file) update.file = step.target;
         if (update.file && update.file !== step.target) {
            log.step("CODE", "✗", "TARGET_VIOLATION");
            log.error("TARGET_VIOLATION", `Model attempted to modify '${update.file}' instead of '${step.target}'`, "Check prompt constraints.");
@@ -270,106 +277,6 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       }
       return;
     }
-...`);
-        try {
-          reviewResult = await reviewerReview(patch);
-          if (isApproved(reviewResult)) {
-            approved = true;
-            log.ok(`[REVIEWER] Passed (${Date.now() - reviewStart}ms)`);
-          } else {
-            if (metrics) metrics.retries++;
-            log.warn(`[REVIEWER] Issue: ${reviewResult}`);
-            logBug({ task: step.target, type: "generation", severity: "medium", description: reviewResult, fix_area: "reviewer.agent.js" });
-            handleReviewFailure(step, reviewResult, chain, opts);
-          }
-        } catch (err: any) {
-          log.warn(`[REVIEWER] Failed: ${err.message}`);
-          logBug({ task: step.target, type: "execution", severity: "low", description: err.message, fix_area: "reviewer.agent.js" });
-          handleReviewFailure(step, err.message, chain, opts);
-        }
-      }
-    }
-
-    // --- ESCALATION TO ADVISOR ---
-    const shouldEscalate = !approved && (failureState.consecutiveFailures >= 2 || !patch);
-
-    if (shouldEscalate && !failureState.advisorCalled && isAdvisorCallAllowed(step.target, { projectDir })) {
-      log.section("ADVISOR");
-      log.warn("[ADVISOR] Escalating to stronger model...");
-      failureState.advisorCalled = true;
-
-      try {
-        const fixedPatch = await advisorFix({
-          task: step.target,
-          patch: patch!,
-          feedback: reviewResult || failureState.lastFailureReason,
-          metrics
-        });
-
-        if (fixedPatch) {
-          const validation = validatePatch(fixedPatch);
-          if (validation.valid) {
-            log.info("[ADVISOR] Received valid patch. Reviewing...");
-            const review = await reviewerReview(fixedPatch);
-            if (isApproved(review)) {
-              log.ok("[ADVISOR] Patch approved");
-              patch = fixedPatch;
-              approved = true;
-              logToFile({ task: opts.task, mode, step: step.target, status: "success", advisor_used: true, timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-            } else {
-              log.error(`[ADVISOR] Patch still not approved: ${review}`);
-              failureState.advisorFailureCount++;
-            }
-          } else {
-            log.error(`[ADVISOR] Invalid patch returned: ${validation.errors.join(", ")}`);
-            failureState.advisorFailureCount++;
-          }
-        }
-      } catch (err: any) {
-        log.error(`[ADVISOR] Failed: ${err.message}`);
-        failureState.advisorFailureCount++;
-      }
-    }
-
-    if (!approved) {
-      logToFile({ task: opts.task, mode, step: step.target, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      return;
-    }
-
-    log.section("RESULT");
-    ux.showStage("PATCH");
-
-    if (dryRun) {
-      log.info(`[PATCHER] Validating (dry-run)...`);
-      let result = await applyPatch(projectDir, patch!, true);
-      
-      if (result.retry) {
-        log.info(`[EXECUTOR] Recovery successful. Retrying (dry-run)...`);
-        result = await applyPatch(projectDir, result.patch, true);
-        patch = result.patch; // Update patch for subsequent steps
-      }
-
-      if (result.valid) {
-        log.ok(`[PATCHER] Valid (dry-run)`);
-        logToFile({ task: opts.task, mode, step: step.target, status: "success", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-        remember({ task: opts.task, step: step.target, status: "dry_run_ok" });
-      } else {
-        log.error(`[PATCHER] Invalid: ${result.reason}`);
-        logToFile({ task: opts.task, mode, step: step.target, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-        remember({ task: opts.task, step: step.target, status: "apply_failed", reason: result.reason });
-      }
-
-      const affectedFiles = extractPatchFiles(patch!);
-      chain.modifiedFiles.push(...affectedFiles);
-      trackRecentFiles(affectedFiles);
-      try {
-        const summary = await summarizePatch(patch!, { metrics });
-        chain.patchSummaries.push(summary);
-        log.info(`[SUMMARY] ${summary}`);
-      } catch {}
-      return;
-    }
-
     log.step("PATCH", "applying...");
     ux.showStage("PATCH");
 
@@ -439,7 +346,39 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
 
   ux.showStage("PLAN");
   log.step("PLAN", "...");
-  const steps: Step[] = (await plannerPlan(task, { metrics, projectDir })) as any;
+  
+  let steps: Step[] = [];
+  const localPlanPath = join(projectDir, "xentari", "plan.json");
+  
+  if (existsSync(localPlanPath)) {
+    try {
+      const { readFileSync } = await import("node:fs");
+      const planData = JSON.parse(readFileSync(localPlanPath, "utf-8"));
+      const taskIds = planData.steps || [];
+      for (const tid of taskIds) {
+        const tFile = join(projectDir, "xentari", "tasks", `${tid}.json`);
+        if (existsSync(tFile)) {
+          const t = JSON.parse(readFileSync(tFile, "utf-8"));
+          steps.push({
+            id: t.id || Number(tid.split("_")[0]),
+            type: "modify",
+            target: t.target,
+            description: t.description,
+            constraints: t.constraints,
+            files: [t.target],
+            dependsOn: []
+          });
+        }
+      }
+      log.info(`Loaded ${steps.length} deterministic tasks from plan.json`);
+    } catch(e) {
+      log.warn(`Failed to parse local plan.json, falling back to dynamic planner.`);
+      steps = (await plannerPlan(task, { metrics, projectDir })) as any;
+    }
+  } else {
+    steps = (await plannerPlan(task, { metrics, projectDir })) as any;
+  }
+  
   log.step("PLAN", "✓", `${steps.length} steps`);
 
   log.info(`Target: ${steps[0]?.target || "N/A"}`);
@@ -519,7 +458,7 @@ export async function runAgent(opts: AgentOptions, { onToken, rl }: any = {}) {
     const changes = getChangedFiles(originalRoot, sandboxRoot);
 
     if (changes.length > 0) {
-      log.section("SANDBOX CHANGES");
+      log.header("SANDBOX CHANGES");
       changes.forEach(c => {
         log.info(`📄 ${c.file}`);
       });
