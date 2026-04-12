@@ -1,5 +1,5 @@
-import { join } from "node:path";
-import { readFileSync, existsSync, writeFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { log, logToFile } from "./logger.js";
 import { retrieve } from "./retriever.js";
@@ -173,7 +173,19 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
   log.info(`\n→ ${step.type.toUpperCase()}: ${step.target}`);
   log.step(index + 1, step.target);
 
+  // Phase: CREATE Step Guarantee
+  if (step.type === 'create' && step.target) {
+    const fullPath = join(projectDir, step.target);
+    if (!existsSync(fullPath)) {
+      log.info(`[EXECUTOR] Pre-creating file: ${step.target}`);
+      const dir = dirname(fullPath);
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      writeFileSync(fullPath, "");
+    }
+  }
+
   let files: any[];
+
   let finalContext: any;
 
   function hashContext(ctx: any) {
@@ -224,13 +236,10 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       return;
     }
 
-    if (files.length > 0 && files[0].score === 0) {
-      log.warn(`[RETRIEVER] Low confidence — broadening search`);
-      const broader = [...keywords, ...step.target.split(/[^a-zA-Z]+/).filter((w) => w.length > 3)];
-      try {
-        files = await retrieve(projectDir, broader, chain?.modifiedFiles || [], { metrics });
-      } catch {}
+    if (files.length === 0) {
+       log.warn(`[RETRIEVER] No matches found for target: ${step.target}`);
     }
+
   }
 
   log.info(`[RETRIEVER] Found: ${files.map((f) => `${f.file}${f.isNew ? " (NEW)" : ""} (${f.score})`).join(", ") || "(none)"} (${Date.now() - retrieveStart}ms)`);
@@ -255,6 +264,24 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
     try {
       fileUpdates = await generateWithRetry(step.target, files, feedback, chain, maxAttempts, { onToken, metrics });
       
+      // Phase: STRICT TARGET ENFORCEMENT
+      if (fileUpdates && fileUpdates.length > 0) {
+        const update = fileUpdates[0];
+        const expected = step.target;
+        
+        // Ensure the path is relative and normalized for comparison
+        if (update.file && update.file !== expected) {
+           log.error(`[EXECUTOR] Target Deviation Detected! Coder tried to modify '${update.file}' instead of '${expected}'`);
+           throw new Error(`TARGET_DEVIATION_ERROR: Model attempted to modify unauthorized file: ${update.file}`);
+        }
+
+        // Force single-file constraint regardless of model tier
+        if (fileUpdates.length > 1) {
+          log.warn(`[EXECUTOR] Multi-file update detected. Rejecting secondary changes to ensure atomic execution.`);
+          fileUpdates = [update];
+        }
+      }
+
       for (const update of fileUpdates) {
         const validation = validateStepResult(projectDir, update);
         if (!validation.valid) {
@@ -265,6 +292,7 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
         }
       }
     } catch (err: any) {
+
       log.error(`[CODER] Failed: ${err.message}`);
       logBug({ task: step.target, type: "generation", severity: "high", description: err.message, fix_area: "coder.agent.js" });
       logToFile({ task: opts.task, mode, step: step.target, status: "code_failed", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });

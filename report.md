@@ -389,6 +389,42 @@ The ultimate safety feature.
     *   **Context Hardware:** Integrated `package.json` analysis directly into the `DynamicContext` engine.
     *   **Strict Constraints:** All planners and coders now receive a mandatory `# PROJECT DEPENDENCIES` block, grounding their architectural choices in the actual available stack.
 
+### Phase 59 — Strict Target Path Enforcement
+*   **Goal:** Eliminate "Coder Deviation" where the agent modifies files outside the intended scope.
+*   **Result:**
+    *   **Validation Gate:** The Executor now rejects any update where the returned file path does not match the expected `targetPath`.
+    *   **Atomic Updates:** Enforced single-file modifications per step to simplify verification and prevent cascading errors.
+
+### Phase 60 — Reinforced Dependency Injection
+*   **Goal:** Provide the LLM with a definitive source of truth for the project's library stack.
+*   **Result:**
+    *   **Manifest Parsing:** Robust JSON parsing of `package.json` ensures that devDependencies and production dependencies are always present in the prompt.
+    *   **Prompt Hardening:** Explicitly instructed the model to "Use ONLY the dependencies listed; do NOT assume libraries."
+
+### Phase 61 — Diff System Hardening (Full-File Flow)
+*   **Goal:** Eliminate malformed patch errors caused by LLM-generated diffs.
+*   **Result:**
+    *   **System-Managed Diffs:** Moved from model-generated diffs to a "Full Content -> Unified Diff" flow. The model provides the final file content, and Xentari's core logic generates the standard Git patch.
+    *   **Sanitization Loop:** Integrated automatic markdown removal and whitespace trimming before the diffing stage.
+
+### Phase 62 — Strict Code Output Contract
+*   **Goal:** Ensure 100% clean code output without conversational prose.
+*   - **Rule Enforcement:** Updated the system prompt to explicitly forbid markdown blocks, explanations, and conversational filler.
+*   - **Failure Rejection:** Added a validation layer that rejects output containing conversational markers or incomplete file structures.
+
+### Phase 63 — CREATE Step Guarantee
+*   **Goal:** Ensure the system never fails when attempting to create a new module.
+*   **Result:**
+    *   **Pre-Initialization:** The Executor now guarantees file and directory existence (via `mkdirSync` and `writeFileSync`) *before* the agent begins work.
+    *   **Reliable Application:** Eliminates `git apply` failures that occur when the target file is missing.
+
+### Phase 64 — Retrieval Strict Mode (No Fallback)
+*   **Goal:** Ensure retrieval results are deterministic and index-driven.
+*   **Result:**
+    *   **Fallback Removal:** Removed "Broad Search" fallbacks that often introduced irrelevant context into the model window.
+    *   **Index Dependency:** Retrieval now strictly requires a valid index, returning an empty set instead of "guessing" when no semantic match is found.
+
+
 
 
 

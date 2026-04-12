@@ -212,7 +212,6 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
     throw new Error("System Index missing. Please run 'xen index' or restart the session.");
   }
 
-
   const maxFiles = profile.maxFiles;
   const maxChars = profile.maxFileChars;
 
@@ -220,18 +219,11 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
   const taskTokens = tokenize(task);
   const typeInfo = detectType(keywords);
   
-  // Task 8: Retrieve RAG knowledge for boosting
   const ragKnowledge = retrieveKnowledge(task);
   const ragFiles = ragKnowledge.map(f => f.path);
 
   const { stack } = getContext(task, projectDir);
   let basePath = projectDir;
-
-  if (stack === "backend" && existsSync(join(projectDir, "backend"))) {
-    basePath = join(projectDir, "backend");
-  } else if (stack === "frontend" && existsSync(join(projectDir, "frontend"))) {
-    basePath = join(projectDir, "frontend");
-  }
 
   const files = await glob("**/*.*", {
     cwd: basePath,
@@ -239,7 +231,6 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
     nodir: true,
   });
 
-  // Pass 1: Quick scoring based on metadata
   const candidates = files
     .filter(isSourceFile)
     .map((file) => {
@@ -250,10 +241,7 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
       const prScore = priorityScore(file) * w.priority;
       const memScore = memoryBonus(relativeFile, recentFiles) * w.memory;
       const boostScore = extraBoostFiles.includes(relativeFile) ? 5 : 0;
-      
-      // RAG Boost (Task 8)
       const ragBoost = ragFiles.includes(relativeFile) ? 10 : 0;
-      
       const typeScore = typeBoost(file, typeInfo);
       const semScore = semanticScore(taskTokens, indexEntry);
 
@@ -272,11 +260,9 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
       };
     }).filter(c => c !== null);
 
-  // Sort and take top candidates for content analysis
   candidates.sort((a, b) => b.score - a.score);
   const topCandidates = candidates.slice(0, maxFiles * 2);
 
-  // Pass 2: Content analysis and chunking for top candidates
   const scored = topCandidates.map((c) => {
     let content = "";
     let ctScore = 0;
@@ -287,7 +273,6 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
         const chunks = chunkText(rawContent, 800);
         const selected = selectRelevantChunks(chunks, task, profile.maxChunks);
         content = buildContextWindow(selected);
-        // Score content based on selected chunks
         ctScore = contentScore(content, keywords) * w.content;
       } else {
         content = rawContent;
@@ -304,6 +289,7 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
 
   scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, maxFiles);
+
 
   if (top.length === 0 && typeInfo) {
     const newFile = suggestNewFilePath(typeInfo, task);

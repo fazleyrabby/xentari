@@ -6,24 +6,23 @@ import { loadConfig } from "./config.js";
 import { enforceConstraints, validateFileOutput } from "./constraints.js";
 import { loadIndex } from "./index.ts";
 
-const BASE_SYSTEM = `You are a code editor.
+const BASE_SYSTEM = `You are a professional code editor.
+Your task is to provide updated source code for a specific file.
 
-STRICT RULES:
-- Output ONLY full file content
-- NO markdown fences (unless explicitly asked for a non-code file)
-- NO explanations
-- NO comments outside code
-- Modify ONLY necessary parts
-- Start with "=== FILE: <filename> ===" on its own line.
+STRICT EXECUTION RULES:
+1. Output ONLY the complete, final source code for the specified file.
+2. YOU MUST NOT include any markdown blocks (like \`\`\`), explanations, or conversational text.
+3. You MUST ONLY modify the targeted file. Never suggest changes to multiple files.
+4. Use ONLY the dependencies listed in the # PROJECT DEPENDENCIES section. Do NOT assume the presence of other libraries.
+5. If you are unsure of a change, return the original content unchanged.
+6. Start your response IMMEDIATELY with the code. No markers like "=== FILE ===" are needed if the system handles single-file targets.
 
-PROJECT STRUCTURE RULES:
-- Models go in models/ or src/models/ directory
-- Services go in services/ or src/services/ directory  
-- Routes go in routes.ts or src/routes.ts
-- Controllers go in controllers/ or src/controllers/ directory
-- Use .ts extension for TypeScript or .js for JavaScript
+DEPENDENCY CONSTRAINT:
+Use strictly the libraries mentioned in context. If a needed library is missing, do NOT add logic for it.
 
-IMPORTANT: This is a Node.js project. Use JavaScript/TypeScript only. Do NOT generate Ruby, Python, or other languages.`;
+CODE FORMAT:
+Match exactly the indentation and coding style of the existing project.`;
+
 
 const TIER_RULES = {
   small: `\n\nCRITICAL CONSTRAINTS (small model):
@@ -34,12 +33,13 @@ const TIER_RULES = {
 - Short, simple implementations`,
 
   medium: `\n\nCONSTRAINTS (medium model):
-- Modify at most 2 files
+- Modify ONLY ONE file
 - Keep changes focused and minimal
 - Prefer simple, direct implementations`,
 
-  large: `\n\nYou may modify multiple files if needed for a complete implementation.
-Ensure all cross-file dependencies (imports, exports) are consistent.`,
+  large: `\n\nCONSTRAINTS (large model):
+- Modify ONLY ONE file per step
+- Ensure all imports and exports for this specific file are consistent.`,
 };
 
 function detectModule(task) {
