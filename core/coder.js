@@ -5,8 +5,9 @@ import { log } from "./logger.js";
 import { loadConfig } from "./config.js";
 import { enforceConstraints, validateFileOutput } from "./constraints.js";
 import { loadIndex } from "./index.ts";
+import { loadPattern, validateStructure } from "./patterns.js";
 
-const BASE_SYSTEM = `# 🧠 XENTARI — AGENT PROMPT (PHASE 3 READY)
+const BASE_SYSTEM = `# 🧠 XENTARI — AGENT PROMPT (PHASE 4 READY)
 
 You are a deterministic code generator inside Xentari operating on a structured project.
 
@@ -87,9 +88,6 @@ Return ONLY the final file content.
 
 Nothing else.`;
 
-
-
-
 const TIER_RULES = {
   small: `\n\nCRITICAL CONSTRAINTS (small model):
 - Modify ONLY ONE file
@@ -118,13 +116,21 @@ function detectModule(task) {
   return null;
 }
 
-function buildPrompt(step, files, feedback, chainContext) {
+function buildPrompt(step, files, feedback, chainContext, { role, pattern } = {}) {
   const tier = detectTier();
   const { context } = getContext(step);
   const config = loadConfig();
   const index = loadIndex();
   
   let system = `${context}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
+
+  // Phase 4: Structure Enforcement (ROLE + PATTERN)
+  if (role && pattern) {
+    const template = loadPattern(pattern);
+    if (template) {
+      system += `\n\nROLE: ${role}\nPATTERN: ${pattern}\n\nYou MUST follow this pattern exactly.\n\nYou are ONLY allowed to:\n- fill logic\n- adapt variable names if needed\n\nYou are NOT allowed to:\n- change structure\n- remove functions\n- change exports\n\nTEMPLATE:\n${template}`;
+    }
+  }
 
   // Phase 44: Architecture Context Injection
   const targetModule = detectModule(step);
@@ -194,7 +200,7 @@ function extractFileContent(raw, maxFiles = 1) {
   return [{ file: null, content }];
 }
 
-export async function generatePatch(step, files, feedback, chainContext, { onToken, metrics } = {}) {
+export async function generatePatch(step, files, feedback, chainContext, { onToken, metrics, role, pattern } = {}) {
   const tier = detectTier();
   const profile = getTierProfile();
   const config = loadConfig();
@@ -214,7 +220,7 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
     log.info(`[CODER] Analysis complete.`);
   }
 
-  const messages = buildPrompt(step, files, feedback, chainContext);
+  const messages = buildPrompt(step, files, feedback, chainContext, { role, pattern });
   if (analysis) {
     messages[messages.length - 1].content += `\n\nFile Analysis:\n${analysis}`;
   }
@@ -258,8 +264,16 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
       throw new Error("Generated content too large");
     }
 
-
+    // Phase 4 Pattern Enforcement
+    if (role && pattern) {
+      try {
+        validateStructure(update.content, role, pattern);
+      } catch (e) {
+        throw new Error(`Structure violation for ${role}/${pattern}: ${e.message}`);
+      }
+    }
   }
   
   return fileUpdates;
 }
+

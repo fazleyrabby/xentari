@@ -48,6 +48,8 @@ export type Step = {
   files?: string[];
   dependsOn: number[];
   status?: StepStatus;
+  role?: string;
+  pattern?: string;
 };
 
 export type AgentOptions = {
@@ -136,6 +138,7 @@ function validateStepResult(projectDir: string, fileUpdate: { file: string; cont
           if (pairs[stack.pop()!] !== char) return { valid: false, reason: `Unbalanced braces or parentheses detected in ${fileUpdate.file}` };
         }
       }
+      if (stack.length > 0) return { valid: false, reason: `Unbalanced braces or parentheses detected in ${fileUpdate.file}` };
     } catch (err: any) {
       return { valid: false, reason: `Syntax check failed for ${fileUpdate.file}: ${err.message}` };
     }
@@ -212,7 +215,12 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
         ? `${(step as any).description}\nConstraints: ${((step as any).constraints || []).join(', ')}`
         : step.target;
         
-      fileUpdates = await generateWithRetry(taskInstruction, files, feedback, chain, maxAttempts, { onToken, metrics });
+      fileUpdates = await generateWithRetry(taskInstruction, files, feedback, chain, maxAttempts, { 
+        onToken, 
+        metrics, 
+        role: step.role, 
+        pattern: step.pattern 
+      });
       
       // Phase: STRICT TARGET ENFORCEMENT
       if (fileUpdates && fileUpdates.length > 0) {

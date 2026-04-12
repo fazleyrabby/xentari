@@ -1,6 +1,28 @@
 {
   "history": [
     {
+      "task": "fix imports in src/index.js to use src/modules/todo/todo.routes.js",
+      "files": [
+        "src/core/config/app.config.js",
+        "src/core/db/sqlite.js",
+        "src/modules/todo/todo.service.js",
+        "src/modules/todo/todo.controller.js"
+      ],
+      "timestamp": 1776025879840
+    },
+    {
+      "task": "implement todo api with sqlite",
+      "files": [
+        "src/index.js",
+        "src/core/config/app.config.js",
+        "src/core/db/sqlite.js",
+        "src/modules/todo/todo.service.js",
+        "src/modules/todo/todo.controller.js",
+        "src/modules/todo/todo.routes.js"
+      ],
+      "timestamp": 1776025764326
+    },
+    {
       "task": "create src/utils.js with a sum function",
       "files": [
         "src/utils.js"

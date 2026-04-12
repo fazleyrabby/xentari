@@ -22,6 +22,21 @@ ALLOWED STEP TYPES:
 - refactor: restructure code without changing behavior
 - verify: check results or run tests
 
+PHASE 4: STRUCTURE ENFORCEMENT
+If a step creates or modifies a core component, you MUST assign a "role" and "pattern" if applicable.
+ROLES: model | service | controller | routes | config
+PATTERNS: model | service | controller | routes
+
+Example Step:
+{
+  "id": 2,
+  "type": "create",
+  "target": "controllers/user.controller.js",
+  "role": "controller",
+  "pattern": "controller",
+  "dependsOn": [1]
+}
+
 IMPORTANT CONTEXT:
 - Follow the project's established conventions and structure.
 - Use the appropriate language and tools for the detected stack.
@@ -133,6 +148,8 @@ export async function plan(task, { metrics, projectDir } = {}) {
       target: String(s.target || s.step || s),
       files: Array.isArray(s.files) ? s.files.map(String) : [],
       dependsOn: Array.isArray(s.dependsOn) ? s.dependsOn.map(Number) : [],
+      role: s.role ? String(s.role) : undefined,
+      pattern: s.pattern ? String(s.pattern) : undefined
     }));
   } catch {
     return [{ id: 1, type: "modify", target: task, files: [], dependsOn: [] }];

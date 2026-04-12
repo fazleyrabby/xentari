@@ -24,6 +24,11 @@ export const log = {
     console.log(`\n${C.bold}${C.cyan}[xentari]${C.reset} ${msg}`);
   },
 
+  section(msg) {
+    console.log(`\n${C.bold}⚙️  [${msg}]${C.reset}`);
+  },
+
+
   info(msg) {
     console.log(`${C.dim}  •${C.reset} ${msg}`);
   },

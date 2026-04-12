@@ -660,6 +660,18 @@ Xentari is organized into a modular hierarchy to separate concerns:
     *   **Generator Fix:** Updated `xentari-task-generator.cjs` to emit `001.json`, `002.json`, etc. (matching the executor's strict `<id>.json` lookup format) rather than verbose filenames, resolving a silent task-loading failure.
     *   **Known Model Behaviour (Not CLI Bug):** The underlying LLM occasionally blends multi-file context into a single output (e.g., outputting `package.json` content into `src/index.js`). This is a prompt-engineering boundary issue within the model layer and does not affect the state machine integrity.
 
+### 🧠 XENTARI — PHASE 4: STRUCTURE ENFORCEMENT (AGENT + SYSTEM SPEC)
+
+**Goal:** Eliminate architectural inconsistency, make structure deterministic, and reduce model decision surface to near-zero.
+
+**Result:**
+*   **Structure Lock:** Shifted architectural responsibility from the model to the system. The model now acts as an implementation engine only, filling predefined templates.
+*   **Pattern Engine:** Implemented `/core/patterns.js` and `/context/patterns/` to store and manage deterministic templates for core components (Controllers, Services, Routes, Models).
+*   **Role-Based Prompting:** The system now injects a specific `ROLE` (e.g., `controller`) and `PATTERN` into the agent's prompt, along with a strict template that MUST be followed exactly.
+*   **Deterministic Validation:** Added a structure validation layer that rejects any model output violating the pattern (e.g., missing `req`/`res` in a controller or using ES modules where CommonJS is required).
+*   **Integrated Planning:** Upgraded the Planner Agent to autonomously assign roles and patterns to individual implementation steps in the `plan.json`.
+*   **Hardened Enforcement:** Established strict rules against changing module exports, adding unauthorized layers, or removing required functions from templates.
+
 ---
 
 # 📊 6. Validation & Scoring System

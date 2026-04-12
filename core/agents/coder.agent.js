@@ -2,12 +2,12 @@ import { detectTier } from "../tier.js";
 import { generatePatch as generatePatchCore } from "../coder.js";
 import { log } from "../logger.js";
 
-export async function generateFileContent(step, files, feedback, chainContext, { onToken, metrics } = {}) {
+export async function generateFileContent(step, files, feedback, chainContext, { onToken, metrics, role, pattern } = {}) {
   const tier = detectTier();
-  return generatePatchCore(step, files, feedback, chainContext, { onToken, metrics });
+  return generatePatchCore(step, files, feedback, chainContext, { onToken, metrics, role, pattern });
 }
 
-export async function generateWithRetry(step, files, feedback, chainContext, maxAttempts, { onToken, metrics } = {}) {
+export async function generateWithRetry(step, files, feedback, chainContext, maxAttempts, { onToken, metrics, role, pattern } = {}) {
   let lastError;
   const tier = detectTier();
   const MAX_RETRY_ATTEMPTS = 2; // Loop breaker for validation failures
@@ -19,7 +19,7 @@ export async function generateWithRetry(step, files, feedback, chainContext, max
         if (metrics) metrics.retries++;
       }
       
-      const fileUpdates = await generateFileContent(step, files, feedback, chainContext, { onToken, metrics });
+      const fileUpdates = await generateFileContent(step, files, feedback, chainContext, { onToken, metrics, role, pattern });
       return fileUpdates;
       
     } catch (err) {
