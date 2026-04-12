@@ -229,11 +229,25 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       log.info(`[DIFF] Generating patch...`);
       try {
         patch = patchToUnified(projectDir, fileUpdates.map(u => ({ file: u.file, content: u.content })));
+
+        // Phase 36: Impact Analysis
+        const index = loadIndex();
+        if (index && fileUpdates.length > 0) {
+          const file = fileUpdates[0].file;
+          const affected = [
+            ...(index.dependencies[file] || []),
+            ...(index.reverseDependencies[file] || [])
+          ];
+
+          if (affected.length > 0) {
+            log.warn(`\n⚠ Impact Analysis: This change may affect:`);
+            affected.forEach(f => log.info(`  - ${f}`));
+          }
+        }
       } catch (err) {
         log.error(`[DIFF] Failed: ${err.message}`);
         handleFailure(step.target, err.message, chain, opts);
       }
-
       if (patch) {
         const validation = validatePatch(patch);
         if (!validation.valid) {
@@ -381,11 +395,19 @@ async function executePipeline(opts, { onToken, rl } = {}) {
   metrics.model = config.model;
   metrics.tier = tier;
 
-  log.header(`Task: ${task}`);
-  log.info(`Mode: ${dryRun ? "dry-run" : "live"} | Auto: ${autoMode}`);
+  // Phase 32: Session Header
+  console.clear();
+  log.header("🧠 Xentari CLI");
+  log.info(`Project: ${projectDir}`);
+  const stackInfo = detectStack(projectDir);
+  log.info(`Stack:   ${stackInfo.stack}${stackInfo.framework ? ` (${stackInfo.framework})` : ""}\n`);
 
-  log.section("MODEL");
-  log.info(`  › ${tier.toUpperCase()} model`);
+  // Phase 32: Context Panel (Simulation)
+  ux.showContext({
+    stack: stackInfo.stack,
+    framework: stackInfo.framework,
+    projectRoot: projectDir
+  });
 
   ux.showStage("PLAN");
   log.info(`[PLANNER] Analyzing task...`);
@@ -410,6 +432,10 @@ async function executePipeline(opts, { onToken, rl } = {}) {
 
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
+    
+    // Phase 32: Clean Step Display
+    console.log(`\n⚙️  [${step.type.toUpperCase()}] ${step.target}`);
+
     try {
       await executeStep(step, i, { projectDir, dryRun, autoMode, maxAttempts, task }, chain, { onToken, rl, metrics });
     } catch (err) {
@@ -421,7 +447,8 @@ async function executePipeline(opts, { onToken, rl } = {}) {
   }
 
   const totalMs = elapsed(totalStart);
-  log.header(`Done in ${(totalMs / 1000).toFixed(1)}s`);
+  const timeSec = (totalMs / 1000).toFixed(2);
+  log.header(`Done in ${timeSec}s`);
 
   if (chain.patchSummaries.length > 0) {
     ux.success("Task completed");
@@ -442,12 +469,14 @@ async function executePipeline(opts, { onToken, rl } = {}) {
     time_ms: totalMs
   });
 
-  statusBar.renderStatusBar({
-    task,
+  // Phase 32: Final Render
+  renderStatus({
+    model: config.model,
+    stack: stackInfo.stack,
     stage: "COMPLETE",
-    tokens: metrics.tokens,
-    time: (totalMs / 1000).toFixed(1),
-    retries: metrics.retries
+    retries: metrics.retries,
+    time: timeSec,
+    tokens: metrics.tokens
   });
 
   return { metrics, chain };

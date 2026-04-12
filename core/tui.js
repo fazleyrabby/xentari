@@ -12,6 +12,8 @@ import { loadConfig } from "./config.js";
 import { renderDashboard } from "./dashboard.js";
 import { loadSummary } from "./analytics.js";
 import { handleCommand } from "./cli/handler.js";
+import { palette } from "./cli/palette.js";
+import readline from "node:readline";
 
 const state = {
   lastTask: null,
@@ -52,6 +54,18 @@ export async function startTUI() {
     output: process.stdout
   });
   
+  // Phase 39: Keypress handling for hotkeys
+  if (process.stdin.isTTY) {
+    readline.emitKeypressEvents(process.stdin);
+    process.stdin.on("keypress", (str, key) => {
+      if (key && key.ctrl && key.name === "p") {
+        process.stdout.write("\n");
+        handleCommand("/palette");
+        process.stdout.write("xen > ");
+      }
+    });
+  }
+
   // Initialize plugins
   const plugins = await loadPlugins(config.root);
   state.registry = buildCommandRegistry(plugins);
@@ -59,6 +73,7 @@ export async function startTUI() {
   console.clear();
   log.header("🧠 Xentari CLI");
   console.log("Type your task or /help for commands.\n");
+  console.log("Hotkeys: Ctrl+P (Palette)\n");
   
   while (true) {
     try {
@@ -66,14 +81,23 @@ export async function startTUI() {
       
       if (!input.trim()) continue;
       
-      // Use the new centralized command handler (Phase 27)
+      // Use the new centralized command handler (Phase 27 & 39)
       const handled = handleCommand(input);
-      if (handled) continue;
+      if (handled === true) continue;
       
+      // Handle palette logic (Phase 39)
+      let task = input;
+      const paletteMatch = palette.find(p => input.startsWith(p.key));
+      if (paletteMatch) {
+        const extra = input.replace(paletteMatch.key, "").trim();
+        task = `${paletteMatch.desc}${extra ? ` regarding ${extra}` : ""}`;
+        log.info(`[PALETTE] Executing: ${task}`);
+      }
+
       state.lastTask = input;
       
       const result = await runAgent({
-        task: input,
+        task: task,
         projectDir: process.cwd(),
         dryRun: false,
         autoMode: true

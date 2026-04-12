@@ -316,20 +316,71 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
   if (top.length === 0 && typeInfo) {
     const newFile = suggestNewFilePath(typeInfo, task);
     if (newFile) {
-      return [{
+      top.push({
         file: newFile.path,
         content: "",
         score: 10,
         isNew: true,
-      }];
+      });
     }
   }
 
-  return top.map(({ file, content, score, isNew }) => ({ 
+  // Phase 35: Multi-File Retrieval (Dependency Expansion)
+  const finalFiles = [...top];
+  if (index && top.length > 0 && top.length < 5) {
+    const mainFile = top[0].file;
+    const deps = index.dependencies[mainFile] || [];
+    const reverse = index.reverseDependencies[mainFile] || [];
+    
+    const relatedPaths = [...deps.slice(0, 2), ...reverse.slice(0, 2)];
+    
+    for (const relPath of relatedPaths) {
+      if (finalFiles.length >= 5) break;
+      if (finalFiles.some(f => f.file === relPath)) continue;
+      
+      try {
+        const fullPath = safePath(projectDir, relPath);
+        if (existsSync(fullPath)) {
+          const content = readFileSync(fullPath, "utf-8");
+          finalFiles.push({
+            file: relPath,
+            content: content.slice(0, profile.maxFileChars),
+            score: 5,
+            isRelated: true
+          });
+        }
+      } catch {}
+    }
+  }
+
+  if (metrics) {
+    metrics.filesUsed = finalFiles.length;
+    metrics.files = finalFiles.map(f => f.file);
+    // Track chunks only for final selected files
+    metrics.chunksUsed = finalFiles.reduce((sum, f) => {
+      if (f.content.includes("... [CHUNK BOUNDARY] ...")) {
+        return sum + f.content.split("... [CHUNK BOUNDARY] ...").length;
+      }
+      return sum;
+    }, 0);
+    // Track RAG matches
+    metrics.ragMatches = finalFiles.filter(f => ragFiles.includes(f.file)).map(f => f.file);
+  }
+
+  const hasPriorityFile = finalFiles.some((f) => f.hasPriority);
+  if (!hasPriorityFile && scored.length > top.length) {
+    const firstPriority = scored.find((f) => f.hasPriority && !finalFiles.includes(f));
+    if (firstPriority && finalFiles.length > 0) {
+      finalFiles[finalFiles.length - 1] = firstPriority;
+    }
+  }
+
+  return finalFiles.map(({ file, content, score, isNew, isRelated }) => ({ 
     file, 
     content, 
     score,
     isNew: isNew || false,
+    isRelated: isRelated || false
   }));
 }
 

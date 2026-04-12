@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { join, basename, extname } from "node:path";
+import { join, basename, extname, dirname, relative } from "node:path";
 import { glob } from "glob";
 import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
@@ -20,22 +20,60 @@ const IGNORE = [
 ];
 
 /**
- * Task 1: Extended Analyzer
+ * Task 2: Normalize Paths (Phase 33)
+ */
+function normalizeImportPath(baseDir, importPath, projectDir) {
+  if (!importPath.startsWith(".")) return null; // Skip packages
+  
+  const absolutePath = join(projectDir, baseDir, importPath);
+  const extensions = [".js", ".ts", ".jsx", ".tsx", "/index.js", "/index.ts"];
+  
+  // Try direct path first
+  if (existsSync(absolutePath) && !fs.statSync(absolutePath).isDirectory()) {
+    return relative(projectDir, absolutePath);
+  }
+
+  for (const ext of extensions) {
+    const fullPath = absolutePath + (ext.startsWith("/") ? ext : (absolutePath.endsWith(ext) ? "" : ext));
+    if (existsSync(fullPath)) return relative(projectDir, fullPath);
+  }
+  
+  return null;
+}
+
+/**
+ * Task 1: Extended Analyzer (Upgraded for Phase 33)
  */
 export function analyzeFile(filePath, projectDir) {
   const fullPath = join(projectDir, filePath);
   const content = readFileSync(fullPath, "utf-8");
+  const fileDir = dirname(filePath);
 
   const functions = content.match(/function\s+(\w+)|(\w+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>|(\w+)\s*:\s*(?:async\s*)?function/g) || [];
   const classes = content.match(/class\s+(\w+)/g) || [];
   const exports = content.match(/export\s+|module\.exports|exports\./g) || [];
+
+  // Phase 33: Extract Imports
+  const importMatches = content.matchAll(/import\s+.*?\s+from\s+['"](.*?)['"]/g);
+  const requireMatches = content.matchAll(/require\(['"](.*?)['"]\)/g);
+  
+  const dependencies = [];
+  for (const match of importMatches) {
+    const normalized = normalizeImportPath(fileDir, match[1], projectDir);
+    if (normalized) dependencies.push(normalized);
+  }
+  for (const match of requireMatches) {
+    const normalized = normalizeImportPath(fileDir, match[1], projectDir);
+    if (normalized) dependencies.push(normalized);
+  }
 
   return {
     path: filePath,
     functions: functions.slice(0, 10), // Cap for index size
     classes: classes.slice(0, 5),
     hasExports: exports.length > 0,
-    size: content.length
+    size: content.length,
+    dependencies: [...new Set(dependencies)]
   };
 }
 
@@ -66,15 +104,23 @@ export function detectFramework(projectDir) {
 }
 
 /**
- * Task 4: Domain Grouping
+ * Task 1: Module Grouping (Phase 38)
  */
-function getDomain(filePath) {
-  const lower = filePath.toLowerCase();
-  if (lower.includes("auth") || lower.includes("login") || lower.includes("user")) return "authentication";
-  if (lower.includes("todo") || lower.includes("task")) return "todos";
-  if (lower.includes("api") || lower.includes("route")) return "api";
-  if (lower.includes("db") || lower.includes("model") || lower.includes("schema")) return "database";
-  return "general";
+function detectModules(files) {
+  const modules = {};
+  files.forEach(f => {
+    const lower = f.path.toLowerCase();
+    let mod = "general";
+    if (lower.includes("auth") || lower.includes("login")) mod = "authentication";
+    else if (lower.includes("user")) mod = "users";
+    else if (lower.includes("todo") || lower.includes("task")) mod = "todos";
+    else if (lower.includes("pay") || lower.includes("billing")) mod = "payments";
+    else if (lower.includes("api") || lower.includes("route")) mod = "api";
+    
+    if (!modules[mod]) modules[mod] = [];
+    modules[mod].push(f.path);
+  });
+  return modules;
 }
 
 /**
@@ -96,6 +142,9 @@ export async function indexProject(projectDir) {
     entryPoints: [],
     files: [],
     domains: {},
+    modules: {}, // Phase 38
+    dependencies: {}, // Phase 33
+    reverseDependencies: {}, // Phase 34
     timestamp: new Date().toISOString(),
     projectDir
   };
@@ -103,17 +152,24 @@ export async function indexProject(projectDir) {
   for (const file of files) {
     try {
       const analysis = analyzeFile(file, projectDir);
-      const domain = getDomain(file);
-      
       knowledge.files.push(analysis);
-      
-      if (!knowledge.domains[domain]) knowledge.domains[domain] = [];
-      knowledge.domains[domain].push(file);
+      knowledge.dependencies[file] = analysis.dependencies;
     } catch {
       continue;
     }
   }
 
+  // Phase 34: Build Reverse Map
+  Object.entries(knowledge.dependencies).forEach(([file, deps]) => {
+    deps.forEach(dep => {
+      knowledge.reverseDependencies[dep] ??= [];
+      if (!knowledge.reverseDependencies[dep].includes(file)) {
+        knowledge.reverseDependencies[dep].push(file);
+      }
+    });
+  });
+
+  knowledge.modules = detectModules(knowledge.files);
   knowledge.entryPoints = detectEntryPoints(knowledge.files);
 
   const knowledgePath = join(config.logsDir, "knowledge.json");
