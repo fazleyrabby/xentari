@@ -23,6 +23,25 @@ function saveAnalytics(data) {
   writeFileSync(analyticsPath(), JSON.stringify(data, null, 2), "utf-8");
 }
 
+export function logBug(bug) {
+  const config = loadConfig();
+  const path = join(config.logsDir, "bugs.json");
+  let bugs = [];
+  if (existsSync(path)) {
+    try {
+      bugs = JSON.parse(readFileSync(path, "utf-8"));
+    } catch {}
+  }
+  bugs.push({
+    ...bug,
+    timestamp: new Date().toISOString()
+  });
+  // Keep last 50
+  if (bugs.length > 50) bugs = bugs.slice(-50);
+  mkdirSync(config.logsDir, { recursive: true });
+  writeFileSync(path, JSON.stringify(bugs, null, 2), "utf-8");
+}
+
 export function recordTestResult(entry) {
   const data = loadAnalytics();
   data.history.push({
@@ -66,4 +85,9 @@ export function showWeeklyAnalysis() {
   console.log(`  Total Tasks:  ${insights.totalTasks}`);
   console.log(`  Avg Retries:  ${insights.averageRetries}`);
   console.log(`  Top Failure:  ${insights.topFailureType}`);
+}
+
+// Alias for UI consumption
+export function loadSummary() {
+  return generateWeeklyInsights();
 }

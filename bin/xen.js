@@ -9,7 +9,7 @@ import { confirm } from "../core/prompt.js";
 import { log } from "../core/logger.js";
 import { indexProject } from "../core/indexer.js";
 import { getContext } from "../core/context.js";
-import { startTUI } from "../core/tui.js";
+import { startTUI } from "../core/tui/index.js";
 import { updateDuration } from "../core/metrics.js";
 import { loadPlugins, buildCommandRegistry } from "../core/plugins.js";
 import { loadConfig } from "../core/config.js";

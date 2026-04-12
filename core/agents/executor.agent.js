@@ -29,6 +29,9 @@ import { cleanupSandbox } from "../sandbox/cleanup.js";
 import { getChangedFiles } from "../sandbox/diff.js";
 import * as ux from "../tui/ux.js";
 import { addToSession } from "../memory/session.js";
+import { detectStack } from "../project/detector.js";
+import { renderStatus } from "../tui/statusBar.js";
+import { loadIndex } from "../indexer.js";
 
 let failureState = {
   consecutiveFailures: 0,
@@ -104,6 +107,16 @@ function validateStepResult(projectDir, fileUpdate) {
   }
 
   return { valid: true };
+}
+
+function detectModule(task) {
+  const lower = task.toLowerCase();
+  if (lower.includes("auth") || lower.includes("login")) return "authentication";
+  if (lower.includes("todo") || lower.includes("task")) return "todos";
+  if (lower.includes("user")) return "users";
+  if (lower.includes("pay") || lower.includes("billing")) return "payments";
+  if (lower.includes("api") || lower.includes("route")) return "api";
+  return null;
 }
 
 async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = {}) {
@@ -235,7 +248,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
       log.info(`[DIFF] Generating patch...`);
       try {
         patch = patchToUnified(projectDir, fileUpdates.map(u => ({ file: u.file, content: u.content })));
-
+        
         // Phase 36: Impact Analysis
         const index = loadIndex();
         if (index && fileUpdates.length > 0) {
@@ -244,7 +257,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
             ...(index.dependencies[file] || []),
             ...(index.reverseDependencies[file] || [])
           ];
-
+          
           if (affected.length > 0) {
             log.warn(`\n⚠ Impact Analysis: This change may affect:`);
             affected.forEach(f => log.info(`  - ${f}`));
@@ -254,6 +267,7 @@ async function executeStep(step, index, opts, chain, { onToken, rl, metrics } = 
         log.error(`[DIFF] Failed: ${err.message}`);
         handleFailure(step.target, err.message, chain, opts);
       }
+
       if (patch) {
         const validation = validatePatch(patch);
         if (!validation.valid) {

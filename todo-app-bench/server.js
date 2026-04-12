@@ -7,7 +7,7 @@ app.use(express.json());
 let todos = [];
 
 app.get('/todos', (req, res) => {
-  res.json(todos);
+  res.json(todos
 });
 
 app.post('/todos', (req, res) => {

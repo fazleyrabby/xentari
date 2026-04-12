@@ -11,6 +11,7 @@ import { remember, trackRecentFiles, recordPattern } from "./memory.js";
 import { summarizePatch } from "./summarizer.js";
 import { confirm } from "./prompt.js";
 import { detectTier, getTierProfile } from "./tier.js";
+
 import { resolveContract } from "./retrieval/resolver.ts";
 import { buildContext } from "./retrieval/contextBuilder.ts";
 import { validateContext } from "./retrieval/validator.ts";
