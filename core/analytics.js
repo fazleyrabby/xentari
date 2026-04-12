@@ -1,84 +1,69 @@
-/**
- * Bug Classification System for Zentari.
- */
-import { writeFileSync, existsSync, readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "./config.js";
+import { log } from "./logger.js";
 
-/**
- * Logs a bug/failure with classification.
- * @param {Object} bug - { task, type, severity, description, fix_area }
- */
-export function logBug(bug) {
-  const config = loadConfig();
-  const bugsPath = join(config.logsDir, "bugs.json");
-  
-  let bugs = [];
-  if (existsSync(bugsPath)) {
-    try {
-      bugs = JSON.parse(readFileSync(bugsPath, "utf-8"));
-    } catch {}
-  }
-
-  const entry = {
-    ...bug,
-    timestamp: new Date().toISOString()
-  };
-
-  bugs.push(entry);
-  writeFileSync(bugsPath, JSON.stringify(bugs, null, 2));
+function analyticsPath() {
+  return join(loadConfig().logsDir, "analytics.json");
 }
 
-/**
- * Records a test result for the dashboard and scoring.
- * @param {Object} result - { task, status, retries, tokens, time_ms }
- */
-export function recordTestResult(result) {
-  const config = loadConfig();
-  const testingPath = join(config.logsDir, "testing.json");
-
-  let data = [];
-  if (existsSync(testingPath)) {
-    try {
-      const content = readFileSync(testingPath, "utf-8");
-      data = JSON.parse(content || "[]");
-    } catch {
-      data = [];
-    }
+function loadAnalytics() {
+  const p = analyticsPath();
+  if (!existsSync(p)) return { history: [] };
+  try {
+    return JSON.parse(readFileSync(p, "utf-8"));
+  } catch {
+    return { history: [] };
   }
+}
 
-  data.push({
-    ...result,
+function saveAnalytics(data) {
+  const config = loadConfig();
+  mkdirSync(config.logsDir, { recursive: true });
+  writeFileSync(analyticsPath(), JSON.stringify(data, null, 2), "utf-8");
+}
+
+export function recordTestResult(entry) {
+  const data = loadAnalytics();
+  data.history.push({
+    ...entry,
     timestamp: new Date().toISOString()
   });
-
-  writeFileSync(testingPath, JSON.stringify(data, null, 2));
+  // Keep last 100 entries
+  if (data.history.length > 100) data.history = data.history.slice(-100);
+  saveAnalytics(data);
 }
 
-/**
- * Scoring System
- */
-export function loadSummary() {
-  const config = loadConfig();
-  const testingPath = join(config.logsDir, "testing.json");
+export function generateWeeklyInsights() {
+  const data = loadAnalytics();
+  if (data.history.length === 0) return null;
 
-  if (!existsSync(testingPath)) return null;
+  const total = data.history.length;
+  const successes = data.history.filter(h => h.status === "success").length;
+  
+  const failureTypes = {};
+  data.history.filter(h => h.status === "fail").forEach(h => {
+    const type = h.failType || "unknown";
+    failureTypes[type] = (failureTypes[type] || 0) + 1;
+  });
 
-  try {
-    const data = JSON.parse(readFileSync(testingPath, "utf-8"));
-    if (data.length === 0) return null;
+  const topFailure = Object.entries(failureTypes).sort((a, b) => b[1] - a[1])[0];
 
-    const total = data.length;
-    const success = data.filter(x => x.status === "success").length;
-    const avgTime = data.reduce((a, b) => a + (b.time_ms || 0), 0) / total / 1000;
+  return {
+    successRate: ((successes / total) * 100).toFixed(1) + "%",
+    totalTasks: total,
+    topFailureType: topFailure ? topFailure[0] : "none",
+    averageRetries: (data.history.reduce((acc, h) => acc + (h.retries || 0), 0) / total).toFixed(1)
+  };
+}
 
-    return {
-      totalTasks: total,
-      successRate: success / total,
-      avgTime: avgTime.toFixed(2),
-      patchSuccess: success / total
-    };
-  } catch {
-    return null;
-  }
+export function showWeeklyAnalysis() {
+  const insights = generateWeeklyInsights();
+  if (!insights) return;
+
+  log.section("📊 SYSTEM INSIGHTS");
+  console.log(`  Success Rate: ${insights.successRate}`);
+  console.log(`  Total Tasks:  ${insights.totalTasks}`);
+  console.log(`  Avg Retries:  ${insights.averageRetries}`);
+  console.log(`  Top Failure:  ${insights.topFailureType}`);
 }

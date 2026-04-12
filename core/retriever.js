@@ -192,6 +192,16 @@ function isSourceFile(filePath) {
   return sourceExts.includes(ext);
 }
 
+function detectModule(task) {
+  const lower = task.toLowerCase();
+  if (lower.includes("auth") || lower.includes("login")) return "authentication";
+  if (lower.includes("todo") || lower.includes("task")) return "todos";
+  if (lower.includes("user")) return "users";
+  if (lower.includes("pay") || lower.includes("billing")) return "payments";
+  if (lower.includes("api") || lower.includes("route")) return "api";
+  return null;
+}
+
 export async function retrieve(projectDir, keywords, extraBoostFiles = [], { metrics } = {}) {
   const config = loadConfig();
   const profile = getTierProfile();
@@ -291,28 +301,6 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
   scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, maxFiles);
 
-  if (metrics) {
-    metrics.filesUsed = top.length;
-    metrics.files = top.map(f => f.file);
-    // Track chunks only for final selected files
-    metrics.chunksUsed = top.reduce((sum, f) => {
-      if (f.content.includes("... [CHUNK BOUNDARY] ...")) {
-        return sum + f.content.split("... [CHUNK BOUNDARY] ...").length;
-      }
-      return sum;
-    }, 0);
-    // Track RAG matches
-    metrics.ragMatches = top.filter(f => ragFiles.includes(f.file)).map(f => f.file);
-  }
-
-  const hasPriorityFile = top.some((f) => f.hasPriority);
-  if (!hasPriorityFile) {
-    const firstPriority = scored.find((f) => f.hasPriority && !top.includes(f));
-    if (firstPriority && top.length > 0) {
-      top[top.length - 1] = firstPriority;
-    }
-  }
-
   if (top.length === 0 && typeInfo) {
     const newFile = suggestNewFilePath(typeInfo, task);
     if (newFile) {
@@ -353,6 +341,29 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
     }
   }
 
+  // Phase 41: Module-Aware Retrieval
+  const targetModule = detectModule(task);
+  if (targetModule && index?.modules && index.modules[targetModule]) {
+    const moduleFiles = index.modules[targetModule].slice(0, 3);
+    for (const modFile of moduleFiles) {
+      if (finalFiles.length >= 5) break;
+      if (finalFiles.some(f => f.file === modFile)) continue;
+      
+      try {
+        const fullPath = safePath(projectDir, modFile);
+        if (existsSync(fullPath)) {
+          const content = readFileSync(fullPath, "utf-8");
+          finalFiles.push({
+            file: modFile,
+            content: content.slice(0, profile.maxFileChars),
+            score: 8, // Higher than related, lower than primary
+            isModuleContext: true
+          });
+        }
+      } catch {}
+    }
+  }
+
   if (metrics) {
     metrics.filesUsed = finalFiles.length;
     metrics.files = finalFiles.map(f => f.file);
@@ -375,12 +386,13 @@ export async function retrieve(projectDir, keywords, extraBoostFiles = [], { met
     }
   }
 
-  return finalFiles.map(({ file, content, score, isNew, isRelated }) => ({ 
+  return finalFiles.map(({ file, content, score, isNew, isRelated, isModuleContext }) => ({ 
     file, 
     content, 
     score,
     isNew: isNew || false,
-    isRelated: isRelated || false
+    isRelated: isRelated || false,
+    isModuleContext: isModuleContext || false
   }));
 }
 

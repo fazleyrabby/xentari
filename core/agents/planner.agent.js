@@ -4,6 +4,7 @@ import { detectTier } from "../tier.js";
 import { log } from "../logger.js";
 import { detectStack } from "../project/detector.js";
 import { loadSession } from "../memory/session.js";
+import { getIntelligence } from "../memory.js";
 
 const BASE_SYSTEM = `You are a professional software architect and planner. Given a coding task, you must REASON about the implementation and then produce a structured JSON execution plan.
 
@@ -82,6 +83,16 @@ export async function plan(task, { metrics, projectDir } = {}) {
     ? `\n[SESSION MEMORY] Recent task: ${session.history[0].task}. Modified files: ${session.history[0].files.join(", ")}`
     : "";
   
+  // Phase 47: Decision Biasing
+  const intel = getIntelligence();
+  let biasHint = "";
+  if (intel.successfulPatterns && intel.successfulPatterns.length > 0) {
+    biasHint += `\n[INTELLIGENCE] Successful past patterns: ${intel.successfulPatterns.slice(-3).map(p => p.step).join(", ")}`;
+  }
+  if (intel.failedPatterns && intel.failedPatterns.length > 0) {
+    biasHint += `\n[INTELLIGENCE] Avoid these previously failed files/approaches: ${intel.failedPatterns.slice(-3).map(p => p.step).join(", ")}`;
+  }
+
   const { stack, framework } = detectStack(projectDir || process.cwd());
   const stackHint = `This is a ${stack} project. Follow common conventions and best practices for this ecosystem.`;
   const frameworkHint = framework ? `Framework: ${framework}` : "";
@@ -89,7 +100,7 @@ export async function plan(task, { metrics, projectDir } = {}) {
   log.section("CONTEXT");
   log.info(`Stack detected: ${stack} ${framework ? `(${framework})` : ""}`);
 
-  let system = `${context}${memoryHint}\n\n${stackHint}\n${frameworkHint}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
+  let system = `${context}${memoryHint}${biasHint}\n\n${stackHint}\n${frameworkHint}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
 
   if (complexity === "complex" && tier === "small") {
     system += `\n\nNOTE: This is a complex task. Create atomic steps with different target files.`;

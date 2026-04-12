@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { join, basename, extname, dirname, relative } from "node:path";
 import { glob } from "glob";
 import { loadConfig } from "./config.js";
@@ -29,7 +29,7 @@ function normalizeImportPath(baseDir, importPath, projectDir) {
   const extensions = [".js", ".ts", ".jsx", ".tsx", "/index.js", "/index.ts"];
   
   // Try direct path first
-  if (existsSync(absolutePath) && !fs.statSync(absolutePath).isDirectory()) {
+  if (existsSync(absolutePath) && !statSync(absolutePath).isDirectory()) {
     return relative(projectDir, absolutePath);
   }
 
@@ -124,6 +124,32 @@ function detectModules(files) {
 }
 
 /**
+ * Task 1: System Flow Detection (Phase 42)
+ */
+function detectFlows(modules) {
+  const flows = {};
+  
+  Object.entries(modules).forEach(([modName, files]) => {
+    const sorted = [...files].sort((a, b) => {
+      const getRank = (p) => {
+        if (p.includes("route")) return 1;
+        if (p.includes("controller")) return 2;
+        if (p.includes("service")) return 3;
+        if (p.includes("model") || p.includes("schema")) return 4;
+        return 5;
+      };
+      return getRank(a) - getRank(b);
+    });
+    
+    flows[modName] = {
+      flow: sorted
+    };
+  });
+  
+  return flows;
+}
+
+/**
  * Task 2: Build Indexer
  * Scans project and builds knowledge.json
  */
@@ -143,6 +169,7 @@ export async function indexProject(projectDir) {
     files: [],
     domains: {},
     modules: {}, // Phase 38
+    flows: {}, // Phase 42
     dependencies: {}, // Phase 33
     reverseDependencies: {}, // Phase 34
     timestamp: new Date().toISOString(),
@@ -170,27 +197,38 @@ export async function indexProject(projectDir) {
   });
 
   knowledge.modules = detectModules(knowledge.files);
+  knowledge.flows = detectFlows(knowledge.modules);
   knowledge.entryPoints = detectEntryPoints(knowledge.files);
 
-  const knowledgePath = join(config.logsDir, "knowledge.json");
+  const xentariDir = join(projectDir, ".xentari");
+  if (!existsSync(xentariDir)) mkdirSync(xentariDir, { recursive: true });
+
+  const knowledgePath = join(xentariDir, "knowledge.json");
   // Also keep index.json for backward compatibility or refactor later
-  const indexPath = join(config.logsDir, "index.json");
+  const indexPath = join(xentariDir, "index.json");
   
-  mkdirSync(config.logsDir, { recursive: true });
   writeFileSync(knowledgePath, JSON.stringify(knowledge, null, 2));
   writeFileSync(indexPath, JSON.stringify(knowledge, null, 2));
   
+  // Phase 52: Auto-add to gitignore
+  const gitignorePath = join(projectDir, ".gitignore");
+  if (existsSync(gitignorePath)) {
+    const content = readFileSync(gitignorePath, "utf-8");
+    if (!content.includes(".xentari/")) {
+      writeFileSync(gitignorePath, content + "\n.xentari/\n");
+    }
+  }
+
   log.ok(`[INDEXER] Indexed ${knowledge.files.length} files. Framework: ${knowledge.framework || 'unknown'}`);
   return knowledge;
 }
 
-export function loadIndex() {
-  const config = loadConfig();
-  const knowledgePath = join(config.logsDir, "knowledge.json");
-  const indexPath = join(config.logsDir, "index.json");
+export function loadIndex(projectDir = loadConfig().root) {
+  const knowledgePath = join(projectDir, ".xentari", "knowledge.json");
+  const indexPath = join(projectDir, ".xentari", "index.json");
   
-  const path = existsSync(knowledgePath) ? knowledgePath : indexPath;
-  if (!existsSync(path)) return null;
+  const path = existsSync(knowledgePath) ? knowledgePath : (existsSync(indexPath) ? indexPath : null);
+  if (!path || !existsSync(path)) return null;
   
   try {
     return JSON.parse(readFileSync(path, "utf-8"));

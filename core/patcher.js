@@ -11,6 +11,9 @@ import { diffInteractive } from "./tui/index.js";
 import { safePath } from "./project/guard.js";
 import { interactiveDiff, simpleDiffPreview } from "./tui/diffViewerInteractive.js";
 import { splitDiff, rebuildDiff } from "./patch/partial.js";
+import { parseDiff } from "./diff/parser.js";
+import { alignDiff } from "./diff/align.js";
+import { renderDiff } from "./tui/diffView.js";
 import readline from "node:readline";
 
 function tmpPatchPath() {
@@ -95,6 +98,11 @@ export async function applyPatch(projectDir, patch, dryRun = false, newContent =
     let finalPatch = patch;
 
     try {
+      // Phase 51: Side-by-Side Diff Viewer (Colored)
+      const parsed = parseDiff(patch);
+      const aligned = alignDiff(parsed);
+      renderDiff(aligned);
+
       // Use the new interactive diff viewer
       if (newContent) {
         approved = await interactiveDiff(oldContent, newContent, targetPath);

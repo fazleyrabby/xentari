@@ -47,6 +47,7 @@ import { detectTier, getTierProfile } from "./tier.js";
 import { log } from "./logger.js";
 import { loadConfig } from "./config.js";
 import { enforceConstraints, validateFileOutput } from "./constraints.js";
+import { loadIndex } from "./indexer.js";
 
 const BASE_SYSTEM = `You are a code editor.
 
@@ -84,11 +85,31 @@ const TIER_RULES = {
 Ensure all cross-file dependencies (imports, exports) are consistent.`,
 };
 
+function detectModule(task) {
+  const lower = task.toLowerCase();
+  if (lower.includes("auth") || lower.includes("login")) return "authentication";
+  if (lower.includes("todo") || lower.includes("task")) return "todos";
+  if (lower.includes("user")) return "users";
+  if (lower.includes("pay") || lower.includes("billing")) return "payments";
+  if (lower.includes("api") || lower.includes("route")) return "api";
+  return null;
+}
+
 function buildPrompt(step, files, feedback, chainContext) {
   const tier = detectTier();
   const { context } = getContext(step);
   const config = loadConfig();
+  const index = loadIndex();
+  
   let system = `${context}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
+
+  // Phase 44: Architecture Context Injection
+  const targetModule = detectModule(step);
+  if (index && targetModule && index.flows && index.flows[targetModule]) {
+    const flow = index.flows[targetModule].flow;
+    const archHint = `\n[ARCHITECTURE] Module: ${targetModule}\nLogical Flow: ${flow.join(" → ")}`;
+    system += archHint;
+  }
 
   if (chainContext) {
     system += `\n\nPrevious changes in this session:`;

@@ -62,12 +62,18 @@ function handleFailure(step, reason, chain, opts) {
   failureState.consecutiveFailures++;
   failureState.lastFailureReason = reason;
   log.warn(`[FAILURE] ${reason} (Count: ${failureState.consecutiveFailures})`);
+  
+  // Phase 46: Failure Memory
+  recordPattern(step, "fail", []);
 }
 
 function handleReviewFailure(step, reason, chain, opts) {
   failureState.consecutiveFailures++;
   failureState.lastReviewRejectReason = reason;
   log.warn(`[REVIEW FAILURE] ${reason} (Count: ${failureState.consecutiveFailures})`);
+  
+  // Phase 46: Failure Memory
+  recordPattern(step, "fail", []);
 }
 
 function resetFailureState() {
@@ -500,6 +506,15 @@ export async function runAgent(opts, { onToken, rl } = {}) {
   }
 
   const result = await executePipeline(opts, { onToken, rl });
+
+  // Phase 43: Flow-Aware Execution
+  const index = loadIndex();
+  const targetModule = detectModule(opts.task);
+  if (index && targetModule && index.flows && index.flows[targetModule]) {
+    const flow = index.flows[targetModule].flow;
+    log.info(`\n🌊 Flow-Aware Execution: Detected ${targetModule} flow.`);
+    // Flow awareness is currently injected via the architectural context in prompts (Phase 44)
+  }
 
   if (sandboxRoot) {
     const changes = getChangedFiles(originalRoot, sandboxRoot);

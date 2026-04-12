@@ -3,11 +3,13 @@ import { loadConfig } from "./config.js";
 import { join } from "node:path";
 
 function memoryPath() {
-  return join(loadConfig().logsDir, "memory.json");
+  const config = loadConfig();
+  return join(config.root, ".xentari", "memory.json");
 }
 
 function intelligencePath() {
-  return join(loadConfig().logsDir, "intelligence.json");
+  const config = loadConfig();
+  return join(config.root, ".xentari", "intelligence.json");
 }
 
 // --- Execution history ---
@@ -24,7 +26,8 @@ function loadHistory() {
 
 export function remember(entry) {
   const config = loadConfig();
-  mkdirSync(config.logsDir, { recursive: true });
+  const dir = join(config.root, ".xentari");
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   const history = loadHistory();
   history.push({ ...entry, timestamp: new Date().toISOString() });
   writeFileSync(memoryPath(), JSON.stringify(history, null, 2), "utf-8");
@@ -59,7 +62,8 @@ function loadIntel() {
 
 function saveIntel(intel) {
   const config = loadConfig();
-  mkdirSync(config.logsDir, { recursive: true });
+  const dir = join(config.root, ".xentari");
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   writeFileSync(intelligencePath(), JSON.stringify(intel, null, 2), "utf-8");
 }
 
@@ -82,15 +86,15 @@ export function trackRecentFiles(files) {
   saveIntel(intel);
 }
 
-export function recordPattern(step, status) {
+export function recordPattern(step, status, files = []) {
   const intel = loadIntel();
-  const entry = { step, timestamp: new Date().toISOString() };
+  const entry = { step, files, timestamp: new Date().toISOString() };
   if (status === "success") {
     intel.successfulPatterns.push(entry);
-    intel.successfulPatterns = intel.successfulPatterns.slice(-30);
+    intel.successfulPatterns = intel.successfulPatterns.slice(-20); // Keep last 20 (Phase 45)
   } else {
     intel.failedPatterns.push(entry);
-    intel.failedPatterns = intel.failedPatterns.slice(-30);
+    intel.failedPatterns = intel.failedPatterns.slice(-20); // Keep last 20
   }
   saveIntel(intel);
 }
