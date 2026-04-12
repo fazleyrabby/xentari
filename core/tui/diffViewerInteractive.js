@@ -62,6 +62,7 @@ export async function interactiveDiff(oldStr, newStr, filePath = "Unknown File")
   const oldLines = oldStr ? oldStr.split("\n") : [];
 
 
+
   const newLines = newStr ? newStr.split("\n") : [];
 
   const total = Math.max(oldLines.length, newLines.length);

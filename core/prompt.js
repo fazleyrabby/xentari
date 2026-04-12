@@ -8,6 +8,8 @@ export function confirm(question) {
 
 
 
+
+
     readline.emitKeypressEvents(process.stdin);
     const wasRaw = process.stdin.isRaw;
     if (process.stdin.isTTY) {

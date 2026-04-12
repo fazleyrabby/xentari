@@ -375,6 +375,19 @@ The ultimate safety feature.
     *   **Automation Hooks:** Successfully verified that the system can be automated via environment variables (e.g., `XEN_AUTO_APPROVE`) for CI/CD and remote testing.
     *   **Regression Fixes:** Identified and fixed a critical syntax error in `diff.ts` discovered during the E2E execution loop.
 
+### Phase 57 — Zero-Configuration Auto-Indexing
+*   **Goal:** Ensure the system always operates with fresh project knowledge without manual intervention.
+*   **Result:**
+    *   **Startup Check:** Added a logic gate in the execution pipeline to detect missing indices.
+    *   **Just-in-Time Indexing:** Automatically triggers `indexProject` on the first task run if no `.xentari/` directory is present.
+
+### Phase 58 — Anti-Hallucination Dependency Injection
+*   **Goal:** Prevent models from assuming the existence of libraries not present in the project.
+*   **Result:**
+    *   **Context Hardware:** Integrated `package.json` analysis directly into the `DynamicContext` engine.
+    *   **Strict Constraints:** All planners and coders now receive a mandatory `# PROJECT DEPENDENCIES` block, grounding their architectural choices in the actual available stack.
+
+
 
 
 *   **Context Panel Simulation:** Added a dedicated visual block to show current project root, stack, and framework.

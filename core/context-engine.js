@@ -31,6 +31,19 @@ function buildKnowledgeContext(task, projectDir) {
   return `\n# RELEVANT PROJECT KNOWLEDGE\n${context}\n`;
 }
 
+function buildDependencyContext(projectDir) {
+  const pkgPath = join(projectDir, "package.json");
+  if (!existsSync(pkgPath)) return "";
+  try {
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+    const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+    const list = Object.keys(deps).join(", ");
+    return `\n# PROJECT DEPENDENCIES\nInstalled: ${list}\n`;
+  } catch {
+    return "";
+  }
+}
+
 export function buildDynamicContext(task, projectDir = process.cwd()) {
   const config = loadConfig();
   const contextDir = join(projectDir, "context");
@@ -43,8 +56,12 @@ export function buildDynamicContext(task, projectDir = process.cwd()) {
     dynamicContext += `# GLOBAL CONTEXT\n${readFileSync(globalPath, "utf-8")}\n`;
   }
 
+  // Dependencies (Anti-Hallucination)
+  dynamicContext += buildDependencyContext(projectDir);
+
   // Project Overview
   dynamicContext += buildProjectOverview(projectDir);
+
 
   // RAG Knowledge (Task 7)
   dynamicContext += buildKnowledgeContext(task, projectDir);

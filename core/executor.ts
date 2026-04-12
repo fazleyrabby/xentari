@@ -31,7 +31,8 @@ import * as ux from "./tui/ux.js";
 import { addToSession } from "./memory/session.js";
 import { detectStack } from "./project/detector.js";
 import { renderStatus } from "./tui/statusBar.js";
-import { loadIndex } from "./index.ts";
+import { loadIndex, indexProject } from "./index.ts";
+
 import { simulateFailure } from "./utils/simulation.js";
 
 
@@ -473,7 +474,16 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
   console.clear();
   log.header("🧠 Xentari CLI");
   log.info(`Project: ${projectDir}`);
+
+  // Auto-Index on first run (UX Critical)
+  const existingIndex = loadIndex(projectDir);
+  if (!existingIndex) {
+    log.info("Index missing. Initializing...");
+    await indexProject(projectDir);
+  }
+
   const stackInfo = detectStack(projectDir);
+
   log.info(`Stack:   ${stackInfo.stack}${stackInfo.framework ? ` (${stackInfo.framework})` : ""}\n`);
 
   // Phase 32: Context Panel (Simulation)

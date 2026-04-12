@@ -1,6 +1,20 @@
 {
   "history": [
     {
+      "task": "move todo logic to models/todo.js and routes/todo.js then connect to app.js",
+      "files": [
+        "app.js"
+      ],
+      "timestamp": 1776015407056
+    },
+    {
+      "task": "create models/todo.js with an in-memory todos array and export it",
+      "files": [
+        "app.js"
+      ],
+      "timestamp": 1776015351283
+    },
+    {
       "task": "create todo CRUD api",
       "files": [
         "app.js",

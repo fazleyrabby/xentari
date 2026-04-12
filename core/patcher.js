@@ -95,6 +95,8 @@ async function handleMissingFile(projectDir, errorPath) {
 
 
 
+
+
       const selectedDir = options[choice] !== undefined ? options[choice] : "root";
       selectedRelativePath = selectedDir === "root" ? fileName : join(selectedDir, fileName);
     }
