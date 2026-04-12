@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "./logger.js";
 import { runAgent } from "./agents/index.js";
-import { indexProject } from "./indexer.js";
+import { indexProject } from "./index.ts";
 import { getContext } from "./context.js";
 import { undo } from "./patcher.js";
 import { updateDuration } from "./metrics.js";
@@ -14,6 +14,8 @@ import { loadSummary } from "./analytics.js";
 import { handleCommand } from "./cli/handler.js";
 import { palette } from "./cli/palette.js";
 import readline from "node:readline";
+import { renderStatus } from "./tui/statusBar.js";
+import { renderHeader } from "./tui/header.js";
 
 const state = {
   lastTask: null,
@@ -24,70 +26,95 @@ const state = {
   registry: null
 };
 
-function formatTokens(n) {
-  if (n > 1000) return (n / 1000).toFixed(1) + "k";
-  return n;
-}
-
-export function renderStatus(metrics) {
-  if (!metrics) return;
-  updateDuration(metrics);
-
-  const line = [
-    `MODEL: ${metrics.model} (${metrics.tier.toUpperCase()})`,
-    `TOKENS: ${formatTokens(metrics.tokens)}`,
-    `TIME: ${(metrics.duration / 1000).toFixed(2)}s`,
-    `FILES: ${metrics.filesUsed}`,
-    `CHUNKS: ${metrics.chunksUsed || 0}`,
-    `RETRIES: ${metrics.retries}`
-  ].join(" | ");
-
-  console.log("\n" + "-".repeat(60));
-  console.log(line);
-  console.log("-".repeat(60));
-}
-
 export async function startTUI() {
-  const config = loadConfig();
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout
   });
-  
-  // Phase 39: Keypress handling for hotkeys
+
+  let isClosed = false;
+  let keypressHandler;
+
+  function exit() {
+    if (isClosed) return;
+    isClosed = true;
+
+    console.log("\n✋ Exiting Xentari...");
+
+    if (keypressHandler && process.stdin.isTTY) {
+      process.stdin.removeListener("keypress", keypressHandler);
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+    }
+    
+    rl.close();
+  }
+
+  // Handle Ctrl+C properly
+  rl.on("SIGINT", () => {
+    exit();
+  });
+
+  // Handle stream close
+  rl.on("close", () => {
+    if (!isClosed) exit();
+    process.exit(0);
+  });
+
+  // Phase 39: Keypress handling
   if (process.stdin.isTTY) {
     readline.emitKeypressEvents(process.stdin);
-    process.stdin.on("keypress", (str, key) => {
+    process.stdin.setRawMode(true);
+
+    keypressHandler = (str, key) => {
+      if (isClosed) return;
+
+      if (key && key.ctrl && key.name === "c") {
+        exit();
+        return;
+      }
+
       if (key && key.ctrl && key.name === "p") {
         process.stdout.write("\n");
         handleCommand("/palette");
         process.stdout.write("xen > ");
       }
-    });
+    };
+
+    process.stdin.on("keypress", keypressHandler);
   }
 
-  // Initialize plugins
+  // Init plugins
+  const config = loadConfig();
   const plugins = await loadPlugins(config.root);
   state.registry = buildCommandRegistry(plugins);
-  
+
   console.clear();
-  log.header("🧠 Xentari CLI");
+  renderHeader({ projectRoot: process.cwd(), stack: "node", mode: "normal" });
   console.log("Type your task or /help for commands.\n");
   console.log("Hotkeys: Ctrl+P (Palette)\n");
-  
-  while (true) {
+
+  // ✅ SAFE LOOP
+  async function loop() {
+    if (isClosed || rl.closed) return;
+
     try {
       const input = await rl.question("xen > ");
-      
-      if (!input.trim()) continue;
-      
-      // Use the new centralized command handler (Phase 27 & 39)
+
+      if (isClosed || rl.closed) return;
+
+      if (!input.trim()) {
+        return loop();
+      }
+
       const handled = handleCommand(input);
-      if (handled === true) continue;
-      
-      // Handle palette logic (Phase 39)
+      if (handled === true) {
+        return loop();
+      }
+
       let task = input;
       const paletteMatch = palette.find(p => input.startsWith(p.key));
+
       if (paletteMatch) {
         const extra = input.replace(paletteMatch.key, "").trim();
         task = `${paletteMatch.desc}${extra ? ` regarding ${extra}` : ""}`;
@@ -95,25 +122,32 @@ export async function startTUI() {
       }
 
       state.lastTask = input;
-      
+
       const result = await runAgent({
-        task: task,
+        task,
         projectDir: process.cwd(),
         dryRun: false,
         autoMode: true
       }, {
         onToken: (token) => {
-          process.stdout.write(token);
+          if (!isClosed) process.stdout.write(token);
         },
-        rl: rl
+        rl
       });
 
       state.metrics = result.metrics;
       const summary = loadSummary();
       renderDashboard(state.metrics, summary);
-      
+
     } catch (err) {
+      if (isClosed || rl.closed) return;
       log.error(`[ERROR] ${err.message}`);
     }
+
+    if (!isClosed && !rl.closed) {
+      loop();
+    }
   }
+
+  loop();
 }

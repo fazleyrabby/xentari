@@ -1,24 +1,64 @@
-import { loadConfig } from "../config.js";
-import { theme } from "./colors.js";
+import { log } from "../logger.js";
+import os from "node:os";
 
-export function renderHeader(state) {
-  const logo = `
+// ---------- ASCII ----------
+const LOGO = `
 ██╗  ██╗███████╗███╗   ██╗████████╗ █████╗ ██████╗ ██╗
 ╚██╗██╔╝██╔════╝████╗  ██║╚══██╔══╝██╔══██╗██╔══██╗██║
  ╚███╔╝ █████╗  ██╔██╗ ██║   ██║   ███████║██████╔╝██║
- ██╔██╗ ██╔══╝  ██║╚██╗██║   ██║   ██╔══██║██╔═══╝ ██║
-██╔╝ ██╗███████╗██║ ╚████║   ██║   ██║  ██║██║     ██║
-╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝╚═╝     ╚═╝
+ ██╔██╗ ██╔══╝  ██║╚██╗██║   ██║   ██╔══██║██╔══██╗██║
+██╔╝ ██╗███████╗██║ ╚████║   ██║   ██║  ██║██║  ██║██║
+╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝
 `;
 
-  console.log(logo);
+const LOGO_COMPACT = `XENTARI`;
 
-  console.log(theme.highlight("🧠 XENTARI v0.1.0"));
-  console.log(theme.muted("Local-first AI Dev System\n"));
+// ---------- helpers ----------
+function getTerminalWidth() {
+  return process.stdout.columns || 80;
+}
 
-  console.log(`${theme.info("📁 Project:")} ${state.projectRoot}`);
-  console.log(`${theme.info("📦 Stack:")}   ${state.stack}`);
-  console.log(`${theme.info("⚙ Mode:")}    ${state.mode || "normal"}`);
+function getModeLabel(mode) {
+  switch (mode) {
+    case "strict": return "STRICT";
+    case "sandbox": return "SANDBOX";
+    default: return "NORMAL";
+  }
+}
 
-  console.log(theme.muted("─".repeat(50)));
+// ---------- main ----------
+export function renderHeader({
+  project,
+  stack,
+  mode = "normal",
+  profile = null,
+}) {
+  const width = getTerminalWidth();
+
+  // ---------- responsive logo ----------
+  if (width >= 80) {
+    console.log(LOGO);
+  } else {
+    console.log(LOGO_COMPACT);
+  }
+
+  // ---------- meta ----------
+  log.info(`XENTARI v0.1.0`);
+  log.info(`Local-first AI Dev System\n`);
+
+  log.info(`📁 Project: ${project}`);
+  log.info(`📦 Stack:   ${stack || "unknown"}`);
+  log.info(`⚙️  Mode:    ${getModeLabel(mode)}`);
+
+  // ---------- profile (future-ready) ----------
+  if (profile) {
+    log.info(
+      `🧠 Model: ${profile.name} | Files: ${profile.maxFiles} | Tokens: ${profile.maxTokens}`
+    );
+  }
+
+  console.log("─".repeat(Math.min(width, 80)));
+
+  console.log(`Type your task or /help for commands.`);
+  console.log(`Hotkeys: Ctrl+P (Palette)\n`);
 }

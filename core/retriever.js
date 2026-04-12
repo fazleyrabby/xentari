@@ -6,7 +6,7 @@ import { loadConfig } from "./config.js";
 import { getRecentFileNames } from "./memory.js";
 import { getTierProfile } from "./tier.js";
 import { getContext } from "./context.js";
-import { loadIndex } from "./indexer.js";
+import { loadIndex } from "./index.ts";
 import { chunkText, selectRelevantChunks, buildContextWindow } from "./chunker.js";
 import { retrieveKnowledge } from "./rag.js";
 import { safePath } from "./project/guard.js";

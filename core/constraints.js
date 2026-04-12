@@ -15,7 +15,16 @@ export function enforceConstraints(output, rules = [], metrics = null) {
       // The spec says result = result.replace(/```[\s\S]*?```/g, "").trim();
       // but that might remove the code we want. 
       // Usually we want to EXTRACT from fences if they exist, or remove them if they surround everything.
-      if (result.includes("```")) {
+      // Extracts content from a single markdown block, or removes fences if they wrap the whole thing.
+      const fencedBlockRegex = /^```(?:\w*\n)?([\s\S]+?)\n?```$/;
+      const match = result.match(fencedBlockRegex);
+
+      if (match) {
+        // If the whole output is one fenced block, just use its content.
+        result = match[1];
+        fixes++;
+      } else if (result.includes("```")) {
+        // Otherwise, remove all markdown fences.
         result = result.replace(/```[\w]*\n?/g, "").replace(/```/g, "").trim();
         fixes++;
       }

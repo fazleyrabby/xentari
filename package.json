@@ -1,12 +1,29 @@
 {
   "name": "xentari",
   "version": "1.0.0",
+  "description": "**Xentari is a deterministic, local-first AI development system that executes coding tasks through structured pipelines instead of chat.**",
+  "keywords": [
+    "cli",
+    "ai"
+  ],
+  "homepage": "https://github.com/fazleyrabby/xentari#readme",
+  "bugs": {
+    "url": "https://github.com/fazleyrabby/xentari/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fazleyrabby/xentari.git"
+  },
+  "license": "ISC",
+  "author": "fazley",
   "type": "module",
+  "main": "index.js",
   "bin": {
-    "xen": "./bin/xen.js"
+    "xen": "bin/xen.js"
   },
   "scripts": {
-    "start": "node bin/xen.js"
+    "start": "node bin/xen.js",
+    "build": "tsc"
   },
   "dependencies": {
     "diff": "^7.0.0",

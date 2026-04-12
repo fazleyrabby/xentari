@@ -2,15 +2,15 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "./config.js";
-import { loadIndex } from "./indexer.js";
+import { loadIndex } from "./index.ts";
 import { retrieveKnowledge } from "./rag.js";
 
-function buildProjectOverview() {
-  const index = loadIndex();
+function buildProjectOverview(projectDir) {
+  const index = loadIndex(projectDir);
   if (!index) return "";
 
   const files = index.files.slice(0, 10);
-  const overview = files.map(f => `- ${f.path}: ${f.summary.slice(0, 80)}...`).join("\n");
+  const overview = files.map(f => `- ${f.file}: [${f.functions.join(", ")}]`).join("\n");
   
   return `\n# PROJECT OVERVIEW\nProject contains:\n${overview}\n`;
 }
@@ -23,18 +23,17 @@ function trimContext(text, maxChars = 3000) {
 /**
  * Task 7: Inject into Context
  */
-function buildKnowledgeContext(task) {
-  const knowledge = retrieveKnowledge(task);
+function buildKnowledgeContext(task, projectDir) {
+  const knowledge = retrieveKnowledge(task, projectDir);
   if (knowledge.length === 0) return "";
 
-  const context = knowledge.map(f => `- ${f.path}: ${f.summary}`).join("\n");
+  const context = knowledge.map(f => `- ${f.file}: [${f.functions.join(", ")}]`).join("\n");
   return `\n# RELEVANT PROJECT KNOWLEDGE\n${context}\n`;
 }
 
 export function buildDynamicContext(task, projectDir = process.cwd()) {
   const config = loadConfig();
   const contextDir = join(projectDir, "context");
-  const xenContextPath = join(projectDir, xenContextPathName(projectDir));
   
   let dynamicContext = "";
 
@@ -45,10 +44,10 @@ export function buildDynamicContext(task, projectDir = process.cwd()) {
   }
 
   // Project Overview
-  dynamicContext += buildProjectOverview();
+  dynamicContext += buildProjectOverview(projectDir);
 
   // RAG Knowledge (Task 7)
-  dynamicContext += buildKnowledgeContext(task);
+  dynamicContext += buildKnowledgeContext(task, projectDir);
 
   // Stack Detection
   const { stack } = detectStack(task, projectDir);

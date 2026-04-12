@@ -3,12 +3,16 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "strict": true,
-    "esModuleInterop": true,
+    "ignoreDeprecations": "6.0",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "outDir": "dist",
+    "rootDir": ".",
     "allowJs": true,
     "checkJs": false,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "dist"
+    "strict": false
   },
-  "include": ["core", "bin"]
+  "include": ["core", "src"]
 }

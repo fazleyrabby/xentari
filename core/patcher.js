@@ -1,5 +1,6 @@
-import { writeFileSync, unlinkSync, existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { writeFileSync, unlinkSync, existsSync, readFileSync, mkdirSync, readdirSync } from "node:fs";
+import { join, dirname } from "node:path";
+
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -14,7 +15,12 @@ import { splitDiff, rebuildDiff } from "./patch/partial.js";
 import { parseDiff } from "./diff/parser.js";
 import { alignDiff } from "./diff/align.js";
 import { renderDiff } from "./tui/diffView.js";
+import { confirm } from "./prompt.js";
+import { log } from "./logger.js";
+import { resolveFileLocation } from "./project/autoPlacement.js";
 import readline from "node:readline";
+
+
 
 function tmpPatchPath() {
   const id = randomBytes(6).toString("hex");
@@ -38,9 +44,6 @@ export function validatePatch(patch) {
   if (!patch || typeof patch !== "string") {
     return { valid: false, errors: ["Patch is empty or not a string"] };
   }
-  if (!patch.includes("diff --git")) {
-    errors.push('Missing "diff --git" header');
-  }
   if (!patch.includes("@@")) {
     errors.push('Missing "@@" hunk markers');
   }
@@ -56,36 +59,121 @@ export function validatePatch(patch) {
   return { valid: errors.length === 0, errors };
 }
 
+async function handleMissingFile(projectDir, errorPath) {
+  const fileName = errorPath.split("/").pop();
+  try {
+    const { path: solvedPath, confidence } = resolveFileLocation(fileName, projectDir);
+    let selectedRelativePath = null;
+
+    if (confidence === "HIGH") {
+      log.ok(`[PLACEMENT] Auto-selected: ${solvedPath} (Confidence: HIGH)`);
+      selectedRelativePath = join(solvedPath, fileName);
+    } else if (confidence === "MEDIUM") {
+      log.info(`[PLACEMENT] Suggestion: ${solvedPath} (Confidence: MEDIUM)`);
+      selectedRelativePath = join(solvedPath, fileName);
+    } else {
+      const shouldCreate = await confirm(`File '${fileName}' does not exist. Create it?`);
+      if (!shouldCreate) return null;
+
+      const projectDirs = readdirSync(projectDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory() && !dirent.name.startsWith('.'))
+        .map(dirent => dirent.name);
+      
+      const options = [...projectDirs, "root"];
+
+      console.log("\nWhere do you want to create this file?");
+      options.forEach((opt, idx) => console.log(`${idx + 1}. ${opt}/`));
+
+      const choice = await new Promise(resolve => {
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        process.stdout.write(`Select option (1-${options.length}): `);
+        rl.on("line", (line) => {
+          rl.close();
+          resolve(parseInt(line.trim()) - 1);
+        });
+      });
+
+      const selectedDir = options[choice] !== undefined ? options[choice] : "root";
+      selectedRelativePath = selectedDir === "root" ? fileName : join(selectedDir, fileName);
+    }
+
+    const fullPath = join(projectDir, selectedRelativePath);
+    mkdirSync(dirname(fullPath), { recursive: true });
+    writeFileSync(fullPath, "");
+    console.log(`\n✅ Created: ${selectedRelativePath}`);
+    
+    return { retry: true, filePath: selectedRelativePath, errorPath };
+  } catch (err) {
+    console.error(`Failed to handle missing file: ${err.message}`);
+    return null;
+  }
+}
+
+
 export async function applyPatch(projectDir, patch, dryRun = false, newContent = null) {
-  // Task 4: Safe Path Guard
-  const files = extractFilesFromPatch(patch);
+  let currentPatch = patch;
+  // Task 4: Safe Path Guard & Directory Creation
+  const files = extractFilesFromPatch(currentPatch);
+
   for (const file of files) {
     try {
-      safePath(projectDir, file);
+      const fullPath = safePath(projectDir, file);
+      const dir = dirname(fullPath);
+      // Ensure directory exists before applying patch
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
     } catch (err) {
       return { applied: false, valid: false, reason: `Safety Error: ${err.message} (${file})` };
     }
   }
 
   const patchPath = tmpPatchPath();
-  writeFileSync(patchPath, patch, "utf-8");
+  writeFileSync(patchPath, currentPatch, "utf-8");
 
   try {
-    execSync(`git apply --check --ignore-whitespace "${patchPath}"`, {
-      cwd: projectDir,
-      stdio: "pipe",
-    });
+    try {
+      execSync(`git apply --check --ignore-whitespace "${patchPath}"`, {
+        cwd: projectDir,
+        stdio: "pipe",
+      });
+    } catch (err) {
+      const stderr = err.stderr?.toString().trim() || err.message;
+      if (stderr.includes("No such file or directory")) {
+        const match = stderr.match(/([^:\s]+): No such file or directory/);
+        if (match) {
+          const res = await handleMissingFile(projectDir, match[1]);
+          if (res && res.retry) {
+            // Update patch and return retry signal
+            const updatedPatch = currentPatch.split(res.errorPath).join(res.filePath);
+            return { applied: false, valid: false, retry: true, patch: updatedPatch };
+          }
+        }
+      }
+      throw err;
+    }
+
+
 
     if (dryRun) {
       return { applied: false, reason: "dry-run", valid: true };
     }
 
     // Try to extract old content for side-by-side preview
-    const filePathMatch = patch.match(/^--- a\/(.+)$/m);
+    const oldFileMatch = currentPatch.match(/^--- a\/(.+)$/m);
+    const newFileMatch = currentPatch.match(/^\+\+\+ b\/(.+)$/m);
     let oldContent = "";
     let targetPath = "Unknown File";
-    if (filePathMatch) {
-      targetPath = filePathMatch[1];
+    
+    if (oldFileMatch) {
+      targetPath = oldFileMatch[1];
+    } else if (newFileMatch) {
+      targetPath = newFileMatch[1];
+    } else if (files.length > 0) {
+      targetPath = files[0];
+    }
+
+    if (targetPath !== "Unknown File" && targetPath !== "/dev/null") {
       const originalPath = safePath(projectDir, targetPath);
       if (existsSync(originalPath)) {
         try {
@@ -95,11 +183,11 @@ export async function applyPatch(projectDir, patch, dryRun = false, newContent =
     }
 
     let approved = false;
-    let finalPatch = patch;
+    let finalPatch = currentPatch;
 
     try {
       // Phase 51: Side-by-Side Diff Viewer (Colored)
-      const parsed = parseDiff(patch);
+      const parsed = parseDiff(currentPatch);
       const aligned = alignDiff(parsed);
       renderDiff(aligned);
 
@@ -107,13 +195,14 @@ export async function applyPatch(projectDir, patch, dryRun = false, newContent =
       if (newContent) {
         approved = await interactiveDiff(oldContent, newContent, targetPath);
       } else {
-        diffInteractive.renderSideBySide(oldContent.slice(0, 5000), patch.slice(0, 5000));
+        diffInteractive.renderSideBySide(oldContent.slice(0, 5000), currentPatch.slice(0, 5000));
         approved = await diffInteractive.interactiveApprove();
       }
 
       // Phase 28: Partial Apply logic
       if (approved) {
-        const hunks = splitDiff(patch);
+        const hunks = splitDiff(currentPatch);
+
         if (hunks.length > 1) {
           console.log(`\nDetected ${hunks.length} changes (hunks).`);
           const wantPartial = await new Promise(res => {
@@ -152,7 +241,8 @@ export async function applyPatch(projectDir, patch, dryRun = false, newContent =
       }
     } catch (e) {
       console.warn("Fallback to simple diff");
-      simpleDiffPreview(oldContent, newContent || patch);
+      simpleDiffPreview(oldContent, newContent || currentPatch);
+
       approved = await askApproval({
         type: APPROVAL_TYPES.PATCH,
         message: "Apply changes?"

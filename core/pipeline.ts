@@ -4,21 +4,40 @@ import { log, logToFile } from "./logger.js";
 import { plan } from "./planner.js";
 import { retrieve } from "./retriever.js";
 import { generatePatch } from "./coder.js";
-import { patchToUnified } from "./diff-generator.js";
+import { patchToUnified } from "./diff.ts";
 import { review, isApproved } from "./reviewer.js";
 import { applyPatch, validatePatch } from "./patcher.js";
 import { remember, trackRecentFiles, recordPattern } from "./memory.js";
 import { summarizePatch } from "./summarizer.js";
 import { confirm } from "./prompt.js";
 import { detectTier, getTierProfile } from "./tier.js";
-
 import { resolveContract } from "./retrieval/resolver.ts";
 import { buildContext } from "./retrieval/contextBuilder.ts";
 import { validateContext } from "./retrieval/validator.ts";
 import { trimContext } from "./retrieval/tokenLimiter.ts";
 import { stage, statusBar } from "./tui/index.js";
-import { Task, Context, PipelineResult } from "./types/index.ts";
+import { Task as TaskType, Context, PipelineResult } from "./types/index.ts";
 import crypto from "crypto";
+
+export type StepType = "plan" | "retrieve" | "code" | "review";
+export type StepStatus = "pending" | "running" | "done" | "failed";
+
+export type Step = {
+  id: string;
+  type: StepType;
+  status: StepStatus;
+};
+
+export type Task = {
+  input: string;
+  steps: Step[];
+};
+
+export type Result = {
+  success: boolean;
+  output?: string;
+  error?: string;
+};
 
 function elapsed(start: number): number {
   return Date.now() - start;
@@ -30,16 +49,16 @@ function extractPatchFiles(patch: string): string[] {
 
 function createChain() {
   return {
-    modifiedFiles: [],
-    patchSummaries: [],
-    get patchSummary() {
+    modifiedFiles: [] as string[],
+    patchSummaries: [] as string[],
+    get patchSummary(): string | null {
       return this.patchSummaries.length ? this.patchSummaries.join("; ") : null;
     },
   };
 }
 
 async function codeAndReview(step: any, files: any[], maxAttempts: number, chainContext: any, projectDir: string): Promise<{ patch: string | null; approved: boolean; review?: string | null }> {
-  let feedback = null;
+  let feedback: string | null = null;
   let consecutiveReviewFails = 0;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -108,7 +127,7 @@ async function codeAndReview(step: any, files: any[], maxAttempts: number, chain
   return { patch: null, approved: false, review: feedback };
 }
 
-async function processStep(step: Task, index: number, opts: any, chain: any): Promise<void> {
+async function processStep(step: TaskType, index: number, opts: any, chain: any): Promise<void> {
   const { projectDir, dryRun, autoMode, maxAttempts, task } = opts;
   const stepStart = Date.now();
   const mode = dryRun ? "dry" : autoMode ? "auto" : "normal";
@@ -123,7 +142,7 @@ async function processStep(step: Task, index: number, opts: any, chain: any): Pr
   }
 
   try {
-    const contract = resolveContract(step.type);
+    const contract = resolveContract(step.type!);
     const context = buildContext({
       filePath: (step.filePath || (step.files && step.files[0]) || "") as string,
       functionName: step.functionName,
@@ -294,7 +313,7 @@ export async function run({ task, projectDir, dryRun, autoMode }: { task: string
   const chain = createChain();
   const maxAttempts = autoMode ? profile.maxRetries : 1;
   for (let i = 0; i < steps.length; i++) {
-    await processStep(steps[i] as any as Task, i, { projectDir, dryRun, autoMode, maxAttempts, task }, chain);
+    await processStep(steps[i] as any as TaskType, i, { projectDir, dryRun, autoMode, maxAttempts, task }, chain);
   }
 
   const totalMs = elapsed(totalStart);

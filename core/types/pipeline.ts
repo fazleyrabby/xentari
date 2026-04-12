@@ -9,10 +9,10 @@ export class Task {
 }
 
 export class Context {
-  file = "";
-  imports: string[] = [];
+  file? = "";
+  imports?: string[] = [];
   functionBlock? = "";
-  dependencies: string[] = [];
+  dependencies?: string[] = [];
 }
 
 export class PipelineResult {

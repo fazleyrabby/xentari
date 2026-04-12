@@ -1,3 +1,11 @@
 {
-  "history": []
+  "history": [
+    {
+      "task": "add a function to multiply two numbers in src/math.js",
+      "files": [
+        "src/math.js"
+      ],
+      "timestamp": 1776007976352
+    }
+  ]
 }

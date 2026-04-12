@@ -1,5 +1,6 @@
 node_modules/
 logs/
-report.md
 phase*.md
 .DS_Store
+.antigravity/
+.xentari/

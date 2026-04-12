@@ -4,7 +4,7 @@ import { detectTier, getTierProfile } from "./tier.js";
 import { log } from "./logger.js";
 import { loadConfig } from "./config.js";
 import { enforceConstraints, validateFileOutput } from "./constraints.js";
-import { loadIndex } from "./indexer.js";
+import { loadIndex } from "./index.ts";
 
 const BASE_SYSTEM = `You are a code editor.
 

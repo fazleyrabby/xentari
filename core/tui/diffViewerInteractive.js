@@ -67,7 +67,10 @@ export async function interactiveDiff(oldStr, newStr, filePath = "Unknown File")
   const pageSize = Math.min(process.stdout.rows - 10, 30);
 
   readline.emitKeypressEvents(process.stdin);
-  if (process.stdin.isTTY) process.stdin.setRawMode(true);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+  }
 
   function render() {
     console.clear();
@@ -108,7 +111,9 @@ export async function interactiveDiff(oldStr, newStr, filePath = "Unknown File")
     };
 
     function cleanup() {
-      if (process.stdin.isTTY) process.stdin.setRawMode(false);
+      if (process.stdin.isTTY) {
+        process.stdin.pause(); // Return stream to idle state
+      }
       process.stdin.removeListener("keypress", onKeypress);
     }
 
