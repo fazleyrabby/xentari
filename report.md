@@ -651,6 +651,15 @@ Xentari is organized into a modular hierarchy to separate concerns:
     *   **Contextual Binding:** Added strict injection in `executor.ts`, ensuring the coder agent ALWAYS receives detailed task descriptions and strict constraints instead of naked file paths.
     *   **End-to-End Stability:** Verified that the multi-step scaffolding pipeline fully iterates through pre-generated `task.json` plans without throwing execution sequence errors.
 
+### Phase 71 — External Isolation Testing & E2E Scaffold Validation
+*   **Goal:** Run a clean end-to-end scaffolding test fully outside the Xentari source tree to validate execution stability in a real-world project scenario.
+*   **Result:**
+    *   **Isolation Enforcement:** Identified and enforced a firm rule: all test scaffold projects must be created outside the Xentari codebase (e.g., `Desktop/Projects/xentari-testing`). Creating test projects inside the Xentari repository polluted the `.xentari/` knowledge index, causing the agent to confuse its own configuration files as target context.
+    *   **Scaffold Execution Verified:** Successfully ran `xen run "build project"` in `Desktop/Projects/xentari-testing` against a full 10-step Todo API scaffold definition (`plan.json` + task files).
+    *   **Pipeline Stability Confirmed:** All 10 tasks loaded correctly. Zero `TARGET_VIOLATION` errors. The executor correctly hydrated each step's `update.file` with `step.target` before enforcement checks.
+    *   **Generator Fix:** Updated `xentari-task-generator.cjs` to emit `001.json`, `002.json`, etc. (matching the executor's strict `<id>.json` lookup format) rather than verbose filenames, resolving a silent task-loading failure.
+    *   **Known Model Behaviour (Not CLI Bug):** The underlying LLM occasionally blends multi-file context into a single output (e.g., outputting `package.json` content into `src/index.js`). This is a prompt-engineering boundary issue within the model layer and does not affect the state machine integrity.
+
 ---
 
 # 📊 6. Validation & Scoring System
@@ -677,10 +686,11 @@ The system logs failures into categories:
 Xentari has evolved into a **Professional-Grade Local Assistant**. It is now **Deterministic**, **Safe**, and **Highly Observable**.
 
 ### Next Strategic Focus:
-1. **Full TypeScript Migration:** Transitioning all remaining `.js` files to `.ts` and implementing strict type-checking across agent boundaries.
-2. **Advanced Contract Expansion:** Developing specialized context contracts for frontend frameworks (React/Next.js) and data-heavy Python stacks.
-3. **Cross-Workspace Dashboard:** Enhancing the metrics system to provide a unified view of performance across multiple indexed projects.
-4. **Interactive Conflict Resolution:** Implementing a terminal UI for resolving merge conflicts during sandbox deployments.
+1. **Prompt Boundary Hardening (Phase 72):** The model occasionally outputs blended multi-file content (e.g., injecting `package.json` into `src/index.js`). The next session should reinforce the coder prompt with stricter single-file boundary rules and example-based guidance.
+2. **Full TypeScript Migration:** Transitioning all remaining `.js` files to `.ts` and implementing strict type-checking across agent boundaries.
+3. **Advanced Contract Expansion:** Developing specialized context contracts for frontend frameworks (React/Next.js) and data-heavy Python stacks.
+4. **Cross-Workspace Dashboard:** Enhancing the metrics system to provide a unified view of performance across multiple indexed projects.
+5. **Interactive Conflict Resolution:** Implementing a terminal UI for resolving merge conflicts during sandbox deployments.
 
 ---
 
