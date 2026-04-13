@@ -34,6 +34,14 @@ import { renderStatus } from "./tui/statusBar.js";
 import { loadIndex, indexProject } from "./index.ts";
 import { runTest, summarizeFailure } from "./utils/testRunner.ts";
 import { selectContext, formatContext } from "./retrieval/contextEngine.ts";
+import { 
+  loadSnapshot, 
+  saveSnapshot, 
+  validateContracts, 
+  updateSnapshotAfterStep, 
+  checkStale, 
+  captureFileSnapshot 
+} from "./retrieval/consistency.ts";
 
 import { simulateFailure } from "./utils/simulation.js";
 
@@ -162,6 +170,16 @@ async function validateStep(projectDir: string, step: Step, fileUpdate: { file: 
     }
   }
 
+  // Phase 8: Consistency Engine (Contract Validation)
+  try {
+    const snapshot = loadSnapshot(projectDir);
+    validateContracts({ path: step.target, content: fileUpdate.content, role: step.role }, snapshot);
+    log.step("CONSISTENCY", "✓", "CONTRACT OK");
+  } catch (err: any) {
+    log.step("CONSISTENCY", "✗", "CONTRACT MISMATCH");
+    return { valid: false, reason: err.message };
+  }
+
   // 2. Test-Aware Validation
   // Only run if step explicitly asks for it or it's a critical module
   if (step.type === "modify" || step.type === "create") {
@@ -203,6 +221,13 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
 
   updateState("running");
 
+  // Phase 8: Cascade Guard (Block if previous step failed)
+  if (chain.hasFailure) {
+    log.step("STEP", "✗", "CASCADE_BLOCKED");
+    updateState("failed");
+    throw new Error("CASCADE_BLOCKED: Previous step failed.");
+  }
+
   // Fix: Ensure a file path is available for steps that need it.
   if (!step.files?.length && !(step as any).filePath) {
     if ((step.type === 'create' || step.type === 'modify') && step.target) {
@@ -238,6 +263,19 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
   try {
      const bundle = selectContext(step.target, projectDir);
      files = [{ file: step.target, content: bundle.target, score: 1.0 }];
+     
+     // Phase 8: Stale Context Check
+     const snapshot = loadSnapshot(projectDir);
+     if (snapshot.files[step.target]) {
+       try {
+         checkStale(step.target, bundle.target, snapshot.files[step.target].hash);
+       } catch (err: any) {
+         log.step("CONTEXT", "⚠", "STALE_DETECTION");
+         // Auto-update snapshot if stale context is detected but target is same
+         updateSnapshotAfterStep(projectDir, step.target, bundle.target);
+       }
+     }
+
      log.step("RETRIEVE", "✓", "DETERMINISTIC OK");
   } catch (err: any) {
     log.step("RETRIEVE", "✗", "FALLBACK TO LEGACY");
@@ -255,12 +293,16 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
         ? `${(step as any).description}\nConstraints: ${((step as any).constraints || []).join(', ')}`
         : step.target;
 
+      // Phase 8: Inject System Snapshot for Consistency awareness
+      const snapshot = loadSnapshot(projectDir);
+
       const fileUpdates = await generateWithRetry(taskInstruction, files, feedback, chain, 1, { 
         onToken, 
         metrics, 
         role: step.role, 
         pattern: step.pattern,
-        projectDir
+        projectDir,
+        systemSnapshot: snapshot // New opt
       });
 
       if (!fileUpdates || fileUpdates.length === 0) throw new Error("EMPTY_OUTPUT");
@@ -293,6 +335,7 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       if (!approved) {
         log.step("PATCH", "✗", "rejected by user");
         updateState("failed");
+        chain.hasFailure = true;
         return;
       }
 
@@ -301,6 +344,10 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       if (result.applied) {
         log.step("PATCH", "✓");
         chain.modifiedFiles.push(step.target);
+        
+        // Phase 8: Post-Step Validation (Update Snapshot)
+        updateSnapshotAfterStep(projectDir, step.target, update.content);
+        
         updateState("done");
         return;
       } else {
@@ -311,6 +358,7 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       if (attempt >= 2) {
         log.step("STEP", "✗", `FAILED: ${err.message}`);
         updateState("failed");
+        chain.hasFailure = true; // Block cascade
         throw err;
       }
       feedback = `Execution failed: ${err.message}. Fix and try again.`;
@@ -343,6 +391,23 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
   if (!existsSync(indexPath)) {
     log.info("[EXECUTOR] Index missing. Initializing project analysis...");
     await indexProject(projectDir);
+  }
+
+  // Phase 8: Consistency Engine (Initialize Snapshot)
+  const snapshot = loadSnapshot(projectDir);
+  const index = loadIndex(projectDir);
+  if (index && Object.keys(snapshot.files).length === 0) {
+    log.info("[EXECUTOR] Snapshot missing. Capturing initial system state...");
+    index.files.forEach((f: any) => {
+      try {
+        const fullPath = join(projectDir, f.file);
+        if (existsSync(fullPath)) {
+          const content = readFileSync(fullPath, "utf-8");
+          snapshot.files[f.file] = captureFileSnapshot(f.file, content);
+        }
+      } catch {}
+    });
+    saveSnapshot(projectDir, snapshot);
   }
 
   const stackInfo = detectStack(projectDir);

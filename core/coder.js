@@ -117,7 +117,7 @@ function detectModule(task) {
   return null;
 }
 
-function buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir } = {}) {
+function buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot } = {}) {
   const tier = detectTier();
   const index = loadIndex();
   
@@ -132,6 +132,25 @@ function buildPrompt(step, files, feedback, chainContext, { role, pattern, proje
 📦 CONTEXT BUNDLE (PHASE 6)
 ==================================================
 ${contextBundle}`;
+
+  // Phase 8: System Snapshot (Consistency)
+  if (systemSnapshot) {
+    const snapshotStr = Object.entries(systemSnapshot.files)
+      .map(([path, info]) => `- ${path}: [${info.exports.join(", ")}]`)
+      .join("\n");
+    
+    system += `\n\n==================================================
+📊 SYSTEM SNAPSHOT (PHASE 8)
+==================================================
+This snapshot represents the current state of exports in the system. 
+You MUST NOT break these contracts unless explicitly asked.
+
+FILES:
+${snapshotStr}
+
+RELATIONS:
+${JSON.stringify(systemSnapshot.relations, null, 2)}`;
+  }
 
   // Phase 4: Structure Enforcement (ROLE + PATTERN)
   if (role && pattern) {
@@ -169,7 +188,7 @@ function extractFileContent(raw, maxFiles = 1) {
   return [{ file: null, content }];
 }
 
-export async function generatePatch(step, files, feedback, chainContext, { onToken, metrics, role, pattern } = {}) {
+export async function generatePatch(step, files, feedback, chainContext, { onToken, metrics, role, pattern, projectDir, systemSnapshot } = {}) {
   const tier = detectTier();
   const profile = getTierProfile();
   const config = loadConfig();
@@ -189,7 +208,7 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
     log.info(`[CODER] Analysis complete.`);
   }
 
-  const messages = buildPrompt(step, files, feedback, chainContext, { role, pattern });
+  const messages = buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot });
   if (analysis) {
     messages[messages.length - 1].content += `\n\nFile Analysis:\n${analysis}`;
   }

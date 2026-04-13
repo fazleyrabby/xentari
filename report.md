@@ -683,6 +683,15 @@ Xentari is organized into a modular hierarchy to separate concerns:
     *   **Word Boundaries:** Switched to word-boundary regex (`\breq\b`) to prevent matches within other variable names or literals.
     *   **Deterministic Success:** Verified the fix against the `patterns.test.js` suite, achieving 100% pass rate.
 
+### Phase 75 — Consistency Engine (System Snapshot)
+*   **Goal:** Ensure cross-file and cross-step consistency beyond single-file validity.
+*   **Result:**
+    *   **Snapshot Management:** Implemented `/core/retrieval/consistency.ts` to capture, persist, and load system snapshots (hashes and exports).
+    *   **Contract Validation:** Added logic to detect "Contract Mismatches" by verifying that functions used in one file (e.g., controller) are actually exported by its dependencies (e.g., service).
+    *   **Cascade Guard:** Implemented a system-wide block that prevents subsequent steps from executing if a previous step has failed, protecting system integrity.
+    *   **Stale Context Detection:** Added JIT checks to ensure that the context being used by the model hasn't drifted since the snapshot was taken.
+    *   **Interface Preservation:** Enforced strict rules against renaming or removing exported functions without explicit coordination, reducing the risk of broken modules during multi-step tasks.
+
 ### 🧠 XENTARI — PHASE 4: STRUCTURE ENFORCEMENT (AGENT + SYSTEM SPEC)
 
 **Goal:** Eliminate architectural inconsistency, make structure deterministic, and reduce model decision surface to near-zero.
