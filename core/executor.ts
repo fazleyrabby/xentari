@@ -42,6 +42,12 @@ import {
   checkStale, 
   captureFileSnapshot 
 } from "./retrieval/consistency.ts";
+import { 
+  isWithinScope, 
+  intentAllowsContractBreak, 
+  validateChangeSize,
+  Intent
+} from "./retrieval/intentEngine.ts";
 
 import { simulateFailure } from "./utils/simulation.js";
 
@@ -60,6 +66,7 @@ export type Step = {
   status?: StepStatus;
   role?: string;
   pattern?: string;
+  intent?: Intent;
 };
 
 export type AgentOptions = {
@@ -158,6 +165,12 @@ function validateStepResult(projectDir: string, fileUpdate: { file: string; cont
 }
 
 async function validateStep(projectDir: string, step: Step, fileUpdate: { file: string; content: string }) {
+  // Phase 9: Scope Enforcement
+  if (step.intent && !isWithinScope(step.target, step.intent)) {
+    log.step("INTENT", "✗", "SCOPE_VIOLATION");
+    return { valid: false, reason: `Scope violation: Change to ${step.target} is outside intended scope (${step.intent.scope}).` };
+  }
+
   // 1. Structure Validation (Phase 4)
   if (step.role && step.pattern) {
     try {
@@ -176,8 +189,27 @@ async function validateStep(projectDir: string, step: Step, fileUpdate: { file: 
     validateContracts({ path: step.target, content: fileUpdate.content, role: step.role }, snapshot);
     log.step("CONSISTENCY", "✓", "CONTRACT OK");
   } catch (err: any) {
-    log.step("CONSISTENCY", "✗", "CONTRACT MISMATCH");
-    return { valid: false, reason: err.message };
+    // Phase 9: Intent-Driven Override
+    if (step.intent && intentAllowsContractBreak(step.intent)) {
+      log.step("CONSISTENCY", "⚠", "CONTRACT_BREAK_ALLOWED_BY_INTENT");
+    } else {
+      log.step("CONSISTENCY", "✗", "CONTRACT MISMATCH");
+      return { valid: false, reason: err.message };
+    }
+  }
+
+  // Phase 9: Minimal Change Enforcer
+  if (step.intent) {
+    const fullPath = join(projectDir, step.target);
+    let oldContent = "";
+    if (existsSync(fullPath)) {
+      oldContent = readFileSync(fullPath, "utf-8");
+    }
+    const sizeValidation = validateChangeSize(oldContent, fileUpdate.content, step.intent);
+    if (!sizeValidation.valid) {
+      log.step("INTENT", "✗", "OVER_MODIFICATION");
+      return { valid: false, reason: sizeValidation.reason };
+    }
   }
 
   // 2. Test-Aware Validation
@@ -302,7 +334,8 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
         role: step.role, 
         pattern: step.pattern,
         projectDir,
-        systemSnapshot: snapshot // New opt
+        systemSnapshot: snapshot,
+        intent: step.intent // Phase 9
       });
 
       if (!fileUpdates || fileUpdates.length === 0) throw new Error("EMPTY_OUTPUT");

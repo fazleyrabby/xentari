@@ -35,6 +35,11 @@ Example Step:
   "role": "controller",
   "pattern": "controller",
   "testCode": "assert.ok(target.handleRequest);",
+  "intent": {
+    "type": "add",
+    "scope": "file",
+    "description": "Create controller to handle user requests"
+  },
   "dependsOn": [1]
 }
 
@@ -43,6 +48,10 @@ IMPORTANT CONTEXT:
 - Use the appropriate language and tools for the detected stack.
 - DO NOT generate code in languages that do not match the project.
 - If a step is critical, provide a minimal 'testCode' (JavaScript) to verify the implementation.
+- Every step MUST include an 'intent' object describing the PURPOSE and SCOPE of the change.
+
+ALLOWED INTENT TYPES: modify | refactor | add | remove
+ALLOWED INTENT SCOPES: file | module | system
 
 OUTPUT FORMAT:
 Output ONLY a JSON object with a "steps" key containing the array of steps.
@@ -50,6 +59,7 @@ Each step MUST have:
 - "id": unique integer starting from 1
 - "type": one of the allowed step types listed above
 - "target": a short implementation-focused description or file path
+- "intent": an object with "type", "scope", and "description"
 - "dependsOn": array of step IDs that MUST be completed before this step
 - "testCode": (optional) a string containing a minimal JS test using 'assert' and the 'target' module.
 
@@ -153,7 +163,8 @@ export async function plan(task, { metrics, projectDir } = {}) {
       dependsOn: Array.isArray(s.dependsOn) ? s.dependsOn.map(Number) : [],
       role: s.role ? String(s.role) : undefined,
       pattern: s.pattern ? String(s.pattern) : undefined,
-      testCode: s.testCode ? String(s.testCode) : undefined
+      testCode: s.testCode ? String(s.testCode) : undefined,
+      intent: s.intent || { type: "modify", scope: "file", description: s.target || "Automated update" }
     }));
   } catch {
     return [{ id: 1, type: "modify", target: task, files: [], dependsOn: [] }];

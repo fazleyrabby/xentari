@@ -692,6 +692,15 @@ Xentari is organized into a modular hierarchy to separate concerns:
     *   **Stale Context Detection:** Added JIT checks to ensure that the context being used by the model hasn't drifted since the snapshot was taken.
     *   **Interface Preservation:** Enforced strict rules against renaming or removing exported functions without explicit coordination, reducing the risk of broken modules during multi-step tasks.
 
+### Phase 76 — Intent Engine (Controlled Flexibility)
+*   **Goal:** Enable safe, intent-driven evolution of the codebase while maintaining strict control.
+*   **Result:**
+    *   **Intent Awareness:** Implemented `/core/retrieval/intentEngine.ts` to define and enforce task intent (modify, refactor, add, remove).
+    *   **Scope Enforcement:** Added strict validation to ensure changes are restricted to the intended file or module scope.
+    *   **Controlled Breaking:** Enabled the system to allow necessary "breaking changes" (like function renames) ONLY when the intent is explicitly set to `refactor`.
+    *   **Minimal Change Enforcer:** Introduced heuristics to prevent "over-modification" where a model might rewrite large portions of a file unnecessarily for a small task.
+    *   **Guided Implementation:** The Planner now generates explicit intents for each step, which are then used to ground the Coder and validator layers in the PURPOSE of the change.
+
 ### 🧠 XENTARI — PHASE 4: STRUCTURE ENFORCEMENT (AGENT + SYSTEM SPEC)
 
 **Goal:** Eliminate architectural inconsistency, make structure deterministic, and reduce model decision surface to near-zero.

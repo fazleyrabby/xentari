@@ -116,11 +116,10 @@ function detectModule(task) {
   if (lower.includes("api") || lower.includes("route")) return "api";
   return null;
 }
-
-function buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot } = {}) {
+function buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot, intent } = {}) {
   const tier = detectTier();
   const index = loadIndex();
-  
+
   // Phase 6: Deterministic Context Bundle
   const targetPath = (typeof step === 'string' && step.includes("/")) ? step : (files[0]?.file || "");
   const bundle = selectContext(targetPath, projectDir);
@@ -133,8 +132,21 @@ function buildPrompt(step, files, feedback, chainContext, { role, pattern, proje
 ==================================================
 ${contextBundle}`;
 
+  // Phase 9: Intent Engine
+  if (intent) {
+    system += `\n\n==================================================
+📜 INTENT (PHASE 9)
+==================================================
+You MUST align your changes with this intent. Do NOT introduce unrelated logic.
+
+TYPE: ${intent.type}
+SCOPE: ${intent.scope}
+GOAL: ${intent.description}`;
+  }
+
   // Phase 8: System Snapshot (Consistency)
   if (systemSnapshot) {
+...
     const snapshotStr = Object.entries(systemSnapshot.files)
       .map(([path, info]) => `- ${path}: [${info.exports.join(", ")}]`)
       .join("\n");
@@ -188,7 +200,7 @@ function extractFileContent(raw, maxFiles = 1) {
   return [{ file: null, content }];
 }
 
-export async function generatePatch(step, files, feedback, chainContext, { onToken, metrics, role, pattern, projectDir, systemSnapshot } = {}) {
+export async function generatePatch(step, files, feedback, chainContext, { onToken, metrics, role, pattern, projectDir, systemSnapshot, intent } = {}) {
   const tier = detectTier();
   const profile = getTierProfile();
   const config = loadConfig();
@@ -208,7 +220,7 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
     log.info(`[CODER] Analysis complete.`);
   }
 
-  const messages = buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot });
+  const messages = buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot, intent });
   if (analysis) {
     messages[messages.length - 1].content += `\n\nFile Analysis:\n${analysis}`;
   }
