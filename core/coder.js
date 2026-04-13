@@ -6,6 +6,7 @@ import { loadConfig } from "./config.js";
 import { enforceConstraints, validateFileOutput } from "./constraints.js";
 import { loadIndex } from "./index.ts";
 import { loadPattern, validateStructure } from "./patterns.js";
+import { selectContext, formatContext } from "./retrieval/contextEngine.ts";
 
 const BASE_SYSTEM = `# 🧠 XENTARI — AGENT PROMPT (PHASE 4 READY)
 
@@ -116,13 +117,21 @@ function detectModule(task) {
   return null;
 }
 
-function buildPrompt(step, files, feedback, chainContext, { role, pattern } = {}) {
+function buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir } = {}) {
   const tier = detectTier();
-  const { context } = getContext(step);
-  const config = loadConfig();
   const index = loadIndex();
   
-  let system = `${context}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
+  // Phase 6: Deterministic Context Bundle
+  const targetPath = (typeof step === 'string' && step.includes("/")) ? step : (files[0]?.file || "");
+  const bundle = selectContext(targetPath, projectDir);
+  const contextBundle = formatContext(bundle);
+
+  let system = `${BASE_SYSTEM}${TIER_RULES[tier]}
+
+==================================================
+📦 CONTEXT BUNDLE (PHASE 6)
+==================================================
+${contextBundle}`;
 
   // Phase 4: Structure Enforcement (ROLE + PATTERN)
   if (role && pattern) {
@@ -132,60 +141,20 @@ function buildPrompt(step, files, feedback, chainContext, { role, pattern } = {}
     }
   }
 
-  // Phase 44: Architecture Context Injection
-  const targetModule = detectModule(step);
-  if (index && targetModule && index.flows && index.flows[targetModule]) {
-    const flow = index.flows[targetModule].flow;
-    const archHint = `\n[ARCHITECTURE] Module: ${targetModule}\nLogical Flow: ${flow.join(" → ")}`;
-    system += archHint;
-  }
-
   if (chainContext) {
     system += `\n\nPrevious changes in this session:`;
     if (chainContext.patchSummary) {
       system += `\n${chainContext.patchSummary}`;
     }
-    if (chainContext.modifiedFiles && chainContext.modifiedFiles.length > 0) {
-      system += `\nModified files: ${chainContext.modifiedFiles.join(", ")}`;
-    }
   }
 
   if (feedback) {
     system += `\n\nPrevious attempt had issues:\n${feedback}\nFix these issues and output the corrected file content.`;
-    if (tier === "small") {
-      system += `\nKeep it as simple as possible. One file, minimal changes.`;
-    }
   }
-
-  // Phase 37: Multi-File Context injection
-  const primaryFiles = files.filter(f => !f.isRelated);
-  const relatedFiles = files.filter(f => f.isRelated);
-
-  let fileList = primaryFiles;
-  if (config.incrementalContext && primaryFiles.length > 2) {
-    fileList = primaryFiles.slice(0, 2);
-    log.info(`[CODER] Incremental context active: sending only 2/${primaryFiles.length} files`);
-  }
-
-  const fileContext = fileList
-    .map((f) => {
-      const isPartial = f.content.includes("... [CHUNK BOUNDARY] ...");
-      let header = `=== FILE: ${f.file} ===`;
-      if (isPartial) {
-        header += `\n[NOTE: This is a PARTIAL file. Context may not include full content. Only modify visible parts.]`;
-      }
-      return `${header}\n${f.content}`;
-    })
-    .join("\n\n---\n\n");
-
-  const relatedContext = relatedFiles.length > 0
-    ? `\n\nRelated files for reference (DO NOT modify these unless requested):\n` + 
-      relatedFiles.map(f => `=== RELATED FILE: ${f.file} ===\n${f.content.slice(0, 1000)}`).join("\n\n")
-    : "";
 
   return [
     { role: "system", content: system },
-    { role: "user", content: `Task: ${step}\n\nFiles to modify:\n${fileContext}${relatedContext}\n\nOutput the FULL updated content for the primary file(s).` },
+    { role: "user", content: `Instruction: ${step}\n\nOutput the FULL updated content for '${targetPath}'.` },
   ];
 }
 

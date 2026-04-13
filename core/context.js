@@ -1,12 +1,14 @@
-import { buildDynamicContext } from "./context-engine.js";
+import { selectContext, formatContext } from "./retrieval/contextEngine.js";
 import { loadConfig } from "./config.js";
 
 export function getContext(task, projectDir = process.cwd()) {
-  return buildDynamicContext(task, projectDir);
+  const bundle = selectContext(task, projectDir);
+  return {
+    context: formatContext(bundle),
+    bundle
+  };
 }
 
-// Keep getSummary for backward compatibility
-export function getSummary() {
-  const { context } = getContext("");
-  return context;
+export function getContextBundle(targetPath, projectDir = process.cwd()) {
+  return selectContext(targetPath, projectDir);
 }

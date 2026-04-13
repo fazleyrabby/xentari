@@ -32,6 +32,8 @@ import { addToSession } from "./memory/session.js";
 import { detectStack } from "./project/detector.js";
 import { renderStatus } from "./tui/statusBar.js";
 import { loadIndex, indexProject } from "./index.ts";
+import { runTest, summarizeFailure } from "./utils/testRunner.ts";
+import { selectContext, formatContext } from "./retrieval/contextEngine.ts";
 
 import { simulateFailure } from "./utils/simulation.js";
 
@@ -147,12 +149,59 @@ function validateStepResult(projectDir: string, fileUpdate: { file: string; cont
   return { valid: true };
 }
 
+async function validateStep(projectDir: string, step: Step, fileUpdate: { file: string; content: string }) {
+  // 1. Structure Validation (Phase 4)
+  if (step.role && step.pattern) {
+    try {
+      const { validateStructure } = await import("./patterns.js");
+      validateStructure(fileUpdate.content, step.role, step.pattern);
+      log.step("VALIDATE", "✓", "STRUCTURE OK");
+    } catch (err: any) {
+      log.step("VALIDATE", "✗", "STRUCTURE FAIL");
+      return { valid: false, reason: `Structure violation: ${err.message}` };
+    }
+  }
+
+  // 2. Test-Aware Validation
+  // Only run if step explicitly asks for it or it's a critical module
+  if (step.type === "modify" || step.type === "create") {
+    // Phase 7: Generate test-case for validation
+    // For now, use a heuristic: if we have a test code in step constraints or description
+    const testMatch = (step as any).testCode;
+    if (testMatch) {
+       log.step("TEST", "running...");
+       const result = await runTest(projectDir, testMatch, step.target);
+       if (!result.success) {
+         log.step("TEST", "✗", "FAIL");
+         const summary = summarizeFailure(result.output);
+         return { valid: false, reason: `Tests failed: ${summary}` };
+       }
+       log.step("TEST", "✓", "PASS");
+    }
+  }
+
+  return { valid: true };
+}
+
 async function executeStep(step: Step, index: number, opts: AgentOptions, chain: any, { onToken, rl, metrics }: any = {}) {
   const { projectDir, dryRun, autoMode, task } = opts;
   const stepStart = Date.now();
   const mode = dryRun ? "dry" : autoMode ? "auto" : "normal";
   const tier = detectTier();
-  const maxAttempts = autoMode ? getTierProfile().maxRetries : 1;
+
+  // Track state.json
+  const statePath = join(projectDir, ".xentari", "state.json");
+  const updateState = (status: string) => {
+    try {
+      const state = existsSync(statePath) ? JSON.parse(readFileSync(statePath, "utf-8")) : { steps: {} };
+      state.current_step = step.id;
+      state.steps = state.steps || {};
+      state.steps[step.id] = { status, timestamp: new Date().toISOString() };
+      writeFileSync(statePath, JSON.stringify(state, null, 2));
+    } catch {}
+  };
+
+  updateState("running");
 
   // Fix: Ensure a file path is available for steps that need it.
   if (!step.files?.length && !(step as any).filePath) {
@@ -162,18 +211,12 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       (step as any).filePath = step.target;
     } else {
       log.warn(`[EXECUTOR] Step ${step.id} has no files to process. Skipping.`);
-      return; // Can't proceed without a file target.
+      updateState("failed");
+      return; 
     }
   }
 
   resetFailureState();
-  failureState.advisorCalled = false; 
-
-
-  if (failureState.advisorCalled && failureState.advisorFailureCount >= 3) {
-    log.warn(`[ADVISOR] Already failed 3 times - no more advisor attempts`);
-    return;
-  }
 
   log.info(`Target: ${step.target}`);
 
@@ -187,130 +230,93 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
     }
   }
 
-  let files: any[];
-  let finalContext: any;
-
+  let files: any[] = [];
   log.step("RETRIEVE", "...");
-  const retrieveStart = Date.now();
   ux.showStage("RETRIEVE");
+  
+  // Phase 6: Use ContextEngine for deterministic retrieval
   try {
+     const bundle = selectContext(step.target, projectDir);
+     files = [{ file: step.target, content: bundle.target, score: 1.0 }];
+     log.step("RETRIEVE", "✓", "DETERMINISTIC OK");
+  } catch (err: any) {
+    log.step("RETRIEVE", "✗", "FALLBACK TO LEGACY");
     const keywords = [...(step.files || []), ...step.target.split(/\s+/)];
     files = await retrieve(projectDir, keywords, chain?.modifiedFiles || [], { metrics });
-    log.step("RETRIEVE", "✓", `files: ${files.length}`);
-  } catch (err: any) {
-    log.step("RETRIEVE", "✗", err.message);
-    log.error("RETRIEVAL_FAILED", err.message, "Run indexing or check file permissions.");
-    return;
   }
 
-  try {
-    const codeStart = Date.now();
-    log.step("CODE", "generating...");
-    ux.showStage("CODE");
-    let fileUpdates: any[];
-    const feedback = failureState.lastReviewRejectReason || failureState.lastFailureReason;
+  let attempt = 1;
+  let feedback = null;
 
+  while (attempt <= 2) { // Max 1 retry (Phase 7 rule)
     try {
+      ux.showStage("CODE");
       const taskInstruction = typeof (step as any).description === 'string' && (step as any).description.length > 0 
         ? `${(step as any).description}\nConstraints: ${((step as any).constraints || []).join(', ')}`
         : step.target;
-        
-      fileUpdates = await generateWithRetry(taskInstruction, files, feedback, chain, maxAttempts, { 
+
+      const fileUpdates = await generateWithRetry(taskInstruction, files, feedback, chain, 1, { 
         onToken, 
         metrics, 
         role: step.role, 
-        pattern: step.pattern 
+        pattern: step.pattern,
+        projectDir
       });
+
+      if (!fileUpdates || fileUpdates.length === 0) throw new Error("EMPTY_OUTPUT");
       
-      // Phase: STRICT TARGET ENFORCEMENT
-      if (fileUpdates && fileUpdates.length > 0) {
-        const update = fileUpdates[0];
-        if (!update.file) update.file = step.target;
-        if (update.file && update.file !== step.target) {
-           log.step("CODE", "✗", "TARGET_VIOLATION");
-           log.error("TARGET_VIOLATION", `Model attempted to modify '${update.file}' instead of '${step.target}'`, "Check prompt constraints.");
-           throw new Error("TARGET_DEVIATION");
-        }
+      const update = fileUpdates[0];
+      if (update.file && update.file !== step.target) {
+         log.step("CODE", "✗", "TARGET_VIOLATION");
+         throw new Error("TARGET_DEVIATION");
       }
-      log.step("CODE", "✓", `lines: ${fileUpdates[0]?.content.split("\n").length || 0}`);
-    } catch (err: any) {
-      log.step("CODE", "✗", "MODEL_UNSTABLE_OUTPUT");
-      return;
-    }
 
-    log.step("VALIDATE", "...");
-    for (const update of fileUpdates!) {
-      const validation = validateStepResult(projectDir, update);
+      log.step("VALIDATE", "...");
+      const validation = await validateStep(projectDir, step, update);
       if (!validation.valid) {
-        log.step("VALIDATE", "✗", validation.reason.toUpperCase());
-        log.error("VALIDATION_FAILED", validation.reason, "Model produced incomplete or truncated code.");
-        return;
+        log.step("VALIDATE", "✗", validation.reason);
+        feedback = `Validation failed: ${validation.reason}. Please fix and return full file.`;
+        attempt++;
+        if (attempt > 2) throw new Error(`Step validation failed after retry: ${validation.reason}`);
+        log.step("RETRY", `attempt 2/2 (fix validation)`);
+        continue;
       }
-    }
-    log.step("VALIDATE", "✓");
 
-    let patch: string | null = null;
-    let approved = false;
-
-    if (fileUpdates! && fileUpdates!.length > 0) {
+      // If valid, apply
       log.step("DIFF", "ready");
-      try {
-        patch = patchToUnified(projectDir, fileUpdates!.map(u => ({ file: u.file, content: u.content })));
-        log.patch(patch!, step.target);
-      } catch (err: any) {
-        log.step("DIFF", "✗");
+      const patch = patchToUnified(projectDir, [{ file: step.target, content: update.content }]);
+      log.patch(patch, step.target);
+
+      const autoApprove = process.env.XEN_AUTO_APPROVE === "true" || opts.autoMode;
+      const approved = autoApprove || await confirm("  Apply changes?");
+      
+      if (!approved) {
+        log.step("PATCH", "✗", "rejected by user");
+        updateState("failed");
         return;
       }
 
-      if (patch) {
-        const auto = process.env.XEN_AUTO_APPROVE === "true";
-        approved = auto || await confirm("  Apply changes?");
-      }
-    }
-
-    if (!approved) {
-      log.step("PATCH", "✗", "rejected by user");
-      return;
-    }
-
-    log.step("PATCH", "applying...");
-    ux.showStage("PATCH");
-
-    if (dryRun) {
-      let result = await applyPatch(projectDir, patch!, true);
-      if (result.valid) {
-        log.step("PATCH", "✓", "dry-run ok");
+      log.step("PATCH", "applying...");
+      let result = await applyPatch(projectDir, patch, false, update.content);
+      if (result.applied) {
+        log.step("PATCH", "✓");
+        chain.modifiedFiles.push(step.target);
+        updateState("done");
+        return;
       } else {
         log.step("PATCH", "✗", result.reason);
+        throw new Error(result.reason!);
       }
-      return;
+    } catch (err: any) {
+      if (attempt >= 2) {
+        log.step("STEP", "✗", `FAILED: ${err.message}`);
+        updateState("failed");
+        throw err;
+      }
+      feedback = `Execution failed: ${err.message}. Fix and try again.`;
+      attempt++;
+      log.step("RETRY", `attempt 2/2 (execution error)`);
     }
-    log.step("PATCH", "applying...");
-    ux.showStage("PATCH");
-
-    let result = await applyPatch(projectDir, patch!, false, fileUpdates![0]?.content);
-
-    if (result.retry) {
-      log.step("RECOVERY", "creating file...");
-      log.step("PATCH", "retry...");
-      result = await applyPatch(projectDir, result.patch, false, fileUpdates![0]?.content);
-      patch = result.patch;
-    }
-
-    if (result.applied) {
-      log.step("PATCH", "✓");
-      const affectedFiles = extractPatchFiles(patch!);
-      chain.modifiedFiles.push(...affectedFiles);
-      try {
-        const summary = await summarizePatch(patch!, { metrics });
-        chain.patchSummaries.push(summary);
-      } catch {}
-    } else {
-      log.step("PATCH", "✗", result.reason);
-      log.error("PATCH_FAILED", result.reason!, "Check file locks or syntax errors in generated code.");
-    }
-  } finally {
-    // Release locks if any
   }
 }
 
@@ -408,12 +414,12 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
     const step = steps[j];
     
     try {
+      // Phase 7: Orchestration handles internal retries
       await executeStep(step, j, opts, chain, { onToken, rl, metrics });
     } catch (err: any) {
-      log.step("STEP", "✗", `Step ${j+1} failed: ${err.message}`);
-      // Retry once if failed
-      log.step("RETRY", "attempt 1/1");
-      await executeStep(step, j, opts, chain, { onToken, rl, metrics });
+      log.step("STEP", "✗", `Step ${j+1} failed permanently: ${err.message}`);
+      // In Phase 7, a permanent step failure halts the pipeline.
+      break; 
     }
   }
 

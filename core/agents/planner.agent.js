@@ -34,6 +34,7 @@ Example Step:
   "target": "controllers/user.controller.js",
   "role": "controller",
   "pattern": "controller",
+  "testCode": "assert.ok(target.handleRequest);",
   "dependsOn": [1]
 }
 
@@ -41,6 +42,7 @@ IMPORTANT CONTEXT:
 - Follow the project's established conventions and structure.
 - Use the appropriate language and tools for the detected stack.
 - DO NOT generate code in languages that do not match the project.
+- If a step is critical, provide a minimal 'testCode' (JavaScript) to verify the implementation.
 
 OUTPUT FORMAT:
 Output ONLY a JSON object with a "steps" key containing the array of steps.
@@ -49,6 +51,7 @@ Each step MUST have:
 - "type": one of the allowed step types listed above
 - "target": a short implementation-focused description or file path
 - "dependsOn": array of step IDs that MUST be completed before this step
+- "testCode": (optional) a string containing a minimal JS test using 'assert' and the 'target' module.
 
 STRICT RULES:
 - Only include server-side/core implementation steps.
@@ -149,7 +152,8 @@ export async function plan(task, { metrics, projectDir } = {}) {
       files: Array.isArray(s.files) ? s.files.map(String) : [],
       dependsOn: Array.isArray(s.dependsOn) ? s.dependsOn.map(Number) : [],
       role: s.role ? String(s.role) : undefined,
-      pattern: s.pattern ? String(s.pattern) : undefined
+      pattern: s.pattern ? String(s.pattern) : undefined,
+      testCode: s.testCode ? String(s.testCode) : undefined
     }));
   } catch {
     return [{ id: 1, type: "modify", target: task, files: [], dependsOn: [] }];

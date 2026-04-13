@@ -25,25 +25,31 @@ export function validateStructure(content, role, patternName) {
     throw new Error("INVALID_EXPORT: module.exports is required for patterns");
   }
 
+  // Strip strings and comments to avoid false positives in literal values or documentation
+  const cleanContent = content
+    .replace(/['"`](?:\\.|[^'"`])*['"`]/g, "")
+    .replace(/\/\/.*/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+
+  // Forbidden: ES modules in CJS patterns
+  if (cleanContent.includes("export default") || cleanContent.includes("import ")) {
+    throw new Error("FORBIDDEN_ES_MODULES: Pattern must remain CommonJS");
+  }
+
   // Pattern Specific Checks
   if (patternName === "controller") {
-    if (!content.includes("req") || !content.includes("res")) {
+    if (!/\breq\b/.test(cleanContent) || !/\bres\b/.test(cleanContent)) {
       throw new Error("INVALID_CONTROLLER_STRUCTURE: missing req/res usage");
     }
-    if (!content.includes("service")) {
+    if (!/\bservice\b/.test(cleanContent)) {
       throw new Error("MISSING_SERVICE_USAGE: controller should use service");
     }
   }
 
   if (patternName === "routes") {
-    if (!content.includes("express.Router()")) {
+    if (!cleanContent.includes("express.Router()")) {
       throw new Error("INVALID_ROUTES_STRUCTURE: missing express.Router()");
     }
-  }
-
-  // Forbidden: ES modules in CJS patterns
-  if (content.includes("export default") || content.includes("import ")) {
-    throw new Error("FORBIDDEN_ES_MODULES: Pattern must remain CommonJS");
   }
 
   return true;

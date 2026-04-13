@@ -1,6 +1,15 @@
 {
   "history": [
     {
+      "task": "create a crud app",
+      "files": [
+        "src/modules/todo/todo.model.js",
+        "src/modules/todo/todo.service.js",
+        "src/modules/todo/todo.controller.js"
+      ],
+      "timestamp": 1776028289798
+    },
+    {
       "task": "fix imports in src/index.js to use src/modules/todo/todo.routes.js",
       "files": [
         "src/core/config/app.config.js",
@@ -72,13 +81,6 @@
         "app.js"
       ],
       "timestamp": 1776013702663
-    },
-    {
-      "task": "add a function to multiply two numbers in src/math.js",
-      "files": [
-        "src/math.js"
-      ],
-      "timestamp": 1776007976352
     }
   ]
 }

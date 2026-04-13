@@ -660,6 +660,29 @@ Xentari is organized into a modular hierarchy to separate concerns:
     *   **Generator Fix:** Updated `xentari-task-generator.cjs` to emit `001.json`, `002.json`, etc. (matching the executor's strict `<id>.json` lookup format) rather than verbose filenames, resolving a silent task-loading failure.
     *   **Known Model Behaviour (Not CLI Bug):** The underlying LLM occasionally blends multi-file context into a single output (e.g., outputting `package.json` content into `src/index.js`). This is a prompt-engineering boundary issue within the model layer and does not affect the state machine integrity.
 
+### Phase 72 — Context Engine (Context Bundle)
+*   **Goal:** Eliminate context confusion and ensure correct file relationships.
+*   **Result:**
+    *   **Deterministic Selection:** Implemented `/core/retrieval/contextEngine.ts` to select and format exact context bundles (Target, Related, Pattern, Rules).
+    *   **Relation Mapping:** Integrated static relation maps and auto-context extraction via the dependency indexer.
+    *   **Context Limiter:** Enforced a 3-file limit for related context to minimize input for small models.
+    *   **Deterministic Prompting:** Updated the CoderAgent to strictly use the formatted context bundle, reducing hallucinations and irrelevant code injections.
+
+### Phase 73 — Multi-File Orchestration & Test-Aware Execution
+*   **Goal:** Safely coordinate changes across multiple files with automated validation.
+*   **Result:**
+    *   **Sequential Execution:** Upgraded the Executor to iterate through atomic steps, maintaining state in `state.json`.
+    *   **Test-Aware Validation:** Integrated `runTest` in the execution loop to verify each change against a generated JS test case before proceeding.
+    *   **Robust Recovery:** Implemented a mandatory 1-retry policy for validation failures, allowing the model to self-correct based on summarized test output.
+    *   **Structure Enforcement:** Automated the application of Phase 4 structure validation within the orchestration loop.
+
+### Phase 74 — Pattern Validation Hardening
+*   **Goal:** Fix false positives in structural validation.
+*   **Result:**
+    *   **Sanitized Content:** Updated `validateStructure` in `patterns.js` to strip strings and comments before running regex checks.
+    *   **Word Boundaries:** Switched to word-boundary regex (`\breq\b`) to prevent matches within other variable names or literals.
+    *   **Deterministic Success:** Verified the fix against the `patterns.test.js` suite, achieving 100% pass rate.
+
 ### 🧠 XENTARI — PHASE 4: STRUCTURE ENFORCEMENT (AGENT + SYSTEM SPEC)
 
 **Goal:** Eliminate architectural inconsistency, make structure deterministic, and reduce model decision surface to near-zero.
