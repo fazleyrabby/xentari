@@ -4,3 +4,5 @@ phase*.md
 .DS_Store
 .antigravity/
 .xentari/
+dist/
+report.md
