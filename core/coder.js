@@ -7,6 +7,7 @@ import { enforceConstraints, validateFileOutput } from "./constraints.js";
 import { loadIndex } from "./index.ts";
 import { loadPattern, validateStructure } from "./patterns.js";
 import { selectContext, formatContext } from "./retrieval/contextEngine.ts";
+import { getFeedbackForStep } from "./retrieval/feedbackEngine.ts";
 
 const BASE_SYSTEM = `# 🧠 XENTARI — AGENT PROMPT (PHASE 4 READY)
 
@@ -142,6 +143,12 @@ You MUST align your changes with this intent. Do NOT introduce unrelated logic.
 TYPE: ${intent.type}
 SCOPE: ${intent.scope}
 GOAL: ${intent.description}`;
+  }
+
+  // Phase 10: Feedback Engine (Self-Improvement)
+  const historicalFeedback = getFeedbackForStep(projectDir, targetPath);
+  if (historicalFeedback) {
+    system += historicalFeedback;
   }
 
   // Phase 8: System Snapshot (Consistency)

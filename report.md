@@ -701,6 +701,15 @@ Xentari is organized into a modular hierarchy to separate concerns:
     *   **Minimal Change Enforcer:** Introduced heuristics to prevent "over-modification" where a model might rewrite large portions of a file unnecessarily for a small task.
     *   **Guided Implementation:** The Planner now generates explicit intents for each step, which are then used to ground the Coder and validator layers in the PURPOSE of the change.
 
+### Phase 77 — Feedback Engine (Self-Improvement Loop)
+*   **Goal:** Capture failures as structured signals to improve system performance over time without changing core architecture.
+*   **Result:**
+    *   **Failure Logging:** Implemented `/core/retrieval/feedbackEngine.ts` to record and classify execution/validation failures in `.xentari/feedback.json`.
+    *   **Pattern Detection:** Added logic to detect repeated failure patterns for specific files or implementation steps.
+    *   **Feedback Injection:** Integrated JIT feedback injection into the CoderAgent's prompt. If a step has failed previously, the system explicitly warns the model about the most common error (e.g., "Contract Mismatch" or "Balanced Braces").
+    *   **Failure Classification:** Implemented a classifier that categorizes issues into Consistency, Behavior, Output, or Context failures, allowing for targeted system adaptations.
+    *   **Continuous Learning:** The system now "learns" from every unsuccessful attempt, effectively narrowing the model's decision surface based on historical project experience.
+
 ### 🧠 XENTARI — PHASE 4: STRUCTURE ENFORCEMENT (AGENT + SYSTEM SPEC)
 
 **Goal:** Eliminate architectural inconsistency, make structure deterministic, and reduce model decision surface to near-zero.

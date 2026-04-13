@@ -48,6 +48,7 @@ import {
   validateChangeSize,
   Intent
 } from "./retrieval/intentEngine.ts";
+import { logFailure } from "./retrieval/feedbackEngine.ts";
 
 import { simulateFailure } from "./utils/simulation.js";
 
@@ -350,6 +351,10 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       const validation = await validateStep(projectDir, step, update);
       if (!validation.valid) {
         log.step("VALIDATE", "✗", validation.reason);
+        
+        // Phase 10: Log validation failure for pattern detection
+        logFailure(projectDir, step.target, validation.reason!, step.intent);
+
         feedback = `Validation failed: ${validation.reason}. Please fix and return full file.`;
         attempt++;
         if (attempt > 2) throw new Error(`Step validation failed after retry: ${validation.reason}`);
@@ -388,6 +393,9 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
         throw new Error(result.reason!);
       }
     } catch (err: any) {
+      // Phase 10: Log execution/model failure for pattern detection
+      logFailure(projectDir, step.target, err.message, step.intent);
+
       if (attempt >= 2) {
         log.step("STEP", "✗", `FAILED: ${err.message}`);
         updateState("failed");
