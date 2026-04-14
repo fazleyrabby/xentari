@@ -777,3 +777,11 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Agent panel:** Visualizes real-time execution actions and raw thinking trace data.
     *   **Context panel:** Continuously displays system stack, phase, and mode attributes.
     *   **Trace UI:** Styled specific trace markers (`OK`, `FAIL`, `STEP`, `RETRY`) with Neo-Brutalist, high-contrast monospace fonts.
+
+### CHAT + EXECUTION ROUTER
+*   **Goal:** Add conversational capability WITHOUT breaking deterministic execution.
+*   **Result:**
+    *   **Input Classifier:** Implemented heuristic intent engine to dynamically switch between standard conversation (CHAT) and deterministic action generation (EXEC).
+    *   **Routing System:** Extracted request validation into `core/router/index.js` to create an API decoupling layer.
+    *   **Chat handler:** Initialized `core/router/chat.js` for standalone conversational responses.
+    *   **UI Integration:** Repurposed the standard Agent execution panel to render sequential user-agent messages while persisting auto-execution integrity.

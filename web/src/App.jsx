@@ -4,6 +4,7 @@ export default function App() {
   const [state, setState] = useState({});
   const [prompt, setPrompt] = useState("");
   const [running, setRunning] = useState(false);
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:3000");
@@ -21,11 +22,25 @@ export default function App() {
 
     setRunning(true);
 
-    await fetch("http://localhost:3000/run", {
+    const res = await fetch("http://localhost:3000/run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, auto: true })
     });
+
+    const data = await res.json();
+
+    if (data.type === "chat") {
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: data.message
+      }]);
+    }
+
+    setMessages(prev => [...prev, {
+      role: "user",
+      content: prompt
+    }]);
 
     setPrompt("");
     setRunning(false);
@@ -57,24 +72,20 @@ export default function App() {
 
         {/* LEFT — AGENT PANEL */}
         <div className="w-1/4 border-r border-gray-700 p-2 overflow-auto">
-          <div className="border-b border-gray-700 mb-2 pb-1">AGENT</div>
 
-          {/* Actions */}
-          {state.actions?.map((a, i) => (
-            <div key={i}>
-              {a.icon} {a.type} {a.target}
+          <div className="border-b border-gray-700 mb-2 pb-1">
+            AGENT
+          </div>
+
+          {messages.map((m, i) => (
+            <div key={i} className="mb-2">
+              <div className="text-gray-500">
+                {m.role === "user" ? "YOU" : "XENTARI"}
+              </div>
+              <div>{m.content}</div>
             </div>
           ))}
 
-          {/* Trace (thinking) */}
-          <div className="mt-4 border-t border-gray-700 pt-2">
-            <div className="text-gray-400">THINKING</div>
-            {state.trace?.map((t, i) => (
-              <div key={i} className={getTraceColor(t.type)}>
-                [{t.type}] {t.command || t.reason}
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* CENTER — MAIN VIEW */}

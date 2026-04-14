@@ -1,7 +1,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import { executionLoop } from "../execution/engine.js";
+import { route } from "../router/index.js";
 import { getState } from "../ui/state.js";
 
 const app = express();
@@ -12,14 +12,15 @@ app.post("/run", async (req, res) => {
   try {
     const { prompt } = req.body;
 
-    const result = await executionLoop(prompt, {
+    const result = await route(prompt, {
       auto: true,
       source: "web"
     });
 
-    res.json({ success: true, result });
+    res.json(result);
+
   } catch (err) {
-    res.json({ success: false, error: err.message });
+    res.json({ error: err.message });
   }
 });
 
