@@ -888,3 +888,13 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Unified API Endpoints:** Added `/api/projects` (GET, POST, DELETE) for global project management.
     *   **CLI Integration:** Added `xen workspace` commands (`add`, `list`, `use`) for full terminal-based workspace management.
     *   **Persistence:** Sessions now remember their linked project across restarts, ensuring a seamless development flow.
+
+### FILE SYSTEM LAYER (PRE-MONACO FOUNDATION)
+*   **Goal:** Establish a secure, project-scoped filesystem module for listing, reading, and writing files.
+*   **Result:**
+    *   **Secure Path Resolution:** Implemented `resolveSafePath` in `core/filesystem/fileManager.js` to strictly enforce project boundaries and prevent directory traversal (STRICT startsWith check + realpath validation).
+    *   **Deterministic Listing:** Developed a recursive `listFiles` utility that automatically ignores noisy directories (`node_modules`, `.git`, `.xentari`).
+    *   **Resource Guards:** Added file size limits (1MB) and UTF-8 encoding requirements to ensure system stability during file reads.
+    *   **Unified File API:** Created `/api/files` and `/api/file` endpoints in `core/server/routes/files.js` to expose the filesystem to the Web UI.
+    *   **Workspace Integration:** Linked file operations directly to the `workspaceManager`, ensuring that all file actions are verified against user-approved project roots.
+    *   **Security Model:** Implemented a backend-controlled access model where the client only provides relative paths, which are then validated against the server-side project registry.

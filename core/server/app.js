@@ -7,6 +7,7 @@ import { setRuntime, getRuntime } from "../runtime/context.js";
 import { workspaceManager } from "../workspace/workspaceManager.js";
 import { sessionManager } from "../session/sessionManager.js";
 import modelsRouter from "./routes/models.js";
+import filesRouter from "./routes/files.js";
 import { providerRuntime } from "../../runtime/providerRuntime.js";
 
 // Initial model discovery
@@ -18,6 +19,7 @@ app.use(bodyParser.json());
 
 // API Routes
 app.use("/api", modelsRouter);
+app.use("/api", filesRouter);
 
 // Projects API
 app.get("/api/projects", (req, res) => {

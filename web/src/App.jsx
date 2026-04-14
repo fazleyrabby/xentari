@@ -274,7 +274,8 @@ export default function App() {
       </div>
 
       {/* MAIN GRID */}
-      <div className="flex flex-1 overflow-hidden         {/* LEFT PANEL: WORKSPACE */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* LEFT PANEL: WORKSPACE */}
         <div className="w-1/4 border-r border-gray-700 flex flex-col overflow-hidden bg-zinc-950">
           <div className="p-3 border-b border-gray-700 flex justify-between items-center bg-zinc-900">
             <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">WORKSPACE</span>
@@ -364,7 +365,7 @@ export default function App() {
               ))}
               <div ref={bottomRef} />
             </div>
-          </div>     </div>
+          </div>
 
           {/* STICKY INPUT BAR */}
           <div className="border-t border-gray-700 p-2 bg-black">
