@@ -1085,3 +1085,31 @@ Expose the backend context awareness in the UI so users can verify exactly which
 - Shows "Loading..." placeholder while fetch is in-flight.
 - Close button resets `selectedFile` to null, unmounts drawer.
 
+---
+
+## Project Intelligence — Generic Signal Scoring (E14.2)
+
+### Problem
+Original project analysis was weak — system prompt injection was a single line (`Project: laravel (mvc).`) giving the LLM no behavioral guidance, and file selection used hardcoded `priorityTerms` unrelated to the user's query.
+
+### Changes
+
+#### `core/context/buildContext.ts` — `scoreFile()` exported
+Generic, framework-agnostic file scoring function. Takes `{ path, content }`, `input` string, and optional `project`:
+- **Keyword relevance**: each input word matched against path (+3) and content (+1).
+- **Shallow path boost**: files ≤2 path segments get +2 (entry-point files).
+- **Entry-point signals**: `index`, `main`, `app`, `server` → +3.
+- **Config/routing signals**: `config`, `routes`, `package`, `composer` → +3.
+- **Noise penalty**: `node_modules`, `dist`, `build`, `public` → −3.
+- **Project-type boost** (light): if `project.type` includes `"backend"`, `routes` and `config` paths get +2 each.
+- No framework names hardcoded anywhere.
+
+#### `core/runtime/runAgent.ts` — re-ranking + strong system prompt
+After `detectProject` resolves, `context.snippets` are re-scored with `scoreFile(file, input, project)`, sorted descending, and sliced to top 8 before being sent to the model.
+
+System prompt replaced with structured guidance:
+- Identifies project type generically (`framework + type` label).
+- Explicit instruction to focus on core architecture over build tooling.
+- Anti-hallucination rule: "If not in context, say not found in context."
+- Sends `structure` (file list) + `rankedSnippets` (top 8 scored files) separately — cleaner than dumping the full context JSON.
+

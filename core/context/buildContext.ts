@@ -2,6 +2,30 @@ import fs from "fs";
 import path from "path";
 import { globSync } from "glob";
 
+export function scoreFile(file: { path: string; content: string }, input: string, project?: { type?: string }): number {
+  let score = 0;
+  const p = file.path.toLowerCase();
+  const c = file.content.toLowerCase();
+
+  for (const k of input.toLowerCase().split(/\s+/)) {
+    if (p.includes(k)) score += 3;
+    if (c.includes(k)) score += 1;
+  }
+
+  if (p.split("/").length <= 2) score += 2;
+
+  if (p.includes("index") || p.includes("main") || p.includes("app") || p.includes("server")) score += 3;
+  if (p.includes("config") || p.includes("routes") || p.includes("package") || p.includes("composer")) score += 3;
+  if (p.includes("node_modules") || p.includes("dist") || p.includes("build") || p.includes("public")) score -= 3;
+
+  if (project?.type?.includes("backend")) {
+    if (p.includes("routes")) score += 2;
+    if (p.includes("config")) score += 2;
+  }
+
+  return score;
+}
+
 export function buildContext(projectDir) {
   const allFiles = globSync("**/*.{js,ts}", {
     cwd: projectDir,

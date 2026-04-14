@@ -2,7 +2,7 @@ import { loadConfig } from "../config/loadConfig.ts";
 import { normalizeModel } from "../providers/normalizeModel.ts";
 import { createProvider } from "../providers/index.ts";
 import { loadSession, saveSession } from "../session/store.ts";
-import { buildContext } from "../context/buildContext.ts";
+import { buildContext, scoreFile } from "../context/buildContext.ts";
 import { detectProject } from "../context/projectIntelligence.ts";
 import { createKey, getCache, setCache } from "../context/contextCache.ts";
 import crypto from "crypto";
@@ -35,13 +35,26 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
 
   if (onStatus) onStatus("analyzing context");
 
-  const systemPrompt = `You are Xentari AI.
-Project: ${project.framework} (${project.type}).
-You are operating inside a real project directory.
-Use the provided project context when answering questions about files or code.
+  const rankedSnippets = (context.snippets ?? [])
+    .map(f => ({ ...f, score: scoreFile(f, input, project) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8);
 
-PROJECT CONTEXT:
-${JSON.stringify(context, null, 2)}`;
+  const projectLabel = [project.framework, project.type].filter(Boolean).join(" ");
+  const systemPrompt = `You are Xentari AI analyzing a ${projectLabel || "software"} project.
+
+Guidelines:
+- Focus on core architecture (backend, routing, services, domain logic).
+- Treat build tools (vite, webpack, assets) as secondary unless explicitly asked.
+- Prioritize directories that define application behavior over static assets.
+- Base your answer strictly on the provided context.
+- If information is not explicitly present in the context, say "not found in context". Do not guess or fabricate implementations.
+
+PROJECT STRUCTURE:
+${context.structure.slice(0, 60).join("\n")}
+
+TOP CONTEXT FILES:
+${JSON.stringify(rankedSnippets, null, 2)}`;
 
   const messages = [
     { role: "system", content: systemPrompt },
