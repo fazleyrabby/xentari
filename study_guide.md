@@ -815,3 +815,15 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Layout Refinement:** Optimized panel widths (1/4, 2/4, 1/4) and added structured headers to all columns.
     *   **Status Indicators:** Replaced plain status text with explicit, colored status boxes (RUNNING, SUCCESS, FAILED) in the center output panel.
     *   **Empty State:** Added a helpful starter prompt for empty message threads.
+
+### WORKSPACE + MODEL CONFIG SYSTEM
+*   **Goal:** Implement a dynamic workspace and model configuration system for multi-project and multi-provider support.
+*   **Result:**
+    *   **Global Runtime Context:** Created `core/runtime/context.js` to manage session-specific project paths, models, and API endpoints.
+    *   **Dynamic Context Engine:** Decoupled `core/context/contextEngine.js` from `process.cwd()`, enabling real-time switching of project scanning targets.
+    *   **API Configuration Layer:** Added `/config` server endpoints to allow external clients (Web UI) to dynamically update the system's operating environment.
+    *   **Integrated Settings UI:**
+        - **Workspace Selector:** Added a project path input to explicitly define the target workspace.
+        - **Model Configurator:** Integrated model name and API URL inputs for on-the-fly LLM provider switching.
+        - **Persistence:** Implemented bi-directional config syncing between the UI and backend runtime.
+    *   **Enhanced Status Header:** Updated the application header to display the currently active workspace path.

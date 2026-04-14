@@ -1,8 +1,11 @@
 import fs from "fs";
 import path from "path";
 import { getState } from "../ui/state.js";
+import { getRuntime } from "../runtime/context.js";
 
-function getProjectFiles(dir = process.cwd(), depth = 2) {
+function getProjectFiles() {
+  const { projectDir } = getRuntime();
+  
   function walk(current, level) {
     if (level > depth) return [];
 
@@ -32,7 +35,7 @@ function getProjectFiles(dir = process.cwd(), depth = 2) {
     }
   }
 
-  return walk(dir, 0);
+  return walk(projectDir, 0);
 }
 
 export function getContext() {

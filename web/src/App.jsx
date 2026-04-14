@@ -5,6 +5,11 @@ export default function App() {
   const [prompt, setPrompt] = useState("");
   const [running, setRunning] = useState(false);
   const [messages, setMessages] = useState([]);
+  const [config, setConfig] = useState({
+    projectDir: "",
+    model: "",
+    apiUrl: ""
+  });
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -16,7 +21,25 @@ export default function App() {
         setState(data.state);
       }
     };
+
+    fetchConfig();
   }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/config");
+      const data = await res.json();
+      setConfig(data);
+    } catch (err) {}
+  };
+
+  const saveConfig = async () => {
+    await fetch("http://localhost:3000/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(config)
+    });
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -64,11 +87,47 @@ export default function App() {
     <div className="h-screen flex flex-col bg-black text-gray-100 font-mono">
 
       {/* HEADER */}
-      <div className="border-b border-gray-700 p-3 flex justify-between bg-black">
-        <div className="font-bold uppercase tracking-tighter">🧠 XENTARI</div>
-        <div className="text-yellow-400 font-bold uppercase text-xs px-2 py-1 border border-yellow-400">
+      <div className="border-b border-gray-700 p-3 flex justify-between bg-black items-center">
+        <div>
+          <div className="font-bold uppercase tracking-tighter">🧠 XENTARI</div>
+          <div className="text-[10px] text-gray-500 uppercase truncate max-w-[300px]">
+            {config.projectDir || "No project selected"}
+          </div>
+        </div>
+        <div className="text-yellow-400 font-bold uppercase text-[10px] px-2 py-1 border border-yellow-400">
           AUTO ⚡
         </div>
+      </div>
+
+      {/* TOP SETTINGS BAR */}
+      <div className="border-b border-gray-700 p-2 flex gap-2 bg-zinc-900 items-center">
+        <input
+          placeholder="Project Path (/Users/...)"
+          value={config.projectDir}
+          onChange={(e) => setConfig({...config, projectDir: e.target.value})}
+          className="bg-black border border-gray-700 px-2 py-1 text-xs text-gray-300 w-1/3 outline-none focus:border-blue-500"
+        />
+
+        <input
+          placeholder="Model (qwen, llama, gpt-4)"
+          value={config.model}
+          onChange={(e) => setConfig({...config, model: e.target.value})}
+          className="bg-black border border-gray-700 px-2 py-1 text-xs text-gray-300 w-1/4 outline-none focus:border-blue-500"
+        />
+
+        <input
+          placeholder="API URL (http://localhost:11434)"
+          value={config.apiUrl}
+          onChange={(e) => setConfig({...config, apiUrl: e.target.value})}
+          className="bg-black border border-gray-700 px-2 py-1 text-xs text-gray-300 w-1/4 outline-none focus:border-blue-500"
+        />
+
+        <button 
+          onClick={saveConfig}
+          className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest transition-colors"
+        >
+          Apply
+        </button>
       </div>
 
       {/* MAIN GRID */}
@@ -174,6 +233,13 @@ export default function App() {
 
             <div className="mt-8 pt-4 border-t border-zinc-800">
               <div className="text-gray-500 font-bold mb-3 uppercase tracking-widest text-[10px]">Model Performance</div>
+              
+              <div className="mb-4 bg-black border border-zinc-800 p-2 text-[10px]">
+                <div className="text-zinc-600 mb-1">ACTIVE MODEL</div>
+                <div className="text-gray-200 font-bold">{config.model || "DEFAULT"}</div>
+                <div className="text-zinc-700 truncate">{config.apiUrl || "-"}</div>
+              </div>
+
               <div className="space-y-4">
                  <div className="flex flex-col">
                     <span className="text-zinc-600 text-[10px]">LATENCY</span>

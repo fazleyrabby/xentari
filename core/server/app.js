@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import { route } from "../router/index.js";
 import { getState } from "../ui/state.js";
+import { setRuntime, getRuntime } from "../runtime/context.js";
 
 const app = express();
 app.use(cors());
@@ -22,6 +23,23 @@ app.post("/run", async (req, res) => {
   } catch (err) {
     res.json({ error: err.message });
   }
+});
+
+app.post("/config", (req, res) => {
+  const { projectDir, model, provider, apiUrl } = req.body;
+
+  setRuntime({
+    projectDir,
+    model,
+    provider,
+    apiUrl
+  });
+
+  res.json({ success: true });
+});
+
+app.get("/config", (req, res) => {
+  res.json(getRuntime());
 });
 
 app.get("/state", (req, res) => {
