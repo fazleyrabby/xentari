@@ -903,7 +903,9 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
 *   **Goal:** Implement a browser-compatible folder selection UX that avoids file uploads and helps users input valid local paths.
 *   **Rationale:** Standard browser security prevents direct access to absolute paths during folder picking. Uploading entire project folders is inefficient and insecure.
 *   **Result:**
-    *   **Folder Name Extraction:** Utilized `webkitdirectory` to allow users to select a folder, extracting only the root folder name from `webkitRelativePath` while ignoring all file contents.
+    *   **Folder Name Extraction:** Implemented a dual-strategy for directory discovery:
+        - **Primary:** Utilized the modern **File System Access API** (`window.showDirectoryPicker()`) to provide a professional "View Files" permission flow instead of a scary "Upload" warning.
+        - **Fallback:** Retained the `webkitdirectory` input for legacy browser support, extracting root folder names while strictly ignoring file contents.
     *   **Path Helper Strategy:** Implemented OS-aware path guessing (Mac, Windows, Linux) to pre-fill an absolute path input, guiding the user towards the correct local directory.
     *   **Hybrid Confirmation UX:** Added a dedicated "RE-GISTER" panel in the Workspace view where users can review and edit the guessed path before it is saved.
     - **Safe Transmission:** Switched to a pure JSON-based API (`POST /api/projects/add`) that only sends the directory string, completely eliminating `FormData` and multipart uploads.

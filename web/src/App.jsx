@@ -297,7 +297,21 @@ export default function App() {
                   <div className="flex gap-1">
                     <button 
                       className="bg-zinc-800 p-1 hover:bg-zinc-700 text-gray-400 border border-gray-700 text-[10px] w-full"
-                      onClick={() => document.getElementById("hidden-picker").click()}
+                      onClick={async () => {
+                        try {
+                          const handle = await window.showDirectoryPicker();
+                          const folderName = handle.name;
+                          const platform = navigator.platform.toLowerCase();
+                          let base = "/Users/";
+                          if (platform.includes("win")) base = "C:\\Users\\";
+                          else if (!platform.includes("mac")) base = "/home/";
+                          setNewProjectPath(`${base}user/${folderName}`);
+                        } catch (err) {
+                          if (err.name !== "AbortError") {
+                            document.getElementById("hidden-picker").click();
+                          }
+                        }
+                      }}
                     >
                       BROWSE...
                     </button>
@@ -315,8 +329,6 @@ export default function App() {
                           let base = "/Users/";
                           if (platform.includes("win")) base = "C:\\Users\\";
                           else if (!platform.includes("mac")) base = "/home/";
-                          
-                          // Default to a placeholder user or the current one if we had it
                           setNewProjectPath(`${base}user/${folderName}`);
                         }
                       }}
