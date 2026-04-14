@@ -6,6 +6,8 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ContextPanel from "./components/ContextPanel";
 import Timeline from "./components/Timeline";
 import FileDrawer from "./components/FileDrawer";
+import { parseCommand } from "./utils/parseCommand";
+import { getCommandPrompt } from "./utils/commandPrompts";
 
 const PHASE_LABELS = {
   thinking: "Thinking",
@@ -35,6 +37,7 @@ export default function App() {
   const [showContext, setShowContext] = useState(true);
   const [showStats, setShowStats] = useState(true);
   const [timeline, setTimeline] = useState([]);
+  const [activeCommand, setActiveCommand] = useState("chat");
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileContent, setFileContent] = useState("");
   const [highlightLine, setHighlightLine] = useState(null);
@@ -96,8 +99,12 @@ export default function App() {
     const text = overridePrompt ?? prompt;
     if (!text.trim() || running) return;
 
-    const currentPrompt = text;
-    if (!overridePrompt) setPrompt("");
+    const command = parseCommand(text);
+    const currentPrompt = command.type === "chat"
+      ? command.query
+      : getCommandPrompt(command.type, command.query);
+
+    if (!overridePrompt) { setPrompt(""); setActiveCommand("chat"); }
     const userMsg = { role: "user", content: currentPrompt };
     const historyBefore = [...session.messages, userMsg];
 
@@ -108,7 +115,7 @@ export default function App() {
     setTimeline([]);
 
     const projectDir = config.projectDir || "";
-    const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectDir=${encodeURIComponent(projectDir)}`;
+    const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectDir=${encodeURIComponent(projectDir)}&command=${encodeURIComponent(command.type)}`;
     const eventSource = new EventSource(url);
 
     eventSource.onmessage = (event) => {
@@ -410,9 +417,34 @@ export default function App() {
         {/* INPUT BAR */}
         <div className="p-4 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent">
           <div className="max-w-4xl mx-auto relative group">
+            {/* Command suggestions */}
+            {prompt.startsWith("/") && activeCommand === "chat" && (
+              <div className="absolute bottom-full mb-2 left-0 bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden shadow-xl z-10">
+                {["/analyze", "/find", "/explain"]
+                  .filter(c => c.includes(prompt.split(" ")[0]))
+                  .map(cmd => (
+                    <div
+                      key={cmd}
+                      onClick={() => { setPrompt(cmd + " "); setActiveCommand(cmd.slice(1)); }}
+                      className="px-4 py-2 text-xs text-zinc-300 hover:bg-zinc-800 cursor-pointer flex items-center gap-2"
+                    >
+                      <span className="text-blue-400 font-mono font-bold">{cmd}</span>
+                    </div>
+                  ))}
+              </div>
+            )}
+            {/* Active command badge */}
+            {activeCommand !== "chat" && (
+              <div className="absolute top-2 left-3 text-[10px] text-blue-400 font-mono font-bold bg-blue-950/50 px-1.5 py-0.5 rounded border border-blue-800/50 z-10">
+                /{activeCommand}
+              </div>
+            )}
             <textarea 
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => {
+                setPrompt(e.target.value);
+                setActiveCommand(parseCommand(e.target.value).type);
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

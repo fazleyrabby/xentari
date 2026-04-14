@@ -7,7 +7,7 @@ import { detectProject } from "../context/projectIntelligence.ts";
 import { createKey, getCache, setCache } from "../context/contextCache.ts";
 import crypto from "crypto";
 
-export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null }) {
+export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null, meta = null }: { input: string; projectDir: string; sessionId?: string; onChunk?: ((chunk: string) => void) | null; onStatus?: ((msg: string) => void) | null; onContext?: ((files: unknown[]) => void) | null; meta?: { command?: string } | null }) {
   const config = loadConfig(projectDir);
   const model = normalizeModel(config.provider, config.model);
   const provider = createProvider(config);
@@ -41,9 +41,13 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     .slice(0, 8);
 
   const projectLabel = [project.framework, project.type].filter(Boolean).join(" ");
+  const mode = meta?.command || "chat";
   const systemPrompt = `You are Xentari AI analyzing a ${projectLabel || "software"} project.
 
+Mode: ${mode}
+
 Guidelines:
+- Follow the mode strictly.
 - Focus on core architecture (backend, routing, services, domain logic).
 - Treat build tools (vite, webpack, assets) as secondary unless explicitly asked.
 - Prioritize directories that define application behavior over static assets.

@@ -39,7 +39,7 @@ app.delete("/api/projects/:id", (req, res) => {
 });
 
 app.get("/chat/stream", async (req, res) => {
-  const { input, projectDir } = req.query;
+  const { input, projectDir, command } = req.query;
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -51,6 +51,7 @@ app.get("/chat/stream", async (req, res) => {
     const result = await runAgent({
       input,
       projectDir,
+      meta: command ? { command } : null,
       onStatus: (msg) => {
         res.write(`data: ${JSON.stringify({ type: "status", message: msg })}\n\n`);
       },
