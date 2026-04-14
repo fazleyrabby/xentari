@@ -730,3 +730,13 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Non-Retryable Halt:** `test-03-non-retry` and `test-05-security` verified that ENVIRONMENT and Security failures correctly halt execution without infinite retry loops.
     *   **Plan Integrity Gate:** `test-07-plan-validation` confirmed that the execution loop rejects malformed or incomplete plans before attempting execution.
     *   **TUI Stability & History Management:** `test-08-ui` successfully validated the action history capping (limit of 20), ensuring no UI overflow or layout breakage during long-running tasks.
+
+### E15 — TRUST BUILDING + CHAOS TESTING
+*   **Goal:** Strengthen system reliability, predictability, and debuggability through deterministic validation and stress-testing.
+*   **Result:**
+    *   **Determinism Validation:** Implemented `tests/determinism.test.js` to ensure identical plans yield identical results across multiple execution cycles.
+    *   **Chaos Testing Suite:** Created `tests/chaos.test.js` to verify the system's resilience against malformed inputs, unicode bypasses, and shell injection attempts.
+    *   **Execution Snapshot System:** Developed `core/execution/snapshot.js` to persist a full audit trail of steps, results, and contexts in `.xentari/snapshots.log`.
+    *   **Debug Trace Layer:** Implemented `core/execution/trace.js`, a high-frequency in-memory circular buffer (cap: 50) for real-time observability.
+    *   **UI Observability Hook:** Integrated the trace buffer into the TUI state machine, enabling future real-time debugging views within the CLI.
+    *   **Normalization Resilience:** Confirmed that the `safeExec` engine correctly normalizes and handles varied whitespace and unicode characters while rejecting dangerous control characters.

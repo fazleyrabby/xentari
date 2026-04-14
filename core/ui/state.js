@@ -14,6 +14,7 @@ export const state = {
     { icon: "▶", type: "INIT", target: "Xentari System" }
   ],
   diff: null,
+  trace: [],
   refresh: 0
 };
 

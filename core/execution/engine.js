@@ -1,5 +1,7 @@
 import { safeExec } from "./safeExec.js";
 import { handleFailure } from "./retryEngine.js";
+import { saveSnapshot } from "./snapshot.js";
+import { addTrace, getTrace } from "./trace.js";
 import * as ui from "../ui/state.js";
 
 /**
@@ -32,14 +34,23 @@ export async function executionLoop(plan, context = {}) {
       icon: "▶"
     });
 
+    addTrace({ type: "STEP", command: step.command });
+    ui.updateState({ trace: getTrace() });
+
     const result = await safeExec({
       command: step.command,
       reason: step.reason || "System execution",
       stack: step.stack || context.stack || "node"
     });
 
+    // E15 — Execution Snapshot
+    saveSnapshot(step, context, result);
+
     if (!result.success) {
       const decision = await handleFailure(step, result, context);
+
+      addTrace({ type: "FAIL", reason: decision.classification.type });
+      ui.updateState({ trace: getTrace() });
 
       ui.addAction({
         type: "FAIL",
@@ -55,6 +66,9 @@ export async function executionLoop(plan, context = {}) {
           target: step.command,
           icon: "↻"
         });
+
+        addTrace({ type: "RETRY", command: step.command });
+        ui.updateState({ trace: getTrace() });
 
         // Repeat this step
         i--;
@@ -74,6 +88,9 @@ export async function executionLoop(plan, context = {}) {
       target: step.command,
       icon: "✔"
     });
+
+    addTrace({ type: "OK", command: step.command });
+    ui.updateState({ trace: getTrace() });
   }
 
   ui.setStatus({ text: "SUCCESS", errors: 0 });
