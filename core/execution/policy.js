@@ -1,31 +1,34 @@
-export function isBlockedCommand(command) {
-  const blockedPatterns = [
-    /&&/,
-    /\|\|/,
-    /\|/,
-    />/,
-    />>/,
-    /;/,
-    /\bsudo\b/,
-    /\brm\b/,
-    /\bmkfs\b/,
-    /\bdd\b/,
-    /\bshutdown\b/,
-    /\breboot\b/,
-  ];
-
-  return blockedPatterns.some((pattern) => pattern.test(command));
-}
-
-export function validatePolicy(command) {
-  if (!command || typeof command !== "string") {
-    throw new Error("Invalid command");
+/**
+ * E11 — Exploit-Resistant Policy Engine
+ * Enforces structured command restrictions.
+ */
+export function validatePolicy(parsed) {
+  if (!parsed.valid) {
+    return { allowed: false, reason: parsed.reason };
   }
 
-  if (isBlockedCommand(command)) {
+  // System-level dangerous commands
+  const blockedCommands = [
+    "rm",
+    "dd",
+    "mkfs",
+    "shutdown",
+    "reboot",
+    "poweroff",
+    "sudo",
+    "chmod",
+    "chown",
+    "apt",
+    "yum",
+    "brew",
+    "dnf",
+    "pacman"
+  ];
+
+  if (blockedCommands.includes(parsed.command)) {
     return {
       allowed: false,
-      reason: "Blocked by execution policy",
+      reason: `Blocked by system policy: command '${parsed.command}' is forbidden.`
     };
   }
 

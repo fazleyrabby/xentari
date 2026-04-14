@@ -6,3 +6,8 @@ phase*.md
 .xentari/
 dist/
 report.md
+core-fix-result.md
+tests/
+*.spec.js
+*.test.js
+*.log
