@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { log } from "./logger.js";
 import { runAgent } from "./agents/index.js";
 import { indexProject } from "./index.ts";
-import { getContext } from "./context.js";
 import { undo } from "./patcher.js";
 import { updateDuration } from "./metrics.js";
 import { loadPlugins, buildCommandRegistry } from "./plugins.js";

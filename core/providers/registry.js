@@ -1,7 +1,6 @@
 import { OllamaProvider } from "./ollamaProvider.js";
 import { LMStudioProvider } from "./lmstudioProvider.js";
 import { LlamaProvider } from "./llamaProvider.js";
-import { getRuntime } from "../runtime/context.js";
 
 export class ProviderRegistry {
   constructor(config = {}) {
@@ -26,7 +25,7 @@ export class ProviderRegistry {
 }
 
 export function getProvider(name) {
-  const { apiUrl } = getRuntime();
+  const apiUrl = "http://localhost:11434"; // Legacy fallback
   const registry = new ProviderRegistry({
     providers: {
       ollama: { enabled: true, baseUrl: apiUrl },

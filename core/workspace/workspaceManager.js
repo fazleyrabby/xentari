@@ -1,10 +1,8 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
-import { getRuntime } from "../runtime/context.js";
 
 function getProjectsPath() {
-  const { projectDir } = getRuntime(); // Fallback to current if needed
   // Global projects are stored in the user home or root of the tool?
   // The user said .xentari/projects.json
   // I'll put it in the tool's base directory or user's home .xentari

@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import { getRuntime } from "../core/runtime/context.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -50,19 +49,18 @@ function getGlobalConfigPath() {
   return path.join(HOME, ".xentari", "config.json");
 }
 
-function getLocalConfigPath() {
+function getLocalConfigPath(projectDir = process.cwd()) {
   try {
-    const runtime = getRuntime();
-    if (!runtime || !runtime.projectDir) return null;
-    return path.join(runtime.projectDir, ".xentari", "config.json");
+    if (!projectDir) return null;
+    return path.join(projectDir, ".xentari", "config.json");
   } catch {
     return null;
   }
 }
 
-export function loadConfig() {
+export function loadConfig(projectDir) {
   const globalPath = getGlobalConfigPath();
-  const localPath = getLocalConfigPath();
+  const localPath = getLocalConfigPath(projectDir);
 
   // Create clean copy of defaults
   let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
@@ -87,7 +85,7 @@ export function loadConfig() {
 }
 
 export function saveConfig(newConfig, isGlobal = false) {
-  const configPath = isGlobal ? getGlobalConfigPath() : getLocalConfigPath();
+  const configPath = isGlobal ? getGlobalConfigPath() : getLocalConfigPath(newConfig.projectDir);
   if (!configPath) return;
 
   const dir = path.dirname(configPath);

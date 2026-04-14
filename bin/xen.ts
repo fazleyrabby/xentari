@@ -4,7 +4,7 @@ import { runAgent } from "../core/runtime/runAgent.ts";
 import { confirm } from "../core/prompt.js";
 import { log } from "../core/logger.js";
 import { indexProject } from "../core/index.ts";
-import { getContext } from "../core/context.js";
+import { buildContext } from "../core/context/buildContext.ts";
 import { updateDuration } from "../core/metrics.js";
 import { loadPlugins, buildCommandRegistry } from "../core/plugins.js";
 import { loadConfig } from "../core/config.js";
@@ -172,10 +172,12 @@ async function main() {
   }
 
   if (task === "context") {
-    const { context, stack } = getContext("", projectDir);
+    const context = buildContext(projectDir);
     log.section("DYNAMIC CONTEXT");
-    log.info(`Stack: ${stack}`);
-    console.log("\n" + context);
+    console.log(`Files: ${context.files.join(", ")}`);
+    context.snippets.forEach((s: any) => {
+      console.log(`\n=== FILE: ${s.path} ===\n${s.content}`);
+    });
     process.exit(0);
   }
 
@@ -187,8 +189,8 @@ async function main() {
     }
 
     log.section("DEBUG MODE");
-    const { stack } = getContext(debugTask, projectDir);
-    log.info(`Detected Stack: ${stack}`);
+    const context = buildContext(projectDir);
+    log.info(`Detected Files: ${context.files.length}`);
 
     // Run a dry agent run to get real metrics
     log.info("Running diagnostic session...");

@@ -1,6 +1,6 @@
 import { commands } from "./commands.js";
 import { palette } from "./palette.js";
-import { loadSession, clearSession } from "../memory/session.js";
+import { loadHistory, addToHistory } from "../session/store.ts";
 import { log } from "../logger.js";
 
 export function handleCommand(input) {
@@ -20,29 +20,30 @@ export function handleCommand(input) {
   }
 
   if (trimmed === "/history") {
-    const session = loadSession();
+    const data = loadHistory(process.cwd());
     log.section("SESSION HISTORY");
-    if (session.history.length === 0) {
+    if (data.history.length === 0) {
       console.log("  (Empty)");
     } else {
-      session.history.forEach((h, i) => {
-        console.log(`  ${i + 1}. ${h.task} (${h.files.length} files)`);
+      data.history.forEach((h, i) => {
+        console.log(`  ${i + 1}. ${h.task} (${h.files?.length || 0} files)`);
       });
     }
     return true;
   }
 
   if (trimmed === "/clear") {
-    clearSession();
+    // Implement clear by saving empty history
+    const { saveHistory } = await import("../session/store.ts");
+    saveHistory(process.cwd(), { history: [] });
     log.ok("Session history cleared");
     return true;
   }
 
   if (trimmed === "/stats") {
-    // Basic stats for now, can be expanded
-    const session = loadSession();
+    const data = loadHistory(process.cwd());
     log.section("STATS");
-    console.log(`  Tasks in current session: ${session.history.length}`);
+    console.log(`  Tasks in current session: ${data.history.length}`);
     return true;
   }
 

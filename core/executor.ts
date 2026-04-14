@@ -2,7 +2,6 @@ import { join, dirname } from "node:path";
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { log, logToFile } from "./logger.js";
-import { retrieve } from "./retriever.js";
 import { generateWithRetry } from "./agents/coder.agent.js";
 import { plan as plannerPlan } from "./agents/planner.agent.js";
 import { review as reviewerReview, isApproved } from "./agents/reviewer.agent.js";
@@ -28,7 +27,7 @@ import { createSandbox } from "./sandbox/manager.js";
 import { cleanupSandbox } from "./sandbox/cleanup.js";
 import { getChangedFiles } from "./sandbox/diff.js";
 import * as ux from "./tui/ux.js";
-import { addToSession } from "./memory/session.js";
+import { addToHistory } from "./session/store.ts";
 import { detectStack } from "./project/detector.js";
 import { renderStatus } from "./tui/statusBar.js";
 import { loadIndex, indexProject } from "./index.ts";
@@ -373,9 +372,8 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
 
      log.step("RETRIEVE", "✓", "DETERMINISTIC OK");
   } catch (err: any) {
-    log.step("RETRIEVE", "✗", "FALLBACK TO LEGACY");
-    const keywords = [...(step.files || []), ...step.target.split(/\s+/)];
-    files = await retrieve(projectDir, keywords, chain?.modifiedFiles || [], { metrics });
+    log.error("RETRIEVE", `✗ DETERMINISTIC FAILED: ${err.message}`);
+    throw err;
   }
 
   let attempt = 1;
@@ -677,7 +675,7 @@ export async function runAgent(opts: AgentOptions, { onToken, rl }: any = {}) {
         ux.success("Changes applied to real project.");
 
         // Task 3: Store after task (Phase 25)
-        addToSession({
+        addToHistory(projectDir, {
           task: task,
           files: changes.map(c => c.file),
           timestamp: Date.now()
@@ -693,7 +691,7 @@ export async function runAgent(opts: AgentOptions, { onToken, rl }: any = {}) {
   } else {
     // If not in sandbox, and successful, also store
     if (result.chain && result.chain.modifiedFiles.length > 0) {
-      addToSession({
+      addToHistory(projectDir, {
         task: task,
         files: [...new Set(result.chain.modifiedFiles)],
         timestamp: Date.now()

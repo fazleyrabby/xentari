@@ -1,5 +1,5 @@
 import { chat } from "../llm.js";
-import { getContext } from "../context.js";
+import { buildContext } from "../context/buildContext.ts";
 
 const NODE_GLOBALS = [
   "console", "process", "Buffer", "setTimeout", "setInterval", "clearTimeout", "clearInterval",
@@ -31,8 +31,9 @@ Your response must be EITHER:
 
 No other output format is allowed.`;
 
-export async function review(patch) {
-  const { context } = getContext("");
+export async function review(patch, projectDir = process.cwd()) {
+  const contextData = buildContext(projectDir);
+  const context = `Context Files: ${contextData.files.join(", ")}`;
   const messages = [
     { role: "system", content: `${context}\n\n${BASE_SYSTEM}` },
     { role: "user", content: patch },
