@@ -28,6 +28,12 @@ export function updateState(updates) {
 
 export function addAction(action) {
   state.actions.push(action);
+  
+  // Cap action history to 20 items to prevent UI overflow (E12/TUI Safety)
+  if (state.actions.length > 20) {
+    state.actions.shift();
+  }
+
   state.refresh++;
 }
 

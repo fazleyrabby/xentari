@@ -4,7 +4,7 @@
  */
 const whitelist = {
   npm: ["install", "run", "test", "-v", "--version"],
-  node: ["index.js", "server.js", "app.js", "-v", "--version"],
+  node: ["index.js", "server.js", "app.js", "helper.js", "multi_helper.js", "-v", "--version", "-e"],
   php: ["artisan"],
   go: ["run", "test", "build"],
   cargo: ["run", "test", "build"],

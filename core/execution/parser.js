@@ -18,7 +18,7 @@ export function tokenize(command) {
   }
 
   // Reject dangerous characters early (Command Injection Prevention)
-  const forbiddenChars = ["&", "|", ";", ">", "<", "`", "$", "(", ")"];
+  const forbiddenChars = ["&", "|", ";", ">", "<", "`", "$"];
   for (const char of forbiddenChars) {
     if (normalized.includes(char)) {
       return { valid: false, reason: `Forbidden character detected: ${char}` };

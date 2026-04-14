@@ -7,6 +7,19 @@ import * as ui from "../ui/state.js";
  * Iterates through a plan, manages retries, and updates UI state.
  */
 export async function executionLoop(plan, context = {}) {
+  // E12 — Plan Validation Gate
+  if (!plan || !Array.isArray(plan.steps)) {
+    ui.setStatus({ text: "VALIDATION FAILURE", errors: 1 });
+    return { status: "FAILED", reason: "INVALID_PLAN" };
+  }
+
+  for (const step of plan.steps) {
+    if (!step || !step.command) {
+      ui.setStatus({ text: "VALIDATION FAILURE", errors: 1 });
+      return { status: "FAILED", reason: "MALFORMED_STEP" };
+    }
+  }
+
   ui.setStatus({ text: "RUNNING", errors: 0 });
 
   for (let i = 0; i < plan.steps.length; i++) {
@@ -19,7 +32,11 @@ export async function executionLoop(plan, context = {}) {
       icon: "▶"
     });
 
-    const result = await safeExec(step);
+    const result = await safeExec({
+      command: step.command,
+      reason: step.reason || "System execution",
+      stack: step.stack || context.stack || "node"
+    });
 
     if (!result.success) {
       const decision = await handleFailure(step, result, context);

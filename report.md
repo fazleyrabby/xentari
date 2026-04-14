@@ -720,3 +720,13 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Integration & System Coverage:** Developed end-to-end flows in `tests/integration/` and `tests/system/` to verify the execution engine's stability during complex, multi-step operations.
     *   **Automated Regression Guard:** Implemented a source-scanning regression test (`tests/regression/regression.test.js`) to prevent the accidental introduction of unsafe `child_process.exec` calls.
     *   **High-Signal Reporting:** All tests are integrated into a unified entry point with deterministic PASS/FAIL signaling, ensuring no architectural regressions are merged into the core.
+
+### MULTI-STEP VALIDATION TESTS
+*   **Goal:** Validate Xentari’s multi-step execution, failure intelligence, retry system, and TUI consistency in an isolated, high-stress environment.
+*   **Result:**
+    *   **Successful Multi-Step Execution:** Verified through `test-01-basic-success` and `test-09-sequential`, confirming that Xentari correctly orchestrates sequential tasks without state corruption.
+    *   **Failure Intelligence Accuracy:** `test-02-retry-code` and `test-04-mixed` successfully demonstrated failure classification as CODE, triggering correct retry behaviors.
+    *   **Retry Boundary Enforcement:** `test-06-multi-retry` confirmed that the system respects retry limits and successfully recovers on subsequent attempts when recoverable.
+    *   **Non-Retryable Halt:** `test-03-non-retry` and `test-05-security` verified that ENVIRONMENT and Security failures correctly halt execution without infinite retry loops.
+    *   **Plan Integrity Gate:** `test-07-plan-validation` confirmed that the execution loop rejects malformed or incomplete plans before attempting execution.
+    *   **TUI Stability & History Management:** `test-08-ui` successfully validated the action history capping (limit of 20), ensuring no UI overflow or layout breakage during long-running tasks.

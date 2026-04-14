@@ -11,3 +11,12 @@ tests/
 *.spec.js
 *.test.js
 *.log
+logs/\n*.log\n*.tmp\ncoverage/\n.cache/\ntest-output/\n*.pid\n*.seed
+reports/
+*.log
+*.tmp
+coverage/
+.cache/
+test-output/
+*.pid
+*.seed
