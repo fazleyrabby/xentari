@@ -215,7 +215,10 @@ async function validateStep(projectDir: string, step: Step, fileUpdate: { file: 
   if (step.role && step.pattern) {
     try {
       const { validateStructure } = await import("./patterns.js");
-      validateStructure(fileUpdate.content, step.role, step.pattern);
+      const { loadStack } = await import("./loadStack.js");
+      const config = loadConfig();
+      const stack = await loadStack(config.stack || "node-basic");
+      validateStructure(fileUpdate.content, step.role, step.pattern, stack);
       log.step("VALIDATE", "✓", "STRUCTURE OK");
     } catch (err: any) {
       log.step("VALIDATE", "✗", "STRUCTURE FAIL");

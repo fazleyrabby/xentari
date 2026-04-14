@@ -329,7 +329,9 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
     // E3 — Structure Enforcement (Pattern Enforcement)
     if (role && pattern) {
       try {
-        validateStructure(update.content, role, pattern);
+        const config = loadConfig();
+        const stack = await loadStack(config.stack || "node-basic");
+        validateStructure(update.content, role, pattern, stack);
       } catch (e) {
         throw new Error(`Structure violation for ${role}/${pattern}: ${e.message}`);
       }

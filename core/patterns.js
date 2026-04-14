@@ -1,70 +1,50 @@
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
-import { log } from "./logger.js";
 import { loadConfig } from "./config.js";
 import { loadStack } from "./loadStack.js";
+import { log } from "./logger.js";
 
 /**
  * Pattern Engine for Xentari E3 — Structure Enforcement.
+ * 
+ * E10: Fully Stack-Agnostic. Loads patterns ONLY from the active stack.
  */
 
 export async function loadPattern(name) {
   const config = loadConfig();
   const stack = await loadStack(config.stack || "node-basic");
 
+  if (!stack || !stack.patterns) {
+    log.error("[PATTERNS] INVALID_STACK_ADAPTER: Missing patterns");
+    throw new Error("INVALID_STACK_ADAPTER: Missing patterns");
+  }
+
   // E10: Check if stack provides the pattern
-  if (stack && stack.patterns && stack.patterns[name]) {
+  if (stack.patterns[name]) {
     return stack.patterns[name];
   }
 
-  // Fallback to legacy path
-  const patternPath = join(process.cwd(), "context/patterns", `${name}.pattern.js`);
-  if (!existsSync(patternPath)) {
-    throw new Error(`PATTERN_REQUIRED: ${name}`);
-  }
-  return readFileSync(patternPath, "utf-8");
+  throw new Error(`PATTERN_REQUIRED_BUT_MISSING_IN_STACK: ${name} (Stack: ${config.stack || "node-basic"})`);
 }
 
-export function validateStructure(content, role, patternName) {
+/**
+ * Validates the structure of the generated code against stack-defined rules.
+ */
+export function validateStructure(content, role, patternName, stack = null) {
   if (!content) {
     throw new Error("EMPTY_CONTENT");
   }
 
-  // CommonJS Export Check
-  if (!content.includes("module.exports")) {
-    throw new Error("INVALID_EXPORT: module.exports is required for patterns");
-  }
-
-  // Strip strings and comments to avoid false positives in literal values or documentation
-  const cleanContent = content
-    .replace(/['"`](?:\\.|[^'"`])*['"`]/g, "")
-    .replace(/\/\/.*/g, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "");
-
-  // Forbidden: ES modules in CJS patterns
-  if (cleanContent.includes("export default") || cleanContent.includes("import ")) {
-    throw new Error("FORBIDDEN_ES_MODULES: Pattern must remain CommonJS");
-  }
-
-  // Forbidden: Classes (E3 — Structure Enforcement requirement: Function-based structure)
-  if (/\bclass\b/.test(cleanContent)) {
-    throw new Error("FORBIDDEN_CLASS: Classes are not allowed. Use the function-based pattern.");
-  }
-
-  // Pattern Specific Checks
-  if (patternName === "controller") {
-    if (!/\breq\b/.test(cleanContent) || !/\bres\b/.test(cleanContent)) {
-      throw new Error("INVALID_CONTROLLER_STRUCTURE: missing req/res usage");
+  // If stack is provided, use its validator
+  if (stack && stack.validator) {
+    const result = stack.validator(content, role, patternName);
+    if (!result.valid) {
+      throw new Error(result.reason || "STACK_VALIDATION_FAILED");
     }
-    if (!/\bservice\b/.test(cleanContent)) {
-      throw new Error("MISSING_SERVICE_USAGE: controller should use service");
-    }
+    return true;
   }
 
-  if (patternName === "routes") {
-    if (!cleanContent.includes("express.Router()")) {
-      throw new Error("INVALID_ROUTES_STRUCTURE: missing express.Router()");
-    }
+  // Minimal baseline validation if stack validator is missing (should not happen in E10)
+  if (!content.includes("module.exports") && !content.includes("export ")) {
+    throw new Error("INVALID_EXPORT: Missing exports");
   }
 
   return true;
