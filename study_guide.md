@@ -836,3 +836,14 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Hybrid Chat Handler:** Updated `core/router/chat.js` to leverage the runtime LLM config for general conversation, automatically injecting project context into the prompt.
     *   **Provider Compatibility:** Ensured chat compatibility with diverse response formats (Ollama vs. OpenAI).
     *   **UI Clarity:** Updated role labels to clearly distinguish between user messages and AI-generated responses.
+
+### MODEL CONFIG VALIDATION + ALERT SYSTEM
+*   **Goal:** Enhance safety and UX by validating LLM runtime configurations and providing guided error recovery.
+*   **Result:**
+    *   **Strict Runtime Validation:** Implemented multi-state validation in `core/router/chat.js` to detect missing API endpoints, missing models, or full config absence.
+    *   **Actionable Error Messaging:** Replaced silent failures and generic "500" errors with detailed, human-readable terminal/chat responses that provide examples (e.g., Ollama/LM Studio URLs).
+    *   **UI Alert Banner:** Integrated a high-visibility yellow warning banner in the Web UI that activates automatically when the model configuration is invalid.
+    *   **Guided UX Recovery:** 
+        - Added a "Configure" CTA in the application header that anchors the user directly to the settings bar.
+        - Implemented real-time status indicators in the Context Panel ("Model not ready") to prevent unintentional chat usage.
+    *   **Fail-Safe Routing:** Ensured that missing model configurations do not crash the server or block non-LLM system queries.

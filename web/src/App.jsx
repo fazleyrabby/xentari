@@ -86,6 +86,14 @@ export default function App() {
   return (
     <div className="h-screen flex flex-col bg-black text-gray-100 font-mono">
 
+      {/* WARNING BANNER */}
+      {(!config.apiUrl || !config.model) && (
+        <div className="bg-yellow-900/50 text-yellow-500 p-2 text-[10px] font-bold border-b border-yellow-900 flex justify-between items-center px-4 uppercase tracking-widest">
+          <span>⚠ Model not configured. Set API & Model in settings.</span>
+          <span className="text-gray-400">SAFE MODE ACTIVE</span>
+        </div>
+      )}
+
       {/* HEADER */}
       <div className="border-b border-gray-700 p-3 flex justify-between bg-black items-center">
         <div>
@@ -94,13 +102,23 @@ export default function App() {
             {config.projectDir || "No project selected"}
           </div>
         </div>
-        <div className="text-yellow-400 font-bold uppercase text-[10px] px-2 py-1 border border-yellow-400">
-          AUTO ⚡
+        <div className="flex gap-2 items-center">
+          {(!config.apiUrl || !config.model) && (
+            <button 
+              onClick={() => document.getElementById("config-bar").scrollIntoView({ behavior: "smooth" })}
+              className="text-yellow-500 border border-yellow-500 px-2 py-0.5 text-[9px] font-bold uppercase hover:bg-yellow-500 hover:text-black transition-all"
+            >
+              Configure
+            </button>
+          )}
+          <div className="text-yellow-400 font-bold uppercase text-[10px] px-2 py-1 border border-yellow-400">
+            AUTO ⚡
+          </div>
         </div>
       </div>
 
       {/* TOP SETTINGS BAR */}
-      <div className="border-b border-gray-700 p-2 flex gap-2 bg-zinc-900 items-center">
+      <div id="config-bar" className="border-b border-gray-700 p-2 flex gap-2 bg-zinc-900 items-center">
         <input
           placeholder="Project Path (/Users/...)"
           value={config.projectDir}
@@ -236,8 +254,13 @@ export default function App() {
               
               <div className="mb-4 bg-black border border-zinc-800 p-2 text-[10px]">
                 <div className="text-zinc-600 mb-1">ACTIVE MODEL</div>
-                <div className="text-gray-200 font-bold">{config.model || "DEFAULT"}</div>
-                <div className="text-zinc-700 truncate">{config.apiUrl || "-"}</div>
+                <div className="text-gray-200 font-bold">{config.model || "N/A"}</div>
+                <div className="text-zinc-700 truncate">{config.apiUrl || "NOT CONFIGURED"}</div>
+                {(!config.model || !config.apiUrl) && (
+                  <div className="mt-2 text-red-500 font-bold animate-pulse uppercase">
+                    ⚠ Model not ready
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">

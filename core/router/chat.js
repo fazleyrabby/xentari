@@ -1,12 +1,31 @@
 import { getContext } from "../context/contextEngine.js";
 import { getRuntime } from "../runtime/context.js";
 
-async function callModel(input, context) {
+function validateModelConfig() {
   const { apiUrl, model } = getRuntime();
 
-  if (!apiUrl) {
-    return "⚠ No model configured. Please set API URL and Model in Settings.";
+  if (!apiUrl && !model) return "NO_MODEL_FULL";
+  if (!apiUrl) return "NO_API";
+  if (!model) return "NO_MODEL";
+  
+  return "OK";
+}
+
+function getConfigErrorMessage(type) {
+  switch (type) {
+    case "NO_MODEL_FULL":
+      return `⚠ No model configured.\n\nGo to settings and set:\n- API endpoint (e.g. http://localhost:11434)\n- Model name (e.g. llama3, qwen)\n\nThen try again.`;
+    case "NO_API":
+      return `⚠ No API endpoint configured.\n\nExample:\nhttp://localhost:11434 (Ollama)\nhttp://localhost:1234 (LM Studio)`;
+    case "NO_MODEL":
+      return `⚠ No model selected.\n\nExample:\n- llama3\n- qwen\n- mistral`;
+    default:
+      return "⚠ Unknown configuration error.";
   }
+}
+
+async function callModel(input, context) {
+  const { apiUrl, model } = getRuntime();
 
   try {
     const res = await fetch(apiUrl, {
@@ -41,6 +60,15 @@ ASSISTANT:
 }
 
 export async function handleChat(input) {
+  const configStatus = validateModelConfig();
+
+  if (configStatus !== "OK") {
+    return {
+      type: "chat",
+      message: getConfigErrorMessage(configStatus)
+    };
+  }
+
   const context = getContext();
 
   return {
