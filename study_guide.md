@@ -1028,3 +1028,30 @@ Expose the backend context awareness in the UI so users can verify exactly which
 #### 🧪 Verification
 - Evaluated deterministic discovery runs (e.g., "where is runAgent defined?").
 - Confirmed that the event emits cleanly *before* chunk generation starts, exhibiting zero token-delay or stream friction.
+
+---
+
+## UI Improvements
+
+### Markdown Rendering
+- Integrated `react-markdown` + `remark-gfm` for full GFM support (tables, strikethrough, task lists).
+- Fenced code blocks rendered via `react-syntax-highlighter` (oneDark theme) with per-language syntax highlighting.
+- Inline code styled with distinct background for readability.
+- Streaming-safe: renderer updates progressively as chunks arrive with no flicker or reset.
+
+### Context Panel
+- `ContextPanel.jsx` displays files used in AI reasoning per response.
+- Shows file path + relevancy score per entry.
+- Toggled via `CTX` button in header — non-blocking, independent of chat flow.
+- Wired to SSE `context` event emitted before chunk generation begins.
+
+---
+
+## Performance
+
+### Context Caching (E14.1)
+- Added `core/context/contextCache.ts` — in-memory Map with 5-minute TTL.
+- Cache key = MD5(`input::MD5(projectDir)`).
+- `buildContext` (filesystem scan) is skipped entirely on cache hit.
+- Repeated identical queries resolve instantly without redundant I/O.
+

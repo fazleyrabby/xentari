@@ -4,6 +4,8 @@ import { createProvider } from "../providers/index.ts";
 import { loadSession, saveSession } from "../session/store.ts";
 import { buildContext } from "../context/buildContext.ts";
 import { detectProject } from "../context/projectIntelligence.ts";
+import { createKey, getCache, setCache } from "../context/contextCache.ts";
+import crypto from "crypto";
 
 export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null }) {
   const config = loadConfig(projectDir);
@@ -12,8 +14,15 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
   const history = loadSession(projectDir, sessionId);
 
   if (onStatus) onStatus("scanning project");
-  const context = buildContext(projectDir);
-  
+  const dirHash = crypto.createHash("md5").update(projectDir).digest("hex");
+  const cacheKey = createKey(input, dirHash);
+  const cached = getCache(cacheKey);
+  const context = cached ?? (() => {
+    const built = buildContext(projectDir);
+    setCache(cacheKey, built);
+    return built;
+  })();
+
   if (onContext && context.files) {
     const contextFiles = context.files.map((f, i) => ({
       path: f.path || f, // handle string array fallback
