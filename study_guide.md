@@ -827,3 +827,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
         - **Model Configurator:** Integrated model name and API URL inputs for on-the-fly LLM provider switching.
         - **Persistence:** Implemented bi-directional config syncing between the UI and backend runtime.
     *   **Enhanced Status Header:** Updated the application header to display the currently active workspace path.
+
+### HYBRID CHAT SYSTEM (SYSTEM + MODEL)
+*   **Goal:** Establish a tiered routing system for system queries, model-powered conversation, and deterministic execution.
+*   **Result:**
+    *   **Tiered Classification:** Upgraded `core/router/classifier.js` to distinguish between direct system triggers, execution requests, and natural language chat.
+    *   **System Handler:** Introduced `core/router/system.js` for fast, zero-LLM responses to status, file, and trace queries.
+    *   **Hybrid Chat Handler:** Updated `core/router/chat.js` to leverage the runtime LLM config for general conversation, automatically injecting project context into the prompt.
+    *   **Provider Compatibility:** Ensured chat compatibility with diverse response formats (Ollama vs. OpenAI).
+    *   **UI Clarity:** Updated role labels to clearly distinguish between user messages and AI-generated responses.

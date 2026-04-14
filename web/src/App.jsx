@@ -157,9 +157,9 @@ export default function App() {
                     ? "border-blue-500 bg-blue-950"
                     : "border-green-500 bg-green-950"
                 }`}>
-                  <div className="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-tighter">
-                    {m.role === "user" ? "YOU" : "XENTARI"}
-                  </div>
+                  <div className={`text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-tighter`}>
+                  {m.role === "user" ? "YOU" : "XENTARI (AI)"}
+                </div>
                   <div className="text-sm leading-relaxed">{m.content}</div>
                 </div>
               ))}

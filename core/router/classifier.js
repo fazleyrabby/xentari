@@ -1,16 +1,28 @@
 export function classifyInput(input) {
-  const execKeywords = [
-    "create",
-    "build",
-    "generate",
-    "run",
-    "make",
-    "setup"
-  ];
-
   const lower = input.toLowerCase();
 
-  const isExec = execKeywords.some(k => lower.includes(k));
+  const systemTriggers = [
+    "status",
+    "files",
+    "what happened",
+    "trace",
+    "stack"
+  ];
 
-  return isExec ? "EXEC" : "CHAT";
+  if (systemTriggers.some(k => lower.includes(k))) {
+    return "SYSTEM";
+  }
+
+  const execTriggers = [
+    "create",
+    "build",
+    "run",
+    "generate"
+  ];
+
+  if (execTriggers.some(k => lower.includes(k))) {
+    return "EXEC";
+  }
+
+  return "CHAT";
 }

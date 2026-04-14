@@ -1,34 +1,50 @@
 import { getContext } from "../context/contextEngine.js";
+import { getRuntime } from "../runtime/context.js";
+
+async function callModel(input, context) {
+  const { apiUrl, model } = getRuntime();
+
+  if (!apiUrl) {
+    return "⚠ No model configured. Please set API URL and Model in Settings.";
+  }
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model,
+        prompt: `
+You are Xentari, an AI coding agent. Use the context below to help the user.
+Be concise and deterministic.
+
+CONTEXT:
+${JSON.stringify(context, null, 2)}
+
+USER:
+${input}
+
+ASSISTANT:
+        `
+      })
+    });
+
+    const data = await res.json();
+
+    // Support both Ollama and standard OpenAI-like response formats
+    return data.response || data.choices?.[0]?.message?.content || data.output || "No response content received.";
+  } catch (e) {
+    return `❌ Model request failed: ${e.message}`;
+  }
+}
 
 export async function handleChat(input) {
   const context = getContext();
 
-  const lower = input.toLowerCase();
-
-  // Basic smart responses (no LLM yet)
-  if (lower.includes("files")) {
-    return {
-      type: "chat",
-      message: `📁 Project files:\n${context.files.map(f => f.name).join(", ")}`
-    };
-  }
-
-  if (lower.includes("status")) {
-    return {
-      type: "chat",
-      message: `📊 Status: ${context.phase} (${context.mode})`
-    };
-  }
-
-  if (lower.includes("what happened")) {
-    return {
-      type: "chat",
-      message: `🧠 Recent activity:\n${context.trace.map(t => `[${t.type}] ${t.command || t.reason || ""}`).join("\n")}`
-    };
-  }
-
   return {
     type: "chat",
-    message: `🤖 Xentari understands your project. Ask about files, status, or actions.`
+    message: await callModel(input, context)
   };
 }
