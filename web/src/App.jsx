@@ -10,8 +10,9 @@ export default function App() {
     model: "",
     apiUrl: ""
   });
-  const [sessionId, setSessionId] = useState("default");
+  const [session, setSession] = useState({ id: "default", messages: [], activeProjectId: null });
   const [sessions, setSessions] = useState(["default"]);
+  const [projects, setProjects] = useState([]);
   const [search, setSearch] = useState("");
   const [availableModels, setAvailableModels] = useState([]);
   const [availableProviders, setAvailableProviders] = useState([]);
@@ -31,7 +32,46 @@ export default function App() {
     fetchConfig();
     fetchSessions();
     fetchDiscovery();
+    fetchProjects();
   }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/projects");
+      setProjects(await res.json());
+    } catch (err) {}
+  };
+
+  const addProject = async (path) => {
+    try {
+      await fetch("http://localhost:3000/api/projects/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path })
+      });
+      fetchProjects();
+    } catch (err) {}
+  };
+
+  const removeProject = async (id) => {
+    try {
+      await fetch(`http://localhost:3000/api/projects/${id}`, { method: "DELETE" });
+      fetchProjects();
+    } catch (err) {}
+  };
+
+  const selectProject = async (projectId) => {
+    try {
+      const res = await fetch("http://localhost:3000/session/set-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: session.id, projectId })
+      });
+      const updatedSession = await res.json();
+      setSession(updatedSession);
+      fetchConfig();
+    } catch (err) {}
+  };
 
   const fetchDiscovery = async (force = false) => {
     try {
@@ -43,10 +83,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (messages.length > 0) {
-      saveChat(sessionId, messages);
+    if (session.messages.length > 0) {
+      saveChat(session);
     }
-  }, [messages]);
+  }, [session.messages]);
 
   const fetchSessions = async () => {
     try {
@@ -59,18 +99,26 @@ export default function App() {
   const loadChat = async (id) => {
     try {
       const res = await fetch(`http://localhost:3000/session/load/${id}`);
-      const history = await res.json();
-      setMessages(history);
-      setSessionId(id);
+      const data = await res.json();
+      setSession(data);
     } catch (err) {}
   };
 
-  const saveChat = async (id, msgs) => {
+  const saveChat = async (s) => {
     await fetch("http://localhost:3000/session/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId: id, messages: msgs })
+      body: JSON.stringify({ session: s })
     });
+  };
+
+  const createNewSession = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/session/create", { method: "POST" });
+      const newSession = await res.json();
+      setSession(newSession);
+      fetchSessions();
+    } catch (err) {}
   };
 
   const fetchConfig = async () => {
@@ -94,17 +142,15 @@ export default function App() {
   }, [messages]);
 
   const run = async () => {
-    if (!prompt || running) return;
+    if (!prompt.trim() || running) return;
 
     const currentPrompt = prompt;
     setPrompt("");
     setRunning(true);
 
-    // Add user message immediately
-    setMessages(prev => [...prev, {
-      role: "user",
-      content: currentPrompt
-    }]);
+    // Add user message to session
+    const userMsg = { role: "user", content: currentPrompt };
+    setSession(prev => ({ ...prev, messages: [...prev.messages, userMsg] }));
 
     try {
       const res = await fetch("http://localhost:3000/run", {
@@ -116,16 +162,12 @@ export default function App() {
       const data = await res.json();
 
       if (data.type === "chat") {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: data.message
-        }]);
+        const aiMsg = { role: "assistant", content: data.message };
+        setSession(prev => ({ ...prev, messages: [...prev.messages, aiMsg] }));
       }
     } catch (err) {
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: `Error: ${err.message}`
-      }]);
+      const errMsg = { role: "assistant", content: `Error: ${err.message}` };
+      setSession(prev => ({ ...prev, messages: [...prev.messages, errMsg] }));
     }
 
     setRunning(false);
@@ -212,12 +254,15 @@ export default function App() {
         <div className="h-4 w-px bg-gray-700 mx-1"></div>
 
         <select 
-          value={sessionId}
-          onChange={(e) => loadChat(e.target.value)}
+          value={session.id}
+          onChange={(e) => {
+            if (e.target.value === "new") createNewSession();
+            else loadChat(e.target.value);
+          }}
           className="bg-black border border-gray-700 px-2 py-1 text-[10px] text-gray-400 outline-none"
         >
-          {sessions.map(s => <option key={s} value={s}>{s}</option>)}
-          <option value={`session-${Date.now()}`}>+ New Session</option>
+          {sessions.map(s => <option key={s} value={s}>{s === "default" ? "Session: Default" : `Session: ${s.slice(0, 8)}`}</option>)}
+          <option value="new">+ New Session</option>
         </select>
 
         <input
@@ -229,27 +274,81 @@ export default function App() {
       </div>
 
       {/* MAIN GRID */}
-      <div className="flex flex-1 overflow-hidden gap-0">
+      <div className="flex flex-1 overflow-hidden         {/* LEFT PANEL: WORKSPACE */}
+        <div className="w-1/4 border-r border-gray-700 flex flex-col overflow-hidden bg-zinc-950">
+          <div className="p-3 border-b border-gray-700 flex justify-between items-center bg-zinc-900">
+            <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">WORKSPACE</span>
+            <div className="relative">
+               <button 
+                  className="bg-zinc-800 p-1 hover:bg-zinc-700 text-gray-400 border border-gray-700 text-[10px] font-bold"
+                  title="Add Project Folder"
+               >
+                  <input 
+                    type="file" 
+                    webkitdirectory="true" 
+                    directory="true"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      if (files && files.length > 0) {
+                        const fullPath = prompt("Enter absolute path to the project folder:");
+                        if (fullPath) addProject(fullPath);
+                      }
+                    }}
+                  />
+                  ADD +
+               </button>
+            </div>
+          </div>
+          
+          <div className="flex-1 overflow-auto p-4 space-y-2">
+             {projects.map(p => (
+                <div 
+                  key={p.id} 
+                  onClick={() => selectProject(p.id)}
+                  className={`p-3 border border-zinc-800 cursor-pointer group hover:border-blue-500 transition-all ${
+                    session.activeProjectId === p.id ? "bg-blue-900/10 border-blue-500/50" : "bg-black"
+                  }`}
+                >
+                   <div className="flex justify-between items-center">
+                      <div className="truncate pr-2">
+                        <div className="font-bold text-xs uppercase tracking-tight text-zinc-300">{p.name}</div>
+                        <div className="text-[9px] text-zinc-600 truncate">{p.path}</div>
+                      </div>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); removeProject(p.id); }}
+                        className="opacity-0 group-hover:opacity-100 text-zinc-700 hover:text-red-500 text-[10px] transition-opacity"
+                      >
+                        ✕
+                      </button>
+                   </div>
+                </div>
+             ))}
 
-        {/* LEFT — AGENT PANEL */}
+             {projects.length === 0 && (
+                <div className="text-center py-8">
+                   <div className="text-zinc-700 text-[10px] uppercase font-bold mb-2 tracking-widest">No Projects</div>
+                   <div className="text-zinc-800 text-[9px] px-4 leading-relaxed italic">Select a folder to begin agentic development.</div>
+                </div>
+             )}
+          </div>
+        </div>
+
+        {/* AGENT PANEL */}
         <div className="w-1/4 border-r border-gray-700 flex flex-col overflow-hidden">
           <div className="p-3 border-b border-gray-700 bg-zinc-900 text-xs font-bold uppercase tracking-widest text-gray-400">
             AGENT
           </div>
           
           <div className="flex-1 overflow-auto p-3 scrollbar-hide">
-            <div className="text-gray-500 text-[10px] mb-4 uppercase tracking-widest">
-              Context-aware mode active
-            </div>
-
-            {!messages.length && (
+            {!session.messages.length && (
               <div className="text-gray-600 text-sm italic">
-                Start by asking something...
+                Awaiting instructions...
               </div>
             )}
 
             <div className="space-y-3">
-              {messages
+              {session.messages
                 .filter(m => !search || m.content.toLowerCase().includes(search.toLowerCase()))
                 .map((m, i) => (
                 <div key={i} className={`p-3 border ${
@@ -260,12 +359,12 @@ export default function App() {
                   <div className={`text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-tighter`}>
                   {m.role === "user" ? "YOU" : "XENTARI (AI)"}
                 </div>
-                  <div className="text-sm leading-relaxed">{m.content}</div>
+                  <div className="text-sm leading-relaxed text-zinc-200">{m.content}</div>
                 </div>
               ))}
               <div ref={bottomRef} />
             </div>
-          </div>
+          </div>     </div>
 
           {/* STICKY INPUT BAR */}
           <div className="border-t border-gray-700 p-2 bg-black">

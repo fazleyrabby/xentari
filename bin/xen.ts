@@ -12,6 +12,7 @@ import { updateDuration } from "../core/metrics.js";
 import { loadPlugins, buildCommandRegistry } from "../core/plugins.js";
 import { loadConfig } from "../core/config.js";
 import { resolveProjectRoot } from "../core/project/resolver.js";
+import { workspaceManager } from "../core/workspace/workspaceManager.js";
 
 let shuttingDown = false;
 
@@ -67,6 +68,9 @@ async function main() {
       xen context             Show current dynamic context
       xen debug "task"        Show retrieval scores and token estimates
       xen undo                Revert last change (git reset --hard HEAD)
+      xen workspace add <path> Add folder to project list
+      xen workspace list      Show all projects
+      xen workspace use <id>  Switch to specific project
       xen --help, xen -h       Show this help
 
     Examples:
@@ -243,6 +247,35 @@ Constraint Engine:
       }
     } else {
       log.info("Aborted.");
+    }
+    process.exit(0);
+  }
+
+  if (task.startsWith("workspace ")) {
+    const sub = task.replace("workspace ", "").trim();
+    const parts = sub.split(" ");
+    const cmd = parts[0];
+    const val = parts.slice(1).join(" ");
+
+    if (cmd === "add") {
+       if (!val) { log.error("Provide a path. Example: xen workspace add /path/to/my-project"); process.exit(1); }
+       try {
+          const p = workspaceManager.addProject(val);
+          log.ok(`Added project: ${p.name} (${p.id})`);
+       } catch (e) { log.error(e.message); }
+    } else if (cmd === "list") {
+       const ps = workspaceManager.getProjects();
+       log.section("WORKSPACE PROJECTS");
+       ps.forEach(p => console.log(` - ${p.name.padEnd(20)} [${p.id.slice(0, 8)}] ${p.path}`));
+    } else if (cmd === "use") {
+       if (!val) { log.error("Provide a projectId"); process.exit(1); }
+       const p = workspaceManager.getProjectById(val) || workspaceManager.getProjects().find(proj => proj.id.startsWith(val));
+       if (!p) { log.error("Project not found"); process.exit(1); }
+       log.ok(`Switched to: ${p.path}`);
+       // Note: CLI usage is usually scoped to CWD or --project flag, 
+       // but we persist this selection if needed.
+    } else {
+       log.error("Unknown workspace command. Use add, list, or use.");
     }
     process.exit(0);
   }

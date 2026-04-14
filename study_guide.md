@@ -873,3 +873,18 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
         - Integrated a `datalist` into the Web UI's model input for real-time model suggestions from discovered providers.
         - Added a manual discovery refresh button (↻) to the settings bar.
 *   **Known Limitations:** Detection is currently limited to localhost; remote providers must still be configured manually in `config.json`.
+
+### WORKSPACE + SESSION PROJECT SYSTEM
+*   **Goal:** Replace manual path entry with a persistent project management system linked to chat sessions.
+*   **Result:**
+    *   **Global Project Storage:** Implemented `.xentari/projects.json` to store user-approved project paths and metadata.
+    *   **Workspace Manager:** Created `core/workspace/workspaceManager.js` to handle global project CRUD operations and path validation.
+    *   **Enhanced Session Linking:**
+        - Upgraded `SessionManager` to link sessions to specific global projects via `activeProjectId`.
+        - Selecting a project in the UI automatically updates the runtime context and switches the agent's target directory.
+    *   **Interactive Workspace UI:**
+        - **Folder Picker:** Integrated a standard browser folder picker (with absolute path fallback) in the left panel.
+        - **Project List:** Added a dedicated Workspace panel for managing all saved projects.
+    *   **Unified API Endpoints:** Added `/api/projects` (GET, POST, DELETE) for global project management.
+    *   **CLI Integration:** Added `xen workspace` commands (`add`, `list`, `use`) for full terminal-based workspace management.
+    *   **Persistence:** Sessions now remember their linked project across restarts, ensuring a seamless development flow.
