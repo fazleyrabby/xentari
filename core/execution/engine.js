@@ -1,25 +1,64 @@
 import { safeExec } from "./safeExec.js";
+import { handleFailure } from "./retryEngine.js";
+import * as ui from "../ui/state.js";
 
 /**
- * E11 — Execution Engine Orchestrator
- * Iterates through a plan and executes commands safely.
+ * E12 — Self-Correcting Execution Engine
+ * Iterates through a plan, manages retries, and updates UI state.
  */
-export async function executionLoop(plan, options = {}) {
-  const results = [];
-  
-  for (const step of plan.steps) {
-    const res = await safeExec({
-      command: step.command,
-      reason: step.description || "System execution",
-      stack: options.stack || "node"
+export async function executionLoop(plan, context = {}) {
+  ui.setStatus({ text: "RUNNING", errors: 0 });
+
+  for (let i = 0; i < plan.steps.length; i++) {
+    const step = plan.steps[i];
+    step.retries = step.retries || 0;
+
+    ui.addAction({
+      type: "RUN",
+      target: step.command,
+      icon: "▶"
     });
-    
-    results.push(res);
-    
-    if (!res.success) {
-      return { status: "FAILED", results };
+
+    const result = await safeExec(step);
+
+    if (!result.success) {
+      const decision = await handleFailure(step, result, context);
+
+      ui.addAction({
+        type: "FAIL",
+        target: decision.classification.type,
+        icon: "✖"
+      });
+
+      if (decision.status === "RETRY") {
+        step.retries++;
+
+        ui.addAction({
+          type: "RETRY",
+          target: step.command,
+          icon: "↻"
+        });
+
+        // Repeat this step
+        i--;
+        continue;
+      }
+
+      ui.setStatus({ text: `FAILED: ${decision.classification.type}`, errors: 1 });
+      return {
+        status: "FAILED",
+        reason: decision.classification.type,
+        result
+      };
     }
+
+    ui.addAction({
+      type: "SUCCESS",
+      target: step.command,
+      icon: "✔"
+    });
   }
-  
-  return { status: "SUCCESS", results };
+
+  ui.setStatus({ text: "SUCCESS", errors: 0 });
+  return { status: "SUCCESS" };
 }

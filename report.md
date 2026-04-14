@@ -702,3 +702,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Non-Blocking Input:** Integrated a raw-mode input listener (`core/ui/input.js`) that allows real-time user commands without interrupting the background execution flow.
     *   **Continuous Refresh Engine:** Implemented a non-flicker UI refresh loop (`core/ui/loop.js`) to maintain visual consistency across all terminal states.
     *   **State-Driven Rendering:** Centralized UI logic into a reactive state machine (`core/ui/state.js`), ensuring the TUI always reflects the current system truth.
+
+### E12 — FAILURE INTELLIGENCE SYSTEM
+*   **Goal:** Transform Xentari into a self-correcting deterministic execution system by classifying and intelligently retrying failures.
+*   **Result:**
+    *   **Failure Classifier:** Implemented `core/execution/failureClassifier.js` to map error messages to specific categories (ENVIRONMENT, PERMISSION, CODE, VALIDATION) and determine retry eligibility.
+    *   **Retry Intelligence Engine:** Created `core/execution/retryEngine.js` to manage execution retries, enforcing a maximum retry limit and coordinating with the classifier.
+    *   **Enhanced Execution Loop:** Upgraded `core/execution/engine.js` to integrate retry logic, automatically repeating steps on recoverable failures (e.g., syntax or validation errors).
+    *   **State-Driven UI Integration:** Fully integrated the execution loop with the TUI state machine, providing real-time visual feedback for runs, failures, and retries.
+    *   **Resilient Orchestration:** The system now intelligently decides whether to halt or attempt recovery based on the structural nature of the error, significantly increasing the success rate of complex tasks.

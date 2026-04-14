@@ -25,3 +25,13 @@ export function updateState(updates) {
   Object.assign(state, updates);
   state.refresh++;
 }
+
+export function addAction(action) {
+  state.actions.push(action);
+  state.refresh++;
+}
+
+export function setStatus(statusUpdates) {
+  state.status = { ...state.status, ...statusUpdates };
+  state.refresh++;
+}
