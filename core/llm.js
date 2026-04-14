@@ -1,6 +1,8 @@
 import { loadConfig } from "./config.js";
 import { log } from "./logger.js";
 import { simulateFailure } from "./utils/simulation.js";
+import { normalizeMetrics } from "./llm/metrics.js";
+import { setMetrics } from "./ui/state.js";
 
 
 function estimateTokens(str) {
@@ -98,6 +100,13 @@ export async function chat(messages, { maxTokens, temperature, stream = false, o
     const data = await res.json();
     const content = data.choices?.[0]?.message?.content;
     if (!content) throw new Error("LLM returned empty response");
+
+    try {
+      const normalized = normalizeMetrics(data);
+      setMetrics(normalized);
+    } catch (e) {
+      log.warn("[LLM] Metrics normalization failed");
+    }
 
     if (metrics) {
       metrics.outputTokens += estimateTokens(content);

@@ -20,6 +20,7 @@ export const state = {
     offset: 0
   },
   view: "actions", // actions | timeline | debug
+  metrics: null,
   refresh: 0
 };
 
@@ -65,5 +66,10 @@ export function addAction(action) {
 
 export function setStatus(statusUpdates) {
   state.status = { ...state.status, ...statusUpdates };
+  state.refresh++;
+}
+
+export function setMetrics(metrics) {
+  state.metrics = metrics || null;
   state.refresh++;
 }

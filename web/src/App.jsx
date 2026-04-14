@@ -116,6 +116,26 @@ export default function App() {
           <div>STACK: {state.stack}</div>
           <div>PHASE: {state.phase}</div>
           <div>MODE: {state.mode}</div>
+
+          <div className="mt-4 border-t border-gray-700 pt-2">
+            <div className="text-gray-400 mb-1">METRICS</div>
+
+            <div>
+              Tokens: {state.metrics?.totalTokens ?? "-"}
+            </div>
+
+            <div>
+              TPS: {state.metrics?.tokensPerSecond ?? "-"}
+            </div>
+
+            <div>
+              Latency: {state.metrics?.latencyMs ?? "-"} ms
+            </div>
+
+            <div className="text-xs text-gray-500">
+              Provider: {state.metrics?.provider ?? "unknown"}
+            </div>
+          </div>
         </div>
 
       </div>

@@ -794,3 +794,14 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Trace Awareness:** Integrated recent execution trace (last 5 steps) and actions into the chat context.
     *   **Smart Chat Responses:** Enhanced `handleChat` to provide keyword-triggered insights about files, system status, and recent activity using the project context.
     *   **UI Hinting:** Added a visual "Context-aware mode active" indicator to the web interface.
+
+### MODEL METRICS OBSERVABILITY
+*   **Goal:** Implement provider-agnostic model performance metrics to track token usage, speed (TPS), and latency.
+*   **Result:**
+    *   **Normalization Layer:** Created `core/llm/metrics.js` to standardize raw response metadata from diverse providers (llama.cpp, OpenAI, vLLM).
+    *   **Safe Capture:** Integrated fallback-safe metrics extraction within the core `chat` logic in `core/llm.js`.
+    *   **State Integration:** Synchronized normalized metrics with the system state machine (`core/ui/state.js`).
+    *   **Unified UI Display:**
+        *   **Web UI:** Integrated real-time metrics (Tokens, TPS, Latency, Provider) into the Context Panel.
+        *   **TUI:** Standardized the execution footer to display performance stats with a graceful "N/A" fallback.
+    *   **Provider Agnosticism:** Verified support for multi-platform usage data without disrupting the deterministic execution flow.
