@@ -768,3 +768,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **React Frontend:** Scaffolded a Vite-powered React application (`web/`) that visualizes internal state, execution traces, and provides a remote command input.
     *   **State-Driven Visualization:** The Web UI consumes the same reactive state machine (`core/ui/state.js`) used by the TUI, ensuring visual parity across interfaces.
     *   **System Decoupling:** Maintained strict separation between the core engine and the interface layer, enabling dual-mode operation (CLI and Web) simultaneously.
+
+### WEB UI — STRUCTURED IDE LAYOUT
+*   **Goal:** Upgrade Xentari Web UI into a structured IDE-like interface with continuous automation support.
+*   **Result:**
+    *   **AUTO mode fix:** Updated backend `/run` endpoint to pass `{ auto: true }` directly, preventing blockages by CLI permission prompts.
+    *   **3-panel system:** Restructured the frontend into dedicated left (Agent), center (Output), and right (Context) panels.
+    *   **Agent panel:** Visualizes real-time execution actions and raw thinking trace data.
+    *   **Context panel:** Continuously displays system stack, phase, and mode attributes.
+    *   **Trace UI:** Styled specific trace markers (`OK`, `FAIL`, `STEP`, `RETRY`) with Neo-Brutalist, high-contrast monospace fonts.
