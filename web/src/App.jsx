@@ -172,9 +172,15 @@ export default function App() {
       if (data.type === "chat") {
         const aiMsg = { role: "assistant", content: data.message };
         setSession(prev => ({ ...prev, messages: [...prev.messages, aiMsg] }));
+      } else if (data.type === "exec") {
+        const aiMsg = { role: "assistant", content: "⚡ Task execution started. Check the OUTPUT panel for results." };
+        setSession(prev => ({ ...prev, messages: [...prev.messages, aiMsg] }));
+      } else if (data.error) {
+        const aiMsg = { role: "assistant", content: `❌ Error: ${data.error}` };
+        setSession(prev => ({ ...prev, messages: [...prev.messages, aiMsg] }));
       }
     } catch (err) {
-      const errMsg = { role: "assistant", content: `Error: ${err.message}` };
+      const errMsg = { role: "assistant", content: `❌ Connection error: ${err.message}` };
       setSession(prev => ({ ...prev, messages: [...prev.messages, errMsg] }));
     }
 

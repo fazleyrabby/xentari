@@ -6,16 +6,16 @@ export class LMStudioProvider extends BaseProvider {
   }
 
   async detect() {
-    if (!this.config?.enabled) return false;
-    const res = await this.safeFetch(`${this.config.baseUrl}/v1/models`);
+    if (!this.config?.enabled || !this.baseUrl) return false;
+    const res = await this.safeFetch(`${this.baseUrl}/models`);
     this.isActive = !!res && res.ok;
     return this.isActive;
   }
 
   async listModels() {
-    if (!this.isActive) return [];
+    if (!this.isActive || !this.baseUrl) return [];
     
-    const res = await this.safeFetch(`${this.config.baseUrl}/v1/models`);
+    const res = await this.safeFetch(`${this.baseUrl}/models`);
     if (!res || !res.ok) return [];
 
     const data = await res.json();

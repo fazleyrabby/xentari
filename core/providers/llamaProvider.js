@@ -6,18 +6,17 @@ export class LlamaProvider extends BaseProvider {
   }
 
   async detect() {
-    if (!this.config?.enabled) return false;
-    // llama-server often responds to /health or /
-    const res = await this.safeFetch(`${this.config.baseUrl}/health`);
+    if (!this.config?.enabled || !this.baseUrl) return false;
+    const res = await this.safeFetch(`${this.baseUrl}/models`);
     this.isActive = !!res && res.ok;
     return this.isActive;
   }
 
   async listModels() {
-    if (!this.isActive) return [];
+    if (!this.isActive || !this.baseUrl) return [];
     
-    // llama-server usually runs one model at a time, but supports OAI /v1/models
-    const res = await this.safeFetch(`${this.config.baseUrl}/v1/models`);
+    // llama-server usually runs one model at a time, but supports OAI /models
+    const res = await this.safeFetch(`${this.baseUrl}/models`);
     if (res && res.ok) {
       const data = await res.json();
       return (data.data || []).map(m => this.normalizeModel(m));

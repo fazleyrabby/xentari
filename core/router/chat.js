@@ -1,5 +1,6 @@
 import { getContext } from "../context/contextEngine.js";
 import { getRuntime } from "../runtime/context.js";
+import { normalizeBaseUrl } from "../providers/normalizeBaseUrl.js";
 
 function validateModelConfig() {
   const { apiUrl, model } = getRuntime();
@@ -14,46 +15,65 @@ function validateModelConfig() {
 function getConfigErrorMessage(type) {
   switch (type) {
     case "NO_MODEL_FULL":
-      return `⚠ No model configured.\n\nGo to settings and set:\n- API endpoint (e.g. http://localhost:11434)\n- Model name (e.g. llama3, qwen)\n\nThen try again.`;
+      return `⚠ Unable to reach model API\n→ Check base URL: http://localhost:8081/v1\n→ Ensure server is running`;
     case "NO_API":
-      return `⚠ No API endpoint configured.\n\nExample:\nhttp://localhost:11434 (Ollama)\nhttp://localhost:1234 (LM Studio)`;
+      return `⚠ No API endpoint configured.\n\nExample:\nhttp://localhost:11434 (Ollama)\nhttp://localhost:1234/v1 (LM Studio)`;
     case "NO_MODEL":
-      return `⚠ No model selected.\n\nExample:\n- llama3\n- qwen\n- mistral`;
+      return `⚠ No model selected.\n\nExamples: llama3, qwen, ollama:qwen`;
     default:
       return "⚠ Unknown configuration error.";
   }
 }
 
 async function callModel(input, context) {
-  const { apiUrl, model } = getRuntime();
+  let { apiUrl, model } = getRuntime();
+
+  if (!apiUrl) return "❌ No API URL configured.";
+
+  // Normalize API URL
+  let endpoint = normalizeBaseUrl(apiUrl);
+  if (endpoint) {
+    endpoint = endpoint + "/chat/completions";
+  }
 
   try {
-    const res = await fetch(apiUrl, {
+    const res = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model,
-        prompt: `
-You are Xentari, an AI coding agent. Use the context below to help the user.
-Be concise and deterministic.
+        messages: [
+          {
+            role: "system",
+            content: `You are Xentari, an AI coding agent. Use the context provided to help the user.
+Be concise, deterministic, and helpful.
 
 CONTEXT:
-${JSON.stringify(context, null, 2)}
-
-USER:
-${input}
-
-ASSISTANT:
-        `
+${JSON.stringify(context, null, 2)}`
+          },
+          {
+            role: "user",
+            content: input
+          }
+        ],
+        temperature: 0.2
       })
     });
 
+    if (!res.ok) {
+      const errBody = await res.text();
+      return `❌ Model error (${res.status}): ${errBody.slice(0, 100)}`;
+    }
+
     const data = await res.json();
 
-    // Support both Ollama and standard OpenAI-like response formats
-    return data.response || data.choices?.[0]?.message?.content || data.output || "No response content received.";
+    const content = data.choices?.[0]?.message?.content || 
+                    data.message?.content || 
+                    data.response || 
+                    data.output || 
+                    "No response content received.";
+                    
+    return content;
   } catch (e) {
     return `❌ Model request failed: ${e.message}`;
   }

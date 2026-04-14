@@ -6,16 +6,16 @@ export class OllamaProvider extends BaseProvider {
   }
 
   async detect() {
-    if (!this.config?.enabled) return false;
-    const res = await this.safeFetch(`${this.config.baseUrl}/api/tags`);
+    if (!this.config?.enabled || !this.baseUrl) return false;
+    const res = await this.safeFetch(`${this.baseUrl}/api/tags`);
     this.isActive = !!res && res.ok;
     return this.isActive;
   }
 
   async listModels() {
-    if (!this.isActive) return [];
+    if (!this.isActive || !this.baseUrl) return [];
     
-    const res = await this.safeFetch(`${this.config.baseUrl}/api/tags`);
+    const res = await this.safeFetch(`${this.baseUrl}/api/tags`);
     if (!res || !res.ok) return [];
 
     const data = await res.json();

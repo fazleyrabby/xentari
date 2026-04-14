@@ -930,3 +930,13 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Standardized Defaults:** Integrated `defaultModel` selection at the registry level, automatically marking preferred models as `selected` in the UI if they are physically detected.
     *   **Runtime Source of Truth:** Maintained a strict "Detection First" architecture where config-only models are ignored if the provider isn't actually accessible at runtime.
     *   **Enhanced API Response:** Upgraded `GET /api/models` to return rich metadata including `overridden` and `selected` flags, providing a foundation for advanced model switching in the Web UI.
+
+### PROVIDER ENDPOINT NORMALIZATION
+*   **Goal:** Simplify user configuration by automatically cleaning base URLs and ensuring compatibility with `llama-server`.
+*   **Result:**
+    *   **Normalization Utility:** Created `core/providers/normalizeBaseUrl.js` which intelligently strips redundant endpoints (like `/chat/completions`) and enforces the `/v1` suffix for OpenAI-compatible providers.
+    *   **Universal Base URLs:** Updated all providers to utilize normalized base paths, allowing users to input simplified URLs (e.g., `http://localhost:8081`) while the system handles the API routing.
+    *   **OpenAI Detection Upgrade:** switched detection for LM Studio and Llama-server to utilize the standard `GET /models` endpoint, improving reliability and out-of-the-box support for `llama.cpp`.
+    - **Self-Correcting Chat Logic:** Enhanced the chat router to normalize the `apiUrl` at runtime before appending `/chat/completions`, preventing common "404 Not Found" errors caused by misconfigured paths.
+    *   **Actionable Error Guidance:** Improved configuration error messages to provide specific examples and troubleshooting steps (e.g., "Ensure server is running") instead of generic failure notices.
+*   **Validation:** Verified that `llama-server` (without explicit `--api` flags) is correctly detected and usable via the normalized `v1` endpoint.

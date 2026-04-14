@@ -1,8 +1,14 @@
+import { normalizeBaseUrl } from "./normalizeBaseUrl.js";
+
 export class BaseProvider {
   constructor(name, config) {
     this.name = name;
     this.config = config;
     this.isActive = false;
+  }
+
+  get baseUrl() {
+    return normalizeBaseUrl(this.config?.baseUrl, this.name);
   }
 
   async detect() {
