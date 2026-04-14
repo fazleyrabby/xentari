@@ -133,10 +133,12 @@ async function main() {
   const cwd = process.cwd();
   if (cwd.includes("xentari") || projectRoot.includes("xentari")) {
     log.warn("⚠ Running inside Xentari project");
-    const approved = await confirm("  You are modifying Xentari itself. Continue?");
-    if (!approved) {
-      log.info("Aborted.");
-      process.exit(1);
+    if (process.env.XEN_AUTO_APPROVE !== "true") {
+      const approved = await confirm("  You are modifying Xentari itself. Continue?");
+      if (!approved) {
+        log.info("Aborted.");
+        process.exit(1);
+      }
     }
   }
 

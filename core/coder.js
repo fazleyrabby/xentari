@@ -7,9 +7,9 @@ import { enforceConstraints, validateFileOutput } from "./constraints.js";
 import { loadIndex } from "./index.ts";
 import { loadPattern, validateStructure } from "./patterns.js";
 import { selectContext, formatContext } from "./retrieval/contextEngine.ts";
-import { getFeedbackForStep } from "./retrieval/feedbackEngine.ts";
+import { getFeedbackForStep, getAdaptiveRules } from "./retrieval/feedbackEngine.ts";
 
-const BASE_SYSTEM = `# 🧠 XENTARI — AGENT PROMPT (PHASE 4 READY)
+const BASE_SYSTEM = `# 🧠 XENTARI — AGENT PROMPT (E3 — Structure Enforcement READY)
 
 You are a deterministic code generator inside Xentari operating on a structured project.
 
@@ -117,26 +117,77 @@ function detectModule(task) {
   if (lower.includes("api") || lower.includes("route")) return "api";
   return null;
 }
+
+function sanitizeImports(code, bundle) {
+  const allowed = [
+    bundle.targetPath,
+    ...(bundle.related || []).map(r => {
+      const match = r.match(/=== FILE: (.*?) ===/);
+      return match ? match[1] : null;
+    }).filter(Boolean)
+  ];
+
+  return code.replace(/(?:require\(|from\s+)(['"])(.*?)\1/g, (match, quote, path) => {
+    if (path.startsWith('.')) {
+      const isAllowed = allowed.some(a => a && a.includes(path.split('/').pop()));
+      if (!isAllowed) {
+        log.warn(`[SANITIZER] Removing unrequested import: ${path}`);
+        return quote + quote;
+      }
+    }
+    return match;
+  });
+}
 function buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot, intent } = {}) {
   const tier = detectTier();
   const index = loadIndex();
 
-  // Phase 6: Deterministic Context Bundle
+  // E5 — Context Engine: Deterministic Context Bundle
   const targetPath = (typeof step === 'string' && step.includes("/")) ? step : (files[0]?.file || "");
   const bundle = selectContext(targetPath, projectDir);
+
+  // E9 — Feedback Engine: Adaptive Context Reduction
+  const adaptiveRules = getAdaptiveRules(projectDir, targetPath);
+  if (adaptiveRules.smallContext) {
+    // Only include target file and closest 1 dependencies
+    bundle.files = bundle.files.slice(0, 2);
+  }
+
   const contextBundle = formatContext(bundle);
 
   let system = `${BASE_SYSTEM}${TIER_RULES[tier]}
 
 ==================================================
-📦 CONTEXT BUNDLE (PHASE 6)
+📦 CONTEXT BUNDLE (E5)
 ==================================================
 ${contextBundle}`;
 
-  // Phase 9: Intent Engine
+  // E9: Adaptive Constraints (Prompt Level)
+  if (adaptiveRules.strictOutput) {
+    system += `\n\n==================================================
+🔒 STRICT OUTPUT ENFORCEMENT (E9)
+==================================================
+The system detected previous output issues. 
+You MUST be extra careful:
+- NO conversational prefix/suffix
+- NO markdown fences
+- FULL code content for the file
+- Balance all braces and parentheses
+- DO NOT truncate the implementation.`;
+  }
+
+  if (adaptiveRules.strictContracts) {
+    system += `\n\n==================================================
+🔒 STRICT CONTRACT ENFORCEMENT (E9)
+==================================================
+Previous contract violations detected. 
+Ensure your changes strictly adhere to the system exports and patterns.`;
+  }
+
+  // E8 — Intent Engine
   if (intent) {
     system += `\n\n==================================================
-📜 INTENT (PHASE 9)
+📜 INTENT (E8)
 ==================================================
 You MUST align your changes with this intent. Do NOT introduce unrelated logic.
 
@@ -145,24 +196,23 @@ SCOPE: ${intent.scope}
 GOAL: ${intent.description}`;
   }
 
-  // Phase 10: Feedback Engine (Self-Improvement)
+  // E9 — Feedback Engine (Self-Improvement)
   const historicalFeedback = getFeedbackForStep(projectDir, targetPath);
   if (historicalFeedback) {
     system += historicalFeedback;
   }
 
-  // Phase 8: System Snapshot (Consistency)
-  if (systemSnapshot) {
-...
+  // E7 — Consistency Engine (System Snapshot)
+  if (systemSnapshot && systemSnapshot.files) {
     const snapshotStr = Object.entries(systemSnapshot.files)
       .map(([path, info]) => `- ${path}: [${info.exports.join(", ")}]`)
       .join("\n");
     
     system += `\n\n==================================================
-📊 SYSTEM SNAPSHOT (PHASE 8)
+📊 SYSTEM SNAPSHOT (E7)
 ==================================================
 This snapshot represents the current state of exports in the system. 
-You MUST NOT break these contracts unless explicitly asked.
+You MUST not break these contracts unless explicitly asked.
 
 FILES:
 ${snapshotStr}
@@ -171,9 +221,9 @@ RELATIONS:
 ${JSON.stringify(systemSnapshot.relations, null, 2)}`;
   }
 
-  // Phase 4: Structure Enforcement (ROLE + PATTERN)
+  // E3 — Structure Enforcement (ROLE + PATTERN)
   if (role && pattern) {
-    const template = loadPattern(pattern);
+    const template = await loadPattern(pattern);
     if (template) {
       system += `\n\nROLE: ${role}\nPATTERN: ${pattern}\n\nYou MUST follow this pattern exactly.\n\nYou are ONLY allowed to:\n- fill logic\n- adapt variable names if needed\n\nYou are NOT allowed to:\n- change structure\n- remove functions\n- change exports\n\nTEMPLATE:\n${template}`;
     }
@@ -197,7 +247,7 @@ ${JSON.stringify(systemSnapshot.relations, null, 2)}`;
 }
 
 function extractFileContent(raw, maxFiles = 1) {
-  // Phase 3 Integrity: Agent always outputs raw code for a single file.
+  // Integrity Guards (E2): Agent always outputs raw code for a single file.
   // We no longer rely on '=== FILE:' markers.
   const fenced = raw.match(/```(?:[\w-]+)?\s*([\s\S]*?)```/);
   let content = raw.trim();
@@ -213,7 +263,7 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
   const config = loadConfig();
   const maxFiles = tier === "small" ? 1 : profile.maxPatchFiles;
 
-  // Task 6: Multi-pass processing for large files
+  // Stability (E1): Multi-pass processing for large files
   const largeFiles = files.filter(f => f.content.includes("... [CHUNK BOUNDARY] ..."));
   let analysis = "";
 
@@ -249,7 +299,12 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
   ];
   const cleaned = enforceConstraints(raw, constraintRules, metrics);
   
-  const fileUpdates = extractFileContent(cleaned, maxFiles);
+  // Integrity Guards (E2): Context Import Sanitization
+  const targetPath = (typeof step === 'string' && step.includes("/")) ? step : (files[0]?.file || "");
+  const bundle = selectContext(targetPath, projectDir);
+  const sanitized = sanitizeImports(cleaned, { ...bundle, targetPath });
+
+  const fileUpdates = extractFileContent(sanitized, maxFiles);
   
   if (fileUpdates.length === 0) {
     throw new Error("No valid file content extracted from LLM response");
@@ -271,7 +326,7 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
       throw new Error("Generated content too large");
     }
 
-    // Phase 4 Pattern Enforcement
+    // E3 — Structure Enforcement (Pattern Enforcement)
     if (role && pattern) {
       try {
         validateStructure(update.content, role, pattern);

@@ -1,7 +1,7 @@
 import { log } from "../logger.js";
 
 /**
- * 🧠 XENTARI — PHASE 9: INTENT ENGINE
+ * 🧠 XENTARI — E8 — Intent Engine
  */
 
 export type IntentType = "modify" | "refactor" | "add" | "remove";
@@ -31,7 +31,8 @@ export function intentAllowsContractBreak(intent: Intent): boolean {
  */
 export function isWithinScope(targetPath: string, intent: Intent): boolean {
   if (intent.scope === "file") {
-    return targetPath === intent.target;
+    // Flexible match: exact match OR targetPath ends with intent.target (to handle models/user.js vs user.js)
+    return targetPath === intent.target || targetPath.endsWith("/" + intent.target) || targetPath.endsWith("\\" + intent.target);
   }
   if (intent.scope === "module" && intent.module) {
     // Check if path contains the module name or is in the module directory

@@ -3,10 +3,10 @@ import { join } from "node:path";
 import { log } from "../logger.js";
 
 /**
- * 🧠 XENTARI — PHASE 10: FEEDBACK ENGINE
+ * 🧠 XENTARI — E9 — Feedback Engine
  */
 
-export type FailureType = "CONSISTENCY" | "BEHAVIOR" | "OUTPUT" | "CONTEXT" | "UNKNOWN";
+export type FailureType = "CONSISTENCY" | "BEHAVIOR" | "OUTPUT" | "CONTEXT" | "INFRA" | "UNKNOWN";
 
 export type FailureEntry = {
   step: string;
@@ -26,10 +26,22 @@ export type FeedbackData = {
  */
 export function classifyFailure(error: string): FailureType {
   const upper = error.toUpperCase();
-  if (upper.includes("CONTRACT") || upper.includes("MISMATCH")) return "CONSISTENCY";
-  if (upper.includes("TEST") || upper.includes("ASSERTION")) return "BEHAVIOR";
-  if (upper.includes("TRUNCATION") || upper.includes("BRACES") || upper.includes("EMPTY_OUTPUT")) return "OUTPUT";
+  
+  // Infrastructure issues should not trigger adaptations
+  if (upper.includes("MODULE_NOT_FOUND")) return "INFRA";
+
+  // Specific output issues first
+  if (upper.includes("TRUNCATION") || upper.includes("BRACES") || upper.includes("EMPTY_OUTPUT") || upper.includes("SYNTAX")) return "OUTPUT";
+  
+  // Specific context issues
   if (upper.includes("CONTEXT") || upper.includes("STALE") || upper.includes("RETRIEVAL")) return "CONTEXT";
+
+  // Specific behavior/test issues
+  if (upper.includes("TEST") || upper.includes("ASSERTION")) return "BEHAVIOR";
+
+  // General consistency/contract issues
+  if (upper.includes("CONTRACT") || upper.includes("MISMATCH")) return "CONSISTENCY";
+  
   return "UNKNOWN";
 }
 
@@ -63,6 +75,12 @@ export function logFailure(projectDir: string, step: string, error: string, inte
   const data = loadFeedback(projectDir);
   
   const type = classifyFailure(error);
+
+  if (type === "INFRA") {
+    log.warn(`[FEEDBACK] Infrastructure failure detected: ${error}. Skipping adaptation.`);
+    return;
+  }
+
   const entry: FailureEntry = {
     step,
     type,
@@ -102,7 +120,7 @@ export function getFeedbackForStep(projectDir: string, step: string): string {
 
   return `
 ==================================================
-⚠️ PREVIOUS FAILURE DETECTED (PHASE 10)
+⚠️ PREVIOUS FAILURE DETECTED (E9 — Feedback Engine)
 ==================================================
 The system recorded a previous failure for this step:
 - Error: ${mostCommon}
@@ -110,4 +128,50 @@ The system recorded a previous failure for this step:
 
 Ensure that your implementation explicitly handles this issue to avoid repetition.
 `;
+}
+
+/**
+ * 5. ADAPTIVE RULES (E9 — Feedback Engine)
+ */
+export type AdaptiveRules = {
+  strictContracts: boolean;
+  strictTests: boolean;
+  strictOutput: boolean;
+  smallContext: boolean;
+};
+
+export function getAdaptiveRules(projectDir: string, step: string): AdaptiveRules {
+  const data = loadFeedback(projectDir);
+  const pattern = data.patterns[step];
+  
+  const rules: AdaptiveRules = {
+    strictContracts: false,
+    strictTests: false,
+    strictOutput: false,
+    smallContext: false
+  };
+
+  if (!pattern || pattern.count === 0) return rules;
+
+  // Filter failures for this specific step/file
+  const stepFailures = data.failures.filter(f => f.step === step);
+  
+  // Count by type
+  const counts = stepFailures.reduce((acc, f) => {
+    acc[f.type] = (acc[f.type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Trigger adaptation if more than one failure of the same type occurs
+  if ((counts["CONSISTENCY"] || 0) > 1) rules.strictContracts = true;
+  if ((counts["BEHAVIOR"] || 0) > 1) rules.strictTests = true;
+  if ((counts["OUTPUT"] || 0) > 1) rules.strictOutput = true;
+  if ((counts["CONTEXT"] || 0) > 1) rules.smallContext = true;
+
+  if (rules.strictContracts) log.info(`[FEEDBACK] Adaptation: STRENGTHEN_CONTRACT_VALIDATION for ${step}`);
+  if (rules.strictTests) log.info(`[FEEDBACK] Adaptation: INCREASE_TEST_STRICTNESS for ${step}`);
+  if (rules.strictOutput) log.info(`[FEEDBACK] Adaptation: TIGHTEN_OUTPUT_VALIDATION for ${step}`);
+  if (rules.smallContext) log.info(`[FEEDBACK] Adaptation: REDUCE_CONTEXT_SIZE for ${step}`);
+
+  return rules;
 }

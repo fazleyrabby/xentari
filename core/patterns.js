@@ -1,16 +1,26 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { log } from "./logger.js";
+import { loadConfig } from "./config.js";
+import { loadStack } from "./loadStack.js";
 
 /**
- * Pattern Engine for Xentari Phase 4: Structure Enforcement.
+ * Pattern Engine for Xentari E3 — Structure Enforcement.
  */
 
-export function loadPattern(name) {
-  const patternPath = join(process.cwd(), "context/patterns", `${name}.pattern.cjs`);
+export async function loadPattern(name) {
+  const config = loadConfig();
+  const stack = await loadStack(config.stack || "node-basic");
+
+  // E10: Check if stack provides the pattern
+  if (stack && stack.patterns && stack.patterns[name]) {
+    return stack.patterns[name];
+  }
+
+  // Fallback to legacy path
+  const patternPath = join(process.cwd(), "context/patterns", `${name}.pattern.js`);
   if (!existsSync(patternPath)) {
-    log.warn(`[PATTERN] Pattern not found: ${name}`);
-    return null;
+    throw new Error(`PATTERN_REQUIRED: ${name}`);
   }
   return readFileSync(patternPath, "utf-8");
 }
@@ -34,6 +44,11 @@ export function validateStructure(content, role, patternName) {
   // Forbidden: ES modules in CJS patterns
   if (cleanContent.includes("export default") || cleanContent.includes("import ")) {
     throw new Error("FORBIDDEN_ES_MODULES: Pattern must remain CommonJS");
+  }
+
+  // Forbidden: Classes (E3 — Structure Enforcement requirement: Function-based structure)
+  if (/\bclass\b/.test(cleanContent)) {
+    throw new Error("FORBIDDEN_CLASS: Classes are not allowed. Use the function-based pattern.");
   }
 
   // Pattern Specific Checks

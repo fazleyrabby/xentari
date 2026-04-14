@@ -31,16 +31,28 @@ let _config;
 
 export function loadConfig() {
   if (_config) return _config;
+  const projectRoot = process.cwd();
+  
+  // Try project-local config first
+  const projectConfigPath = join(projectRoot, ".xentari", "config.json");
+  let projectConfig = {};
+  try {
+    if (fs.existsSync(projectConfigPath)) {
+      projectConfig = JSON.parse(fs.readFileSync(projectConfigPath, "utf-8"));
+    }
+  } catch {}
+
   try {
     const raw = readFileSync(join(ROOT, "config", "config.json"), "utf-8");
     const user = JSON.parse(raw);
     _config = {
       ...defaults,
       ...user,
+      ...projectConfig,
       retrieverWeights: { ...defaults.retrieverWeights, ...user.retrieverWeights },
     };
   } catch {
-    _config = { ...defaults };
+    _config = { ...defaults, ...projectConfig };
   }
   _config.root = ROOT;
   _config.logsDir = join(ROOT, "logs");

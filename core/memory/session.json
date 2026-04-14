@@ -1,86 +1,76 @@
 {
   "history": [
     {
-      "task": "create a crud app",
+      "task": "Add deleteTodo feature",
       "files": [
-        "src/modules/todo/todo.model.js",
-        "src/modules/todo/todo.service.js",
-        "src/modules/todo/todo.controller.js"
+        "services/todo.service.js"
       ],
-      "timestamp": 1776028289798
+      "timestamp": 1776145657661
     },
     {
-      "task": "fix imports in src/index.js to use src/modules/todo/todo.routes.js",
+      "task": "Fix todo service to pass tests",
       "files": [
-        "src/core/config/app.config.js",
-        "src/core/db/sqlite.js",
-        "src/modules/todo/todo.service.js",
-        "src/modules/todo/todo.controller.js"
+        "services/todo.service.js"
       ],
-      "timestamp": 1776025879840
+      "timestamp": 1776145524112
     },
     {
-      "task": "implement todo api with sqlite",
+      "task": "Update controller",
       "files": [
-        "src/index.js",
-        "src/core/config/app.config.js",
-        "src/core/db/sqlite.js",
-        "src/modules/todo/todo.service.js",
-        "src/modules/todo/todo.controller.js",
-        "src/modules/todo/todo.routes.js"
+        "routes/todo.routes.js"
       ],
-      "timestamp": 1776025764326
+      "timestamp": 1776145330301
     },
     {
-      "task": "create src/utils.js with a sum function",
+      "task": "Add deleteTodo feature",
       "files": [
-        "src/utils.js"
+        "services/todo.service.js",
+        "controllers/todo.controller.js"
       ],
-      "timestamp": 1776020183258
+      "timestamp": 1776145285408
     },
     {
-      "task": "move todo logic to models/todo.js and routes/todo.js then connect to app.js",
+      "task": "Add updateTodo feature",
+      "files": [
+        "models/todo.model.js"
+      ],
+      "timestamp": 1776145238698
+    },
+    {
+      "task": "Create todo API",
       "files": [
         "app.js"
       ],
-      "timestamp": 1776015407056
+      "timestamp": 1776145198846
     },
     {
-      "task": "create models/todo.js with an in-memory todos array and export it",
+      "task": "Fix todo service to pass tests",
       "files": [
-        "app.js"
+        "services/todo.service.js"
       ],
-      "timestamp": 1776015351283
+      "timestamp": 1776145156279
     },
     {
-      "task": "create todo CRUD api",
+      "task": "Create todo service",
       "files": [
-        "app.js",
-        "models/todo.js"
+        "services/todo.service.js",
+        "routes/todo.routes.js"
       ],
-      "timestamp": 1776014712137
+      "timestamp": 1776145110823
     },
     {
-      "task": "create todo api",
+      "task": "Fix controller",
       "files": [
-        "app.js"
+        "routes/todo.routes.js"
       ],
-      "timestamp": 1776014284371
+      "timestamp": 1776144995478
     },
     {
-      "task": "create todo api",
+      "task": "Update controller",
       "files": [
-        "routes/todo.js",
-        "app.js"
+        "routes/todo.routes.js"
       ],
-      "timestamp": 1776013984260
-    },
-    {
-      "task": "create todo api",
-      "files": [
-        "app.js"
-      ],
-      "timestamp": 1776013702663
+      "timestamp": 1776144962312
     }
   ]
 }

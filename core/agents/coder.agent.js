@@ -21,7 +21,7 @@ export async function generateWithRetry(step, files, feedback, chainContext, max
 
       const fileUpdates = await generateFileContent(step, files, feedback, chainContext, { onToken, metrics, role, pattern, projectDir, systemSnapshot, intent });
       return fileUpdates;
-...    } catch (err) {
+    } catch (err) {
       lastError = err;
       log.error(`[CODER] Attempt ${attempt}/${maxAttempts} failed: ${err.message}`);
       

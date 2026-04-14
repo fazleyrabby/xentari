@@ -51,6 +51,7 @@ import {
 import { logFailure } from "./retrieval/feedbackEngine.ts";
 
 import { simulateFailure } from "./utils/simulation.js";
+import { loadStack } from "./loadStack.js";
 
 
 export type StepType = "analyze" | "read" | "modify" | "create" | "refactor" | "verify" | "plan" | "retrieve" | "code" | "review";
@@ -85,6 +86,41 @@ let failureState = {
   advisorCalled: false,
   advisorFailureCount: 0,
 };
+
+let executionState = {
+  anyPatchApplied: false,
+  failed: false
+};
+
+const ORDER = [
+  "model",
+  "service",
+  "controller",
+  "routes"
+];
+
+function validatePlan(steps: Step[]) {
+  for (const step of steps) {
+    if (!step.target || typeof step.target !== "string") {
+      throw new Error(`INVALID_PLAN_STEP: Missing target for step ${step.id}`);
+    }
+  }
+
+  // Fix 7: Multi-file Order Enforcement
+  steps.sort((a, b) => {
+    const targetA = a.target.toLowerCase();
+    const targetB = b.target.toLowerCase();
+    
+    const indexA = ORDER.findIndex(o => targetA.includes(o));
+    const indexB = ORDER.findIndex(o => targetB.includes(o));
+    
+    const valA = indexA === -1 ? 99 : indexA;
+    const valB = indexB === -1 ? 99 : indexB;
+    
+    if (valA !== valB) return valA - valB;
+    return a.id - b.id; // Preserve original id order for same type
+  });
+}
 
 function detectModule(task: string) {
   const lower = task.toLowerCase();
@@ -166,13 +202,16 @@ function validateStepResult(projectDir: string, fileUpdate: { file: string; cont
 }
 
 async function validateStep(projectDir: string, step: Step, fileUpdate: { file: string; content: string }) {
-  // Phase 9: Scope Enforcement
-  if (step.intent && !isWithinScope(step.target, step.intent)) {
-    log.step("INTENT", "✗", "SCOPE_VIOLATION");
-    return { valid: false, reason: `Scope violation: Change to ${step.target} is outside intended scope (${step.intent.scope}).` };
+  // E8 — Intent Engine (Scope Enforcement)
+  if (step.intent) {
+    log.info(`[DEBUG] Scope Check: targetPath="${step.target}", intent.target="${step.intent.target}", intent.scope="${step.intent.scope}"`);
+    if (!isWithinScope(step.target, step.intent)) {
+      log.step("INTENT", "✗", "SCOPE_VIOLATION");
+      return { valid: false, reason: `Scope violation: Change to ${step.target} is outside intended scope (${step.intent.scope}).` };
+    }
   }
 
-  // 1. Structure Validation (Phase 4)
+  // E3 — Structure Enforcement (Structure Validation)
   if (step.role && step.pattern) {
     try {
       const { validateStructure } = await import("./patterns.js");
@@ -184,22 +223,23 @@ async function validateStep(projectDir: string, step: Step, fileUpdate: { file: 
     }
   }
 
-  // Phase 8: Consistency Engine (Contract Validation)
+  // E7 — Consistency Engine (Contract Validation)
   try {
     const snapshot = loadSnapshot(projectDir);
     validateContracts({ path: step.target, content: fileUpdate.content, role: step.role }, snapshot);
     log.step("CONSISTENCY", "✓", "CONTRACT OK");
   } catch (err: any) {
-    // Phase 9: Intent-Driven Override
+    // E8 — Intent Engine (Intent-Driven Override)
     if (step.intent && intentAllowsContractBreak(step.intent)) {
       log.step("CONSISTENCY", "⚠", "CONTRACT_BREAK_ALLOWED_BY_INTENT");
     } else {
       log.step("CONSISTENCY", "✗", "CONTRACT MISMATCH");
-      return { valid: false, reason: err.message };
+      // Explicitly mark failure to prevent patch application
+      return { valid: false, reason: "CONTRACT_MISMATCH_PREVENTED: Mismatch detected before patch." };
     }
   }
 
-  // Phase 9: Minimal Change Enforcer
+  // E8 — Intent Engine (Minimal Change Enforcer)
   if (step.intent) {
     const fullPath = join(projectDir, step.target);
     let oldContent = "";
@@ -213,18 +253,23 @@ async function validateStep(projectDir: string, step: Step, fileUpdate: { file: 
     }
   }
 
-  // 2. Test-Aware Validation
+  // E4 — Behavior Validation
   // Only run if step explicitly asks for it or it's a critical module
   if (step.type === "modify" || step.type === "create") {
-    // Phase 7: Generate test-case for validation
-    // For now, use a heuristic: if we have a test code in step constraints or description
+    // E4: Generate test-case for validation
     const testMatch = (step as any).testCode;
     if (testMatch) {
        log.step("TEST", "running...");
-       const result = await runTest(projectDir, testMatch, step.target);
+       
+       const config = loadConfig();
+       const { loadStack } = await import("./loadStack.js");
+       const stack = await loadStack(config.stack || "node-basic");
+       
+       const result = stack.testRunner ? stack.testRunner(testMatch) : await runTest(projectDir, testMatch, step.target);
+       
        if (!result.success) {
          log.step("TEST", "✗", "FAIL");
-         const summary = summarizeFailure(result.output);
+         const summary = summarizeFailure(result.output || "Test failed");
          return { valid: false, reason: `Tests failed: ${summary}` };
        }
        log.step("TEST", "✓", "PASS");
@@ -240,6 +285,11 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
   const mode = dryRun ? "dry" : autoMode ? "auto" : "normal";
   const tier = detectTier();
 
+  // E8 — Intent Engine (Intent Target Guarantee)
+  if (step.intent && step.intent.scope === 'file' && !step.intent.target) {
+    step.intent.target = step.target;
+  }
+
   // Track state.json
   const statePath = join(projectDir, ".xentari", "state.json");
   const updateState = (status: string) => {
@@ -254,23 +304,32 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
 
   updateState("running");
 
-  // Phase 8: Cascade Guard (Block if previous step failed)
-  if (chain.hasFailure) {
+  // Fix 3: Cascade Failure Halt
+  if (executionState.failed || chain.hasFailure) {
     log.step("STEP", "✗", "CASCADE_BLOCKED");
     updateState("failed");
-    throw new Error("CASCADE_BLOCKED: Previous step failed.");
+    throw new Error("CASCADE_ABORT: Previous step failed");
   }
 
-  // Fix: Ensure a file path is available for steps that need it.
+  // Fix 2: Invalid Plan Step Guard
   if (!step.files?.length && !(step as any).filePath) {
-    if ((step.type === 'create' || step.type === 'modify') && step.target) {
+    // If target looks like a file path (has a dot) or is explicitly a file-acting type
+    const isFileActingType = ["create", "modify", "refactor", "verify"].includes(step.type);
+    const looksLikeFilePath = step.target && step.target.includes('.');
+
+    if (step.target && (isFileActingType || looksLikeFilePath)) {
       log.info(`[EXECUTOR] Inferring file path from target: ${step.target}`);
       step.files = [step.target];
       (step as any).filePath = step.target;
+    } else if (step.type === 'plan' || step.type === 'analyze') {
+      log.info(`[EXECUTOR] Step ${step.id} is informational (${step.type}). Marking done.`);
+      updateState("done");
+      return; // Skip the file-acting parts
     } else {
-      log.warn(`[EXECUTOR] Step ${step.id} has no files to process. Skipping.`);
+      log.step("STEP", "✗", "INVALID_PLAN_STEP");
+      executionState.failed = true;
       updateState("failed");
-      return; 
+      throw new Error(`INVALID_PLAN_STEP: Step ${step.id} has no target files for type ${step.type}`);
     }
   }
 
@@ -292,12 +351,12 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
   log.step("RETRIEVE", "...");
   ux.showStage("RETRIEVE");
   
-  // Phase 6: Use ContextEngine for deterministic retrieval
+  // E5 — Context Engine (Deterministic Retrieval)
   try {
      const bundle = selectContext(step.target, projectDir);
      files = [{ file: step.target, content: bundle.target, score: 1.0 }];
      
-     // Phase 8: Stale Context Check
+     // E7 — Consistency Engine (Stale Context Check)
      const snapshot = loadSnapshot(projectDir);
      if (snapshot.files[step.target]) {
        try {
@@ -318,15 +377,16 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
 
   let attempt = 1;
   let feedback = null;
+  const maxAttempts = (opts.autoMode && process.env.XEN_ALLOW_RETRIES === "true") ? 2 : 1;
 
-  while (attempt <= 2) { // Max 1 retry (Phase 7 rule)
+  while (attempt <= maxAttempts) { // E1 — Stability (Retry Rule)
     try {
       ux.showStage("CODE");
       const taskInstruction = typeof (step as any).description === 'string' && (step as any).description.length > 0 
         ? `${(step as any).description}\nConstraints: ${((step as any).constraints || []).join(', ')}`
         : step.target;
 
-      // Phase 8: Inject System Snapshot for Consistency awareness
+      // E7 — Consistency Engine (Snapshot Awareness)
       const snapshot = loadSnapshot(projectDir);
 
       const fileUpdates = await generateWithRetry(taskInstruction, files, feedback, chain, 1, { 
@@ -336,7 +396,7 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
         pattern: step.pattern,
         projectDir,
         systemSnapshot: snapshot,
-        intent: step.intent // Phase 9
+        intent: step.intent // E8
       });
 
       if (!fileUpdates || fileUpdates.length === 0) throw new Error("EMPTY_OUTPUT");
@@ -348,11 +408,12 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       }
 
       log.step("VALIDATE", "...");
-      const validation = await validateStep(projectDir, step, update);
+      // E10: Use stack validator
+      const validation = stack.validator ? stack.validator(update.content) : await validateStep(projectDir, step, update);
       if (!validation.valid) {
         log.step("VALIDATE", "✗", validation.reason);
         
-        // Phase 10: Log validation failure for pattern detection
+        // E9 — Feedback Engine (Log validation failure)
         logFailure(projectDir, step.target, validation.reason!, step.intent);
 
         feedback = `Validation failed: ${validation.reason}. Please fix and return full file.`;
@@ -381,23 +442,26 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
       let result = await applyPatch(projectDir, patch, false, update.content);
       if (result.applied) {
         log.step("PATCH", "✓");
+        executionState.anyPatchApplied = true;
         chain.modifiedFiles.push(step.target);
         
-        // Phase 8: Post-Step Validation (Update Snapshot)
+        // E7 — Consistency Engine (Post-Step Snapshot Update)
         updateSnapshotAfterStep(projectDir, step.target, update.content);
         
         updateState("done");
         return;
       } else {
         log.step("PATCH", "✗", result.reason);
+        executionState.failed = true;
         throw new Error(result.reason!);
       }
     } catch (err: any) {
-      // Phase 10: Log execution/model failure for pattern detection
+      // E9 — Feedback Engine (Log execution failure)
       logFailure(projectDir, step.target, err.message, step.intent);
 
       if (attempt >= 2) {
         log.step("STEP", "✗", `FAILED: ${err.message}`);
+        executionState.failed = true;
         updateState("failed");
         chain.hasFailure = true; // Block cascade
         throw err;
@@ -412,7 +476,17 @@ async function executeStep(step: Step, index: number, opts: AgentOptions, chain:
 
 async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
   const { task, projectDir, dryRun, autoMode } = opts;
+
+  // Reset execution state
+  executionState.anyPatchApplied = false;
+  executionState.failed = false;
+
   const config = loadConfig();
+  
+  // Load Stack
+  const stack = await loadStack(config.stack || "node-basic");
+  if (!stack) throw new Error("CRITICAL: Failed to load stack");
+
   const profile = getTierProfile();
   const tier = detectTier();
   const totalStart = Date.now();
@@ -434,7 +508,7 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
     await indexProject(projectDir);
   }
 
-  // Phase 8: Consistency Engine (Initialize Snapshot)
+  // E7 — Consistency Engine (Initialize Snapshot)
   const snapshot = loadSnapshot(projectDir);
   const index = loadIndex(projectDir);
   if (index && Object.keys(snapshot.files).length === 0) {
@@ -499,6 +573,9 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
     steps = (await plannerPlan(task, { metrics, projectDir })) as any;
   }
   
+  // Fix 2: Invalid Plan Step Guard
+  validatePlan(steps);
+
   log.step("PLAN", "✓", `${steps.length} steps`);
 
   log.info(`Target: ${steps[0]?.target || "N/A"}`);
@@ -520,31 +597,36 @@ async function executePipeline(opts: AgentOptions, { onToken, rl }: any = {}) {
     const step = steps[j];
     
     try {
-      // Phase 7: Orchestration handles internal retries
+      // E6 — Multi-File Orchestration (Step execution)
       await executeStep(step, j, opts, chain, { onToken, rl, metrics });
     } catch (err: any) {
-      log.step("STEP", "✗", `Step ${j+1} failed permanently: ${err.message}`);
-      // In Phase 7, a permanent step failure halts the pipeline.
+      log.step("STEP", "✗", `FAILED: ${err.message}`);
+      log.error("CASCADE_ABORT", `Execution halted due to step failure: ${err.message}`, "The system will not proceed with subsequent steps to avoid inconsistent state.");
+      executionState.failed = true;
       break; 
     }
   }
+const totalMs = elapsed(totalStart);
+const timeSec = (totalMs / 1000).toFixed(2);
 
-  const totalMs = elapsed(totalStart);
-  const timeSec = (totalMs / 1000).toFixed(2);
-
-  if (chain.patchSummaries.length > 0) {
-    log.summary({
-      changes: chain.modifiedFiles.map(f => ({ path: f, type: "updated" })),
-      added: chain.patchSummaries.reduce((acc, s) => acc + (s.match(/\+/g) || []).length, 0),
-      removed: chain.patchSummaries.reduce((acc, s) => acc + (s.match(/-/g) || []).length, 0),
-      time: timeSec
-    });
-  } else {
-    log.error("TASK_FAILED", "No changes were applied to the project.", "Check model logs or try a clearer instruction.");
-  }
-
-  return { metrics, chain };
+// Fix 1: Finalize Execution Success Detection
+if (executionState.anyPatchApplied) {
+  log.summary({
+    changes: chain.modifiedFiles.map(f => ({ path: f, type: "updated" })),
+    added: chain.patchSummaries.reduce((acc, s) => acc + (s.match(/\+/g) || []).length, 0),
+    removed: chain.patchSummaries.reduce((acc, s) => acc + (s.match(/-/g) || []).length, 0),
+    time: timeSec
+  });
+} else if (executionState.failed) {
+  // If we failed but didn't apply any patch, it's a hard fail
+  log.error("TASK_FAILED", "Execution failed and no changes were applied.", "Check previous errors for details.");
+} else {
+  log.error("TASK_FAILED", "No changes were applied to the project.", "Check model logs or try a clearer instruction.");
 }
+
+return { metrics, chain };
+}
+
 
 
 export async function runAgent(opts: AgentOptions, { onToken, rl }: any = {}) {

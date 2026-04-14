@@ -10,9 +10,19 @@ import { log } from "../logger.js";
 export type TestResult = {
   success: boolean;
   output: string;
+  skipped?: boolean;
 };
 
+function hasTsx(projectDir: string): boolean {
+  return existsSync(join(projectDir, "node_modules/tsx"));
+}
+
 export async function runTest(projectDir: string, testCode: string, targetFile: string): Promise<TestResult> {
+  if (!hasTsx(projectDir)) {
+    log.info("⚠ TEST SKIPPED (no runner)");
+    return { success: true, output: "Skipped: tsx not found", skipped: true };
+  }
+
   const xentariDir = join(projectDir, ".xentari");
   if (!existsSync(xentariDir)) mkdirSync(xentariDir, { recursive: true });
 

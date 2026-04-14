@@ -186,73 +186,73 @@ export async function applyPatch(projectDir, patch, dryRun = false, newContent =
       }
     }
 
-    let approved = false;
+    let approved = process.env.XEN_AUTO_APPROVE === "true";
     let finalPatch = currentPatch;
 
-    try {
+    if (!approved) {
+      try {
+        // Phase 51: Side-by-Side Diff Viewer (Colored)
+        const parsed = parseDiff(currentPatch);
+        const aligned = alignDiff(parsed);
+        renderDiff(aligned);
 
+        // Use the new interactive diff viewer
+        if (newContent) {
+          approved = await interactiveDiff(oldContent, newContent, targetPath);
+        } else {
+          diffInteractive.renderSideBySide(oldContent.slice(0, 5000), currentPatch.slice(0, 5000));
+          approved = await diffInteractive.interactiveApprove();
+        }
 
-      // Phase 51: Side-by-Side Diff Viewer (Colored)
-      const parsed = parseDiff(currentPatch);
-      const aligned = alignDiff(parsed);
-      renderDiff(aligned);
+        // Phase 28: Partial Apply logic
+        if (approved) {
+          const hunks = splitDiff(currentPatch);
 
-      // Use the new interactive diff viewer
-      if (newContent) {
-        approved = await interactiveDiff(oldContent, newContent, targetPath);
-      } else {
-        diffInteractive.renderSideBySide(oldContent.slice(0, 5000), currentPatch.slice(0, 5000));
-        approved = await diffInteractive.interactiveApprove();
-      }
-
-      // Phase 28: Partial Apply logic
-      if (approved) {
-        const hunks = splitDiff(currentPatch);
-
-        if (hunks.length > 1) {
-          console.log(`\nDetected ${hunks.length} changes (hunks).`);
-          const wantPartial = await new Promise(res => {
-            const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-            rl.question("Apply all changes? (y) or select specific hunks? (s): ", (ans) => {
-              rl.close();
-              res(ans.trim().toLowerCase() === 's');
-            });
-          });
-
-          if (wantPartial) {
-            hunks.forEach((h, i) => {
-              console.log(`\n[${i}] ------------------`);
-              console.log(h.content.slice(0, 300) + (h.content.length > 300 ? "..." : ""));
-            });
-
-            const selectedIds = await new Promise(res => {
+          if (hunks.length > 1) {
+            console.log(`\nDetected ${hunks.length} changes (hunks).`);
+            const wantPartial = await new Promise(res => {
               const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-              rl.question("\nSelect hunk IDs to apply (comma separated, e.g. 0,2): ", (ans) => {
+              rl.question("Apply all changes? (y) or select specific hunks? (s): ", (ans) => {
                 rl.close();
-                res(ans.split(",").map(n => parseInt(n.trim())).filter(n => !isNaN(n)));
+                res(ans.trim().toLowerCase() === 's');
               });
             });
 
-            const selectedHunks = hunks.filter(h => selectedIds.includes(h.id));
-            if (selectedHunks.length > 0) {
-              finalPatch = rebuildDiff(selectedHunks);
-              // Save the new partial patch
-              writeFileSync(patchPath, finalPatch, "utf-8");
-            } else {
-              console.log("No hunks selected. Aborting.");
-              return { applied: false, valid: true, reason: "user_rejected_all_hunks" };
+            if (wantPartial) {
+              hunks.forEach((h, i) => {
+                console.log(`\n[${i}] ------------------`);
+                console.log(h.content.slice(0, 300) + (h.content.length > 300 ? "..." : ""));
+              });
+
+              const selectedIds = await new Promise(res => {
+                const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+                rl.question("\nSelect hunk IDs to apply (comma separated, e.g. 0,2): ", (ans) => {
+                  rl.close();
+                  res(ans.split(",").map(n => parseInt(n.trim())).filter(n => !isNaN(n)));
+                });
+              });
+
+              const selectedHunks = hunks.filter(h => selectedIds.includes(h.id));
+              if (selectedHunks.length > 0) {
+                finalPatch = rebuildDiff(selectedHunks);
+                // Save the new partial patch
+                writeFileSync(patchPath, finalPatch, "utf-8");
+              } else {
+                console.log("No hunks selected. Aborting.");
+                return { applied: false, valid: true, reason: "user_rejected_all_hunks" };
+              }
             }
           }
         }
-      }
-    } catch (e) {
-      console.warn("Fallback to simple diff");
-      simpleDiffPreview(oldContent, newContent || currentPatch);
+      } catch (e) {
+        console.warn("Fallback to simple diff");
+        simpleDiffPreview(oldContent, newContent || currentPatch);
 
-      approved = await askApproval({
-        type: APPROVAL_TYPES.PATCH,
-        message: "Apply changes?"
-      });
+        approved = await askApproval({
+          type: APPROVAL_TYPES.PATCH,
+          message: "Apply changes?"
+        });
+      }
     }
 
     if (!approved) {

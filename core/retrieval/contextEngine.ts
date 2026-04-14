@@ -1,10 +1,10 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { loadIndex } from "./index.ts";
-import { loadPattern } from "./patterns.js";
+import { loadIndex } from "../index.ts";
+import { loadPattern } from "../patterns.js";
 
 /**
- * 🧠 XENTARI — PHASE 6: CONTEXT ENGINE
+ * 🧠 XENTARI — E5 — Context Engine
  */
 
 export type ContextBundle = {

@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { log } from "../logger.js";
 
 /**
- * 🧠 XENTARI — PHASE 8: CONSISTENCY ENGINE
+ * 🧠 XENTARI — E7 — Consistency Engine
  */
 
 export type FileSnapshot = {
@@ -64,7 +64,7 @@ export function validateContracts(targetFile: { path: string, content: string, r
   const dependencies = DEFAULT_RELATIONS[targetFile.role] || [];
   
   // Find which files in the snapshot match the required roles
-  // For simplicity in Phase 8, we look at files that contain the role name in their path
+  // For simplicity in E7 — Consistency Engine, we look at files that contain the role name in their path
   for (const role of dependencies) {
     const relatedFiles = Object.keys(snapshot.files).filter(f => f.includes(role));
     

@@ -1,5 +1,5 @@
 import { chat } from "../llm.js";
-import { getSummary } from "../context.js";
+import { getContext } from "../context.js";
 
 const NODE_GLOBALS = [
   "console", "process", "Buffer", "setTimeout", "setInterval", "clearTimeout", "clearInterval",
@@ -32,8 +32,9 @@ Your response must be EITHER:
 No other output format is allowed.`;
 
 export async function review(patch) {
+  const { context } = getContext("");
   const messages = [
-    { role: "system", content: `${getSummary()}\n\n${BASE_SYSTEM}` },
+    { role: "system", content: `${context}\n\n${BASE_SYSTEM}` },
     { role: "user", content: patch },
   ];
   return chat(messages, { maxTokens: 300 });

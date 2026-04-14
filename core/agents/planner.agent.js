@@ -2,9 +2,10 @@ import { chat } from "../llm.js";
 import { getContext } from "../context.js";
 import { detectTier } from "../tier.js";
 import { log } from "../logger.js";
-import { detectStack } from "../project/detector.js";
 import { loadSession } from "../memory/session.js";
 import { getIntelligence } from "../memory.js";
+import { loadConfig } from "../config.js";
+import { loadStack } from "../loadStack.js";
 
 const BASE_SYSTEM = `You are a professional software architect and planner. Given a coding task, you must REASON about the implementation and then produce a structured JSON execution plan.
 
@@ -22,7 +23,7 @@ ALLOWED STEP TYPES:
 - refactor: restructure code without changing behavior
 - verify: check results or run tests
 
-PHASE 4: STRUCTURE ENFORCEMENT
+E3 — Structure Enforcement
 If a step creates or modifies a core component, you MUST assign a "role" and "pattern" if applicable.
 ROLES: model | service | controller | routes | config
 PATTERNS: model | service | controller | routes
@@ -102,7 +103,15 @@ function extractJSON(raw) {
 export async function plan(task, { metrics, projectDir } = {}) {
   const tier = detectTier();
   const complexity = detectComplexity(task);
-  const maxSteps = tier === "small" ? 3 : tier === "medium" ? 4 : 6;
+  const config = loadConfig();
+  
+  // E10: Load Stack for planning constraints
+  const stackModule = await loadStack(config.stack || "node-basic");
+  
+  let maxSteps = tier === "small" ? 3 : tier === "medium" ? 4 : 6;
+  if (stackModule && stackModule.planner && stackModule.planner.maxSteps) {
+    maxSteps = Math.min(maxSteps, stackModule.planner.maxSteps);
+  }
 
   const { context } = getContext(task, projectDir);
   
@@ -121,14 +130,18 @@ export async function plan(task, { metrics, projectDir } = {}) {
     biasHint += `\n[INTELLIGENCE] Avoid these previously failed files/approaches: ${intel.failedPatterns.slice(-3).map(p => p.step).join(", ")}`;
   }
 
-  const { stack, framework } = detectStack(projectDir || process.cwd());
-  const stackHint = `This is a ${stack} project. Follow common conventions and best practices for this ecosystem.`;
-  const frameworkHint = framework ? `Framework: ${framework}` : "";
+  const stackName = config.stack || "node-basic";
+  const stackHint = `This is a ${stackName} project. Follow common conventions and best practices for this ecosystem.`;
+  
+  let stackRules = "";
+  if (stackModule && stackModule.rules) {
+    stackRules = `\n\nSTACK-SPECIFIC RULES:\n${stackModule.rules}`;
+  }
   
   log.section("CONTEXT");
-  log.info(`Stack detected: ${stack} ${framework ? `(${framework})` : ""}`);
+  log.info(`Stack: ${stackName}`);
 
-  let system = `${context}${memoryHint}${biasHint}\n\n${stackHint}\n${frameworkHint}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
+  let system = `${context}${memoryHint}${biasHint}\n\n${stackHint}${stackRules}\n\n${BASE_SYSTEM}${TIER_RULES[tier]}`;
 
   if (complexity === "complex" && tier === "small") {
     system += `\n\nNOTE: This is a complex task. Create atomic steps with different target files.`;
