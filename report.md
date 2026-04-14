@@ -693,3 +693,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Adversarial Security Testing:** Added specialized tests to verify protection against unicode-based bypasses and path traversal attacks.
     *   **Non-Interactive Automation:** Updated the permission gate to support `XEN_AUTO_APPROVE`, enabling automated CI/CD and regression testing.
     *   **UI Snapshot Validation:** Integrated basic UI rendering tests to ensure layout stability during system execution.
+
+### E14 — TUI UPGRADE (SPLIT PANELS + PERSISTENT LOOP)
+*   **Goal:** Transform Xentari from a one-time execution CLI into a persistent, multi-panel TUI system.
+*   **Result:**
+    *   **Persistent CLI Loop:** Implemented a long-running execution model where the process remains active, enabling live status monitoring and user interactivity.
+    *   **Split-Panel Layout:** Created a dual-panel rendering system (`core/ui/layout.js`) that divides the terminal into logical regions (Actions/History vs. Diffs/Details).
+    *   **Non-Blocking Input:** Integrated a raw-mode input listener (`core/ui/input.js`) that allows real-time user commands without interrupting the background execution flow.
+    *   **Continuous Refresh Engine:** Implemented a non-flicker UI refresh loop (`core/ui/loop.js`) to maintain visual consistency across all terminal states.
+    *   **State-Driven Rendering:** Centralized UI logic into a reactive state machine (`core/ui/state.js`), ensuring the TUI always reflects the current system truth.
