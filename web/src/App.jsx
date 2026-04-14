@@ -127,7 +127,13 @@ export default function App() {
     try {
       const res = await fetch("http://localhost:3000/config");
       const data = await res.json();
-      setConfig(data);
+      setConfig(prev => ({
+        ...prev,
+        ...data,
+        projectDir: data.projectDir || "",
+        model: data.model || "",
+        apiUrl: data.apiUrl || ""
+      }));
     } catch (err) {}
   };
 

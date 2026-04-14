@@ -1,8 +1,8 @@
 let runtime = {
   projectDir: process.cwd(),
-  model: null,
-  provider: null,
-  apiUrl: null
+  model: "",
+  provider: "",
+  apiUrl: ""
 };
 
 export function setRuntime(update) {
