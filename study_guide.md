@@ -856,3 +856,20 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Auto-Persistence:** Configured the Web UI to automatically sync chat history to the workspace after every message.
     *   **Instant Message Search:** Implemented a real-time client-side search filter enabled by `core/session/search.js`.
     *   **Session Switching:** Added a dynamic session selector to the settings bar, allowing users to pivot between different conversation contexts and create new threads on the fly.
+
+### CONFIG + PROVIDER DETECTION
+*   **Goal:** Implement a deterministic system for persisting user configurations and auto-detecting local LLM providers (Ollama, LM Studio).
+*   **Result:**
+    *   **Config Management:** Developed `config/configManager.js` to handle `.xentari/config.json` with safe defaults and persistence logic.
+    *   **Modular Provider System:** 
+        - Created `BaseProvider` interface and specific implementations for `OllamaProvider` and `LMStudioProvider`.
+        - Detection is strictly HTTP-based (GET `/api/tags` and GET `/v1/models`) to avoid shell execution.
+    *   **Centralized Discovery:**
+        - **ProviderRegistry:** Manages parallel provider detection and model aggregation with fail-safe error handling.
+        - **ModelRegistry:** Maintains a normalized, in-memory state of discovered models and active providers.
+    *   **Discovery Runtime:** Implemented `runtime/providerRuntime.js` to coordinate the full discovery lifecycle and sync data into the global registry.
+    *   **Discovery API:** Exposed a new `/api/models` endpoint for consistent external access.
+    - **Intelligent UI Integration:** 
+        - Integrated a `datalist` into the Web UI's model input for real-time model suggestions from discovered providers.
+        - Added a manual discovery refresh button (↻) to the settings bar.
+*   **Known Limitations:** Detection is currently limited to localhost; remote providers must still be configured manually in `config.json`.

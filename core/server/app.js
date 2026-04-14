@@ -5,10 +5,18 @@ import { route } from "../router/index.js";
 import { getState } from "../ui/state.js";
 import { setRuntime, getRuntime } from "../runtime/context.js";
 import { saveSession, loadSession, listSessions } from "../session/store.js";
+import modelsRouter from "./routes/models.js";
+import { providerRuntime } from "../../runtime/providerRuntime.js";
+
+// Initial model discovery
+providerRuntime.refresh().catch(console.error);
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+// API Routes
+app.use("/api", modelsRouter);
 
 app.post("/run", async (req, res) => {
   try {

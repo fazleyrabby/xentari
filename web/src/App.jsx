@@ -13,6 +13,8 @@ export default function App() {
   const [sessionId, setSessionId] = useState("default");
   const [sessions, setSessions] = useState(["default"]);
   const [search, setSearch] = useState("");
+  const [availableModels, setAvailableModels] = useState([]);
+  const [availableProviders, setAvailableProviders] = useState([]);
 
   const bottomRef = useRef(null);
 
@@ -28,7 +30,17 @@ export default function App() {
 
     fetchConfig();
     fetchSessions();
+    fetchDiscovery();
   }, []);
+
+  const fetchDiscovery = async (force = false) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/models${force ? "?refresh=true" : ""}`);
+      const data = await res.json();
+      setAvailableModels(data.models || []);
+      setAvailableProviders(data.providers || []);
+    } catch (err) {}
+  };
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -166,8 +178,14 @@ export default function App() {
           placeholder="Model (qwen, llama, gpt-4)"
           value={config.model}
           onChange={(e) => setConfig({...config, model: e.target.value})}
+          list="model-list"
           className="bg-black border border-gray-700 px-2 py-1 text-xs text-gray-300 w-1/4 outline-none focus:border-blue-500"
         />
+        <datalist id="model-list">
+          {availableModels.map(m => (
+            <option key={m.id} value={m.id}>{m.name} ({m.provider})</option>
+          ))}
+        </datalist>
 
         <input
           placeholder="API URL (http://localhost:11434)"
@@ -181,6 +199,14 @@ export default function App() {
           className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest transition-colors"
         >
           Apply
+        </button>
+
+        <button 
+          onClick={() => fetchDiscovery(true)}
+          className="bg-zinc-800 hover:bg-zinc-700 text-gray-400 text-[10px] font-bold px-3 py-1 uppercase tracking-widest transition-colors border border-gray-700"
+          title="Refresh available models"
+        >
+          ↻
         </button>
 
         <div className="h-4 w-px bg-gray-700 mx-1"></div>
