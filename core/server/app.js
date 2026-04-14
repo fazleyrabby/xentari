@@ -1,4 +1,6 @@
 import express from "express";
+import fs from "fs";
+import path from "path";
 import bodyParser from "body-parser";
 import cors from "cors";
 import { getState } from "../ui/state.js";
@@ -148,6 +150,32 @@ app.post("/session/create", (req, res) => {
 
 app.post("/session/set-project", (req, res) => {
   res.json({ success: true });
+});
+
+app.get("/file", (req, res) => {
+  const { path: filePath } = req.query;
+  const config = loadConfig();
+  const projectDir = config.projectDir || "";
+
+  if (!filePath || !projectDir) {
+    return res.status(400).json({ error: "Missing path or projectDir" });
+  }
+
+  const resolved = path.resolve(projectDir, filePath);
+  if (!resolved.startsWith(path.resolve(projectDir))) {
+    return res.status(403).json({ error: "Path traversal denied" });
+  }
+
+  try {
+    const raw = fs.readFileSync(resolved, "utf-8");
+    const truncated = raw.slice(0, 2000);
+    const keyword = req.query.keyword || path.basename(filePath, path.extname(filePath));
+    const lines = truncated.split("\n");
+    const matchLine = lines.findIndex(l => l.toLowerCase().includes(keyword.toLowerCase()));
+    res.json({ path: filePath, content: truncated, matchLine: matchLine >= 0 ? matchLine : null });
+  } catch {
+    res.status(404).json({ error: "File not found" });
+  }
 });
 
 app.get("/state", (req, res) => {

@@ -4,6 +4,8 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ContextPanel from "./components/ContextPanel";
+import Timeline from "./components/Timeline";
+import FileDrawer from "./components/FileDrawer";
 
 const PHASE_LABELS = {
   thinking: "Thinking",
@@ -32,6 +34,10 @@ export default function App() {
   const [showLeft, setShowLeft] = useState(true);
   const [showContext, setShowContext] = useState(true);
   const [showStats, setShowStats] = useState(true);
+  const [timeline, setTimeline] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileContent, setFileContent] = useState("");
+  const [highlightLine, setHighlightLine] = useState(null);
 
   const bottomRef = useRef(null);
   const hiddenPickerRef = useRef(null);
@@ -98,6 +104,7 @@ export default function App() {
     setRunning(true);
     bufferRef.current = "";
     setContextFiles([]);
+    setTimeline([]);
 
     const projectDir = config.projectDir || "";
     const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectDir=${encodeURIComponent(projectDir)}`;
@@ -113,6 +120,7 @@ export default function App() {
           } else {
             setCurrentPhase(data.message.replace(" ", "-"));
           }
+          setTimeline(prev => [...prev, { message: data.message, time: Date.now() }]);
         }
 
         if (data.type === "chunk") {
@@ -168,6 +176,20 @@ export default function App() {
     const newCfg = { ...config, projectDir: p.path };
     setConfig(newCfg);
     saveConfig(newCfg);
+  };
+
+  const openFile = async (filePath) => {
+    setSelectedFile(filePath);
+    setFileContent("");
+    setHighlightLine(null);
+    try {
+      const res = await fetch(`http://localhost:3000/file?path=${encodeURIComponent(filePath)}`);
+      const data = await res.json();
+      setFileContent(data.content || data.error || "");
+      setHighlightLine(data.matchLine ?? null);
+    } catch {
+      setFileContent("Failed to load file.");
+    }
   };
 
   const deleteProject = async (id) => {
@@ -325,6 +347,9 @@ export default function App() {
           </div>
         </div>
 
+        {/* TIMELINE */}
+        {timeline.length > 0 && <Timeline steps={timeline} />}
+
         {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-8 max-w-4xl mx-auto w-full">
           {session.messages.length === 0 && (
@@ -412,7 +437,14 @@ export default function App() {
       </div>
 
       {/* CONTEXT PANEL — toggleable */}
-      {showContext && <ContextPanel files={contextFiles} />}
+      {showContext && <ContextPanel files={contextFiles} onFileClick={openFile} />}
+
+      <FileDrawer
+        file={selectedFile}
+        content={fileContent}
+        highlightLine={highlightLine}
+        onClose={() => setSelectedFile(null)}
+      />
 
       {/* RIGHT — INFERENCE STATS — toggleable */}
       {showStats && <div className="w-64 flex-shrink-0 border-l border-zinc-900 bg-zinc-950/50 flex flex-col overflow-hidden">

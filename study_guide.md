@@ -1055,3 +1055,33 @@ Expose the backend context awareness in the UI so users can verify exactly which
 - `buildContext` (filesystem scan) is skipped entirely on cache hit.
 - Repeated identical queries resolve instantly without redundant I/O.
 
+---
+
+## Observability Timeline
+
+### Execution Trace (`Timeline.jsx`)
+- New component renders a horizontal step-by-step trace above the chat messages.
+- Populated live from SSE `status` events (`scanning project → analyzing context → generating response`).
+- Active (last) step highlighted with emerald glow dot + brighter text.
+- Completed steps shown muted with `→` separators.
+- Resets to empty on every new query.
+- Hidden when no steps exist (zero layout impact on idle state).
+
+---
+
+## File Preview Drawer
+
+### On-Demand File Preview (`FileDrawer.jsx`)
+- Clicking any file in the Context Panel opens a right-side drawer (500px, full height, `z-40`).
+- File content fetched on-demand via `GET /file?path=...` — nothing pre-loaded.
+- Backend endpoint added to `core/server/app.js`:
+  - Resolves path relative to active `projectDir` from config.
+  - Path traversal guard: rejects any path escaping `projectDir` via `path.resolve` comparison.
+  - Truncates content to 2000 chars to keep response light.
+  - Returns `{ path, content, matchLine }` — `matchLine` is the first line index matching the filename keyword.
+- Drawer renders code as a line-numbered table (`<table>`), not a flat `<pre>`.
+- Highlighted line: `bg-yellow-500/10` row + `text-yellow-200` text.
+- Auto-scrolls to highlighted line via `useEffect` + `scrollIntoView({ behavior: "smooth", block: "center" })`.
+- Shows "Loading..." placeholder while fetch is in-flight.
+- Close button resets `selectedFile` to null, unmounts drawer.
+
