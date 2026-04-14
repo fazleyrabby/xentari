@@ -138,7 +138,7 @@ function sanitizeImports(code, bundle) {
     return match;
   });
 }
-function buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot, intent } = {}) {
+async function buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot, intent } = {}) {
   const tier = detectTier();
   const index = loadIndex();
 
@@ -277,7 +277,7 @@ export async function generatePatch(step, files, feedback, chainContext, { onTok
     log.info(`[CODER] Analysis complete.`);
   }
 
-  const messages = buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot, intent });
+  const messages = await buildPrompt(step, files, feedback, chainContext, { role, pattern, projectDir, systemSnapshot, intent });
   if (analysis) {
     messages[messages.length - 1].content += `\n\nFile Analysis:\n${analysis}`;
   }

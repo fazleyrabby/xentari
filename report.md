@@ -749,3 +749,13 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Multi-View Panel Switching:** Integrated keyboard shortcuts (`1`, `2`, `3`) to instantly switch between Actions, Timeline, and Debug views.
     *   **Integrated Debug Panel:** Created a dedicated system status view showing the last execution step, failure types, precise timestamps, and snapshot counts.
     *   **Reactive UI state:** Extended the state machine to handle view-specific offsets and timeline data, ensuring perfect synchronization between background execution and user display.
+
+### BATTLE TESTING — EXTERNAL HARNESS
+*   **Goal:** Validate Xentari as a black-box system using an external, non-intrusive test suite.
+*   **Result:**
+    *   **External Test Location:** Implemented at `/Users/rabbi/Desktop/xentari-tests/` to ensure zero pollution of the core codebase.
+    *   **Black-Box Validation:** Verified the CLI through `runner.js` using `child_process.execSync`, testing the system exactly as an end-user would.
+    *   **Attack Resilience:** Successfully blocked 5/5 execution attacks, including shell-injection attempts and unicode-based ampersand bypasses.
+    *   **Path Traversal Prevention:** Confirmed that filesystem attacks (e.g., accessing `/etc/passwd` or `../secret.js`) are correctly detected and blocked by the argument validator.
+    *   **Deterministic Stability:** Verified that identical task inputs yield consistent execution statuses across multiple runs.
+    *   **Regression Fixes:** Identified and resolved two critical `SyntaxError` bugs in the `coder.js` and `agents/index.js` modules discovered during external execution.
