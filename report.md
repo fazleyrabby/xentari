@@ -711,3 +711,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Enhanced Execution Loop:** Upgraded `core/execution/engine.js` to integrate retry logic, automatically repeating steps on recoverable failures (e.g., syntax or validation errors).
     *   **State-Driven UI Integration:** Fully integrated the execution loop with the TUI state machine, providing real-time visual feedback for runs, failures, and retries.
     *   **Resilient Orchestration:** The system now intelligently decides whether to halt or attempt recovery based on the structural nature of the error, significantly increasing the success rate of complex tasks.
+
+### CORE TEST SUITE — ADVANCED
+*   **Goal:** Establish a multi-tier, high-fidelity validation framework to ensure deterministic behavior across all system layers.
+*   **Result:**
+    *   **Unit Testing Layer:** Implemented strict logic validation for the Parser (including unicode bypass checks), Failure Classifier, and UI State Machine.
+    *   **Feature Validation:** Created targeted tests for the Retry Engine and SafeExec wrapper to ensure specific engine capabilities behave as intended.
+    *   **Integration & System Coverage:** Developed end-to-end flows in `tests/integration/` and `tests/system/` to verify the execution engine's stability during complex, multi-step operations.
+    *   **Automated Regression Guard:** Implemented a source-scanning regression test (`tests/regression/regression.test.js`) to prevent the accidental introduction of unsafe `child_process.exec` calls.
+    *   **High-Signal Reporting:** All tests are integrated into a unified entry point with deterministic PASS/FAIL signaling, ensuring no architectural regressions are merged into the core.

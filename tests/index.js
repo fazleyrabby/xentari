@@ -1,15 +1,17 @@
 /**
- * Xentari Core Test Suite Entry Point
+ * Xentari Advanced Core Test Suite
  */
 
-import "./unit/parser.test.js";
-import "./unit/policy.test.js";
-import "./unit/whitelist.test.js";
+import "./unit/parser.unit.test.js";
+import "./unit/failureClassifier.unit.test.js";
+import "./unit/state.unit.test.js";
 
-import "./integration/safeExec.test.js";
-import "./integration/stackLoader.test.js";
+import "./feature/retry.feature.test.js";
+import "./feature/safeExec.feature.test.js";
 
-import "./system/executionFlow.test.js";
+import "./integration/execution.integration.test.js";
+import "./integration/ui.integration.test.js";
 
-import "./security.test.js";
-import "./ui.test.js";
+import "./system/full.system.test.js";
+
+import "./regression/regression.test.js";
