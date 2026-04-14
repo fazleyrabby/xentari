@@ -11,9 +11,13 @@ const DEFAULT_CONFIG = {
     lmstudio: {
       enabled: true,
       baseUrl: "http://localhost:1234"
+    },
+    llama: {
+      enabled: true,
+      baseUrl: "http://localhost:8081"
     }
   },
-  defaultModel: null
+  defaultModel: "qwen"
 };
 
 function getConfigPath() {

@@ -1,11 +1,13 @@
 import { OllamaProvider } from "./ollamaProvider.js";
 import { LMStudioProvider } from "./lmstudioProvider.js";
+import { LlamaProvider } from "./llamaProvider.js";
 
 export class ProviderRegistry {
   constructor(config = {}) {
     this.providers = [
       new OllamaProvider(config.providers?.ollama),
-      new LMStudioProvider(config.providers?.lmstudio)
+      new LMStudioProvider(config.providers?.lmstudio),
+      new LlamaProvider(config.providers?.llama)
     ];
   }
 
