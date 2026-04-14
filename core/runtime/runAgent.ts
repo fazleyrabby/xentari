@@ -3,6 +3,7 @@ import { normalizeModel } from "../providers/normalizeModel.ts";
 import { createProvider } from "../providers/index.ts";
 import { loadSession, saveSession } from "../session/store.ts";
 import { buildContext } from "../context/buildContext.ts";
+import { detectProject } from "../context/projectIntelligence.ts";
 
 export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null }) {
   const config = loadConfig(projectDir);
@@ -21,9 +22,12 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     onContext(contextFiles);
   }
   
+  const project = await detectProject({ files: context.structure, provider, projectDir, model });
+
   if (onStatus) onStatus("analyzing context");
 
   const systemPrompt = `You are Xentari AI.
+Project: ${project.framework} (${project.type}).
 You are operating inside a real project directory.
 Use the provided project context when answering questions about files or code.
 
