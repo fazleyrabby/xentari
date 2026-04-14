@@ -29,6 +29,9 @@ export default function App() {
   const [currentPhase, setCurrentPhase] = useState(null);
   const [showAddProject, setShowAddProject] = useState(false);
   const [contextFiles, setContextFiles] = useState([]);
+  const [showLeft, setShowLeft] = useState(true);
+  const [showContext, setShowContext] = useState(true);
+  const [showStats, setShowStats] = useState(true);
 
   const bottomRef = useRef(null);
   const hiddenPickerRef = useRef(null);
@@ -97,7 +100,8 @@ export default function App() {
     bufferRef.current = "";
     setContextFiles([]);
 
-    const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectDir=${encodeURIComponent(config.projectDir)}`;
+    const projectDir = config.projectDir || "";
+    const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectDir=${encodeURIComponent(projectDir)}`;
     const eventSource = new EventSource(url);
 
     eventSource.onmessage = (event) => {
@@ -198,18 +202,18 @@ export default function App() {
   }, [session.messages, currentPhase]);
 
   return (
-    <div className="flex h-screen w-full bg-zinc-950 text-gray-300">
+    <div className="flex h-screen w-full bg-zinc-950 text-gray-300 overflow-hidden">
       
       {/* LEFT SIDEBAR — EXPLORER */}
-      <div className="w-64 border-r border-zinc-900 flex flex-col bg-zinc-950/50">
-        <div className="p-4 border-b border-zinc-900 flex justify-between items-center">
+      <div className={`flex-shrink-0 border-r border-zinc-900 flex flex-col bg-zinc-950/50 transition-all duration-200 overflow-hidden ${showLeft ? 'w-56' : 'w-0'}`}>
+        <div className="p-4 border-b border-zinc-900 flex justify-between items-center min-w-[224px]">
           <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Workspace</span>
           <button onClick={() => setShowSettings(!showSettings)} className="hover:text-white">
             <SettingsIcon />
           </button>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-2 space-y-4">
+        <div className="flex-1 overflow-y-auto p-2 space-y-4 min-w-[224px]">
           <div>
             <div className="text-[9px] uppercase text-zinc-600 px-2 mb-2 tracking-tighter">Projects</div>
             {projects.map(p => (
@@ -281,22 +285,49 @@ export default function App() {
       </div>
 
       {/* MAIN — CHAT AREA */}
-      <div className="flex-1 flex flex-col relative bg-zinc-950">
+      <div className="flex-1 flex flex-col relative bg-zinc-950 min-w-0">
         
         {/* HEADER */}
-        <div className="h-12 border-b border-zinc-900 flex items-center justify-between px-4 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10">
+        <div className="h-12 border-b border-zinc-900 flex items-center justify-between px-3 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-2">
+            {/* Toggle Left Panel */}
+            <button
+              onClick={() => setShowLeft(v => !v)}
+              title="Toggle workspace"
+              className={`p-1.5 rounded transition-colors ${showLeft ? 'text-zinc-300 bg-zinc-800' : 'text-zinc-600 hover:text-zinc-300'}`}
+            >
+              <PanelIcon />
+            </button>
             <span className="text-white font-bold text-xs tracking-widest italic">XENTARI</span>
             <span className="text-[10px] text-zinc-600">/</span>
-            <span className="text-[11px] text-zinc-400 font-medium truncate max-w-sm">
+            <span className="text-[11px] text-zinc-400 font-medium truncate max-w-[150px]">
               {config.projectDir?.split("/").pop() || "Select Project"}
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
              <div className="text-[10px] flex items-center gap-1.5 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
                 <div className={`w-1.5 h-1.5 rounded-full ${availableModels.length > 0 ? 'bg-green-500 shadow-[0_0_5px_green]' : 'bg-red-500'}`} />
-                <span className="text-zinc-400">{config.model?.split(":")[0] || "No Model"}</span>
+                <span className="text-zinc-400 hidden sm:inline">{config.model?.split(":")[0] || "No Model"}</span>
              </div>
+             {/* Toggle Context Panel */}
+             <button
+               onClick={() => setShowContext(v => !v)}
+               title="Toggle context panel"
+               className={`p-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${ showContext ? 'text-zinc-300 bg-zinc-800' : 'text-zinc-600 hover:text-zinc-300'}`}
+             >
+               CTX
+             </button>
+             {/* Toggle Stats Panel */}
+             <button
+               onClick={() => setShowStats(v => !v)}
+               title="Toggle stats panel"
+               className={`p-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${showStats ? 'text-zinc-300 bg-zinc-800' : 'text-zinc-600 hover:text-zinc-300'}`}
+             >
+               ⟁
+             </button>
+             <button onClick={() => setShowSettings(!showSettings)} className="hover:text-white p-1.5">
+               <SettingsIcon />
+             </button>
           </div>
         </div>
 
@@ -386,11 +417,11 @@ export default function App() {
         </div>
       </div>
 
-      {/* CONTEXT PANEL */}
-      <ContextPanel files={contextFiles} />
+      {/* CONTEXT PANEL — toggleable */}
+      {showContext && <ContextPanel files={contextFiles} />}
 
-      {/* RIGHT — INFERENCE STATS */}
-      <div className="w-80 border-l border-zinc-900 bg-zinc-950/50 flex flex-col overflow-hidden">
+      {/* RIGHT — INFERENCE STATS — toggleable */}
+      {showStats && <div className="w-64 flex-shrink-0 border-l border-zinc-900 bg-zinc-950/50 flex flex-col overflow-hidden">
         <div className="p-4 border-b border-zinc-900">
            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Inference stats</span>
         </div>
@@ -435,8 +466,8 @@ export default function App() {
                  ))}
               </div>
            </div>
-        </div>
-      </div>
+         </div>
+      </div>}
 
       {/* SETTINGS MODAL */}
       {showSettings && (
@@ -521,6 +552,14 @@ function SendIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+    </svg>
+  );
+}
+
+function PanelIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/>
     </svg>
   );
 }
