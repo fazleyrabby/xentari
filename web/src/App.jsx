@@ -77,6 +77,10 @@ export default function App() {
             AGENT
           </div>
 
+          <div className="text-gray-500 text-xs mb-2">
+            Context-aware mode active
+          </div>
+
           {messages.map((m, i) => (
             <div key={i} className="mb-2">
               <div className="text-gray-500">

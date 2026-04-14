@@ -785,3 +785,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Routing System:** Extracted request validation into `core/router/index.js` to create an API decoupling layer.
     *   **Chat handler:** Initialized `core/router/chat.js` for standalone conversational responses.
     *   **UI Integration:** Repurposed the standard Agent execution panel to render sequential user-agent messages while persisting auto-execution integrity.
+
+### CONTEXT-AWARE CHAT SYSTEM
+*   **Goal:** Upgrade the chat system to be aware of project files, execution history, current stack, and active context.
+*   **Result:**
+    *   **Context Engine:** Implemented `core/context/contextEngine.js` for project scanning (depth-limited) and state retrieval.
+    *   **Project Scanning:** Added logic to walk the project directory and capture file structure (read-only).
+    *   **Trace Awareness:** Integrated recent execution trace (last 5 steps) and actions into the chat context.
+    *   **Smart Chat Responses:** Enhanced `handleChat` to provide keyword-triggered insights about files, system status, and recent activity using the project context.
+    *   **UI Hinting:** Added a visual "Context-aware mode active" indicator to the web interface.
