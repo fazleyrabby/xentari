@@ -89,26 +89,21 @@ This ensures:
 * Works with OpenAI-compatible local servers (llama.cpp, Qwen, Gemma)
 * No dependency on external APIs
 
-### 🔹 Interactive TUI
+### 🔹 Dual Interface System
 
-* Persistent CLI session
-* Streaming execution output
-* Command palette and shortcuts
+* **Interactive TUI:** Persistent CLI session with split-panel layout (lazygit-style) and real-time streaming.
+* **Web UI (Beta):** Headless interface with React + Vite frontend, broadcasting live state via WebSockets.
 
-### 🔹 Context Engine
+### 🔹 Self-Healing Execution (E12)
 
-* Multi-stack awareness (backend/frontend detection)
-* Tiered context system (global, stack, rules)
+* **Failure Classification:** Automatically categorizes errors (CODE, ENVIRONMENT, PERMISSION).
+* **Intelligent Retries:** Automatically attempts to fix recoverable errors (e.g., syntax/validation) with a 2-retry boundary.
 
-### 🔹 Smart Retrieval + Chunking
+### 🔹 Advanced Observability (E15)
 
-* Selects only relevant parts of files
-* Simulates long-context reasoning for smaller models
-
-### 🔹 Constraint Engine
-
-* Removes markdown and conversational noise
-* Enforces structured outputs and size limits
+* **Execution Snapshots:** Full audit trail of steps, results, and contexts persisted to `.xentari/snapshots.log`.
+* **Debug Trace Layer:** High-frequency circular buffer capturing every internal state transition for real-time debugging.
+* **Timeline Visualization:** Visual execution trace available in both TUI and Web UI.
 
 ### 🔹 Project Indexing (RAG-lite)
 
@@ -296,23 +291,21 @@ xen "add login endpoint to auth service"
 
 ## 📊 Current Status
 
-Xentari is a functional MVP and actively used in real development workflows.
+Xentari is a **production-ready deterministic engine** actively used for local-first software engineering.
 
-* ✅ Stable execution pipeline
-* ✅ Local LLM integration
-* ✅ Safe patch system with rollback
-* ✅ Multi-step execution with retry control
-
-Actively improving through real-world testing and iteration.
+* ✅ **E14 Stable:** Persistent TUI with split-panel navigation.
+* ✅ **Self-Correction:** High success rate in multi-step recovery (E12).
+* ✅ **Full Audit:** Execution snapshots and high-frequency tracing (E15).
+* ✅ **Web-Ready:** Headless WebSocket API and React frontend.
 
 ---
 
 ## 🗺 Roadmap
 
-* Improved retrieval precision
-* Enhanced multi-file reasoning
-* Better UX (diff navigation, command palette)
-* Stability improvements from real-world usage
+* **Full TypeScript Migration:** Transitioning remaining core JS to strict TS.
+* **Advanced Contract Expansion:** Domain-specific contracts for React and Python stacks.
+* **Cross-Workspace Dashboard:** Multi-project state monitoring in the Web UI.
+* **Embedding-based Indexing:** Augmenting heuristic RAG with local vector storage.
 
 ---
 
