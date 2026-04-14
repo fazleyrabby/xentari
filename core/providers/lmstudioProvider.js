@@ -24,7 +24,7 @@ export class LMStudioProvider extends BaseProvider {
 
   normalizeModel(raw) {
     return {
-      id: raw.id,
+      id: `lmstudio:${raw.id}`,
       name: raw.id.split("/").pop(),
       provider: "lmstudio",
       context: raw.context_length || null

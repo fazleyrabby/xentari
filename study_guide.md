@@ -920,3 +920,13 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Lossless Saving:** Upgraded `saveConfig` to perform a disk-read-and-merge cycle. This ensures that saving a subset of settings (e.g., just updating a model name) does not inadvertently wipe out unrelated configuration keys.
     *   **Safe Defaults:** Updated `DEFAULT_CONFIG` with sane, disabled-by-default states for local providers like `llama` to prevent silent connection errors.
 *   **Validation:** Verified that the system correctly merges tiered configurations (Default → Global → Local) without data corruption.
+
+### HYBRID MODEL REGISTRY (DETECTION + OVERRIDES)
+*   **Goal:** Combine real-time provider detection with persistent configuration overrides for a deterministic, customized model menu.
+*   **Result:**
+    *   **Model ID Normalization:** Implemented a unified ID schema (`provider:modelId`) across all providers (Ollama, LM Studio, Llama-server), enabling reliably merging and identification.
+    *   **Merged Model Logic:** Created `core/models/modelMerger.js` to intelligently combine runtime-detected models with optional overrides from `config.json`.
+    *   **Config Overrides:** Enabled custom labels, context windows, and capability tagging (e.g., "coding", "vision") via the `models` block in configuration.
+    *   **Standardized Defaults:** Integrated `defaultModel` selection at the registry level, automatically marking preferred models as `selected` in the UI if they are physically detected.
+    *   **Runtime Source of Truth:** Maintained a strict "Detection First" architecture where config-only models are ignored if the provider isn't actually accessible at runtime.
+    *   **Enhanced API Response:** Upgraded `GET /api/models` to return rich metadata including `overridden` and `selected` flags, providing a foundation for advanced model switching in the Web UI.

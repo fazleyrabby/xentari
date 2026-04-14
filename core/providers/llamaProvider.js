@@ -33,7 +33,7 @@ export class LlamaProvider extends BaseProvider {
 
   normalizeModel(raw) {
     return {
-      id: raw.id,
+      id: `llama:${raw.id}`,
       name: raw.id.split("/").pop(),
       provider: "llama"
     };

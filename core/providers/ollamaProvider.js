@@ -24,8 +24,8 @@ export class OllamaProvider extends BaseProvider {
 
   normalizeModel(raw) {
     return {
-      id: raw.name,
-      name: raw.name.split(":")[0],
+      id: `ollama:${raw.name}`,
+      name: raw.name,
       provider: "ollama",
       details: raw.details || {},
       size: raw.size
