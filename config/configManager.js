@@ -5,7 +5,8 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const XENTARI_ROOT = path.join(__dirname, "..");
+
+const HOME = process.env.HOME || process.env.USERPROFILE || process.env.HOMEPATH;
 
 const DEFAULT_CONFIG = {
   baseURL: "http://localhost:8081/v1",
@@ -22,7 +23,7 @@ const DEFAULT_CONFIG = {
   providers: {
     ollama: { enabled: true, baseUrl: "http://localhost:11434" },
     lmstudio: { enabled: true, baseUrl: "http://localhost:1234" },
-    llama: { enabled: true, baseUrl: "http://localhost:8081" }
+    llama: { enabled: false, baseUrl: "http://localhost:8081" }
   },
   retrieverWeights: {
     filename: 2,
@@ -32,51 +33,75 @@ const DEFAULT_CONFIG = {
   }
 };
 
+function deepMerge(target, source) {
+  if (!source) return target;
+  for (const key in source) {
+    const val = source[key];
+    if (val && typeof val === "object" && !Array.isArray(val)) {
+      target[key] = deepMerge(target[key] || {}, val);
+    } else {
+      target[key] = val;
+    }
+  }
+  return target;
+}
+
 function getGlobalConfigPath() {
-   return path.join(XENTARI_ROOT, "config", "config.json");
+  return path.join(HOME, ".xentari", "config.json");
 }
 
 function getLocalConfigPath() {
-  const { projectDir } = getRuntime();
-  return path.join(projectDir, ".xentari", "config.json");
+  try {
+    const runtime = getRuntime();
+    if (!runtime || !runtime.projectDir) return null;
+    return path.join(runtime.projectDir, ".xentari", "config.json");
+  } catch {
+    return null;
+  }
 }
 
 export function loadConfig() {
   const globalPath = getGlobalConfigPath();
   const localPath = getLocalConfigPath();
-  
-  let config = { ...DEFAULT_CONFIG };
 
-  // 1. Merge Global Config (User settings in Xentari root)
+  // Create clean copy of defaults
+  let config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+
+  // global merge
   if (fs.existsSync(globalPath)) {
     try {
       const globalData = JSON.parse(fs.readFileSync(globalPath, "utf-8"));
-      config = { ...config, ...globalData };
-    } catch (e) {
-      console.error("Failed to load global config:", e.message);
-    }
+      config = deepMerge(config, globalData);
+    } catch {}
   }
 
-  // 2. Merge Local Config (Project-specific settings)
-  if (fs.existsSync(localPath)) {
+  // local merge
+  if (localPath && fs.existsSync(localPath)) {
     try {
       const localData = JSON.parse(fs.readFileSync(localPath, "utf-8"));
-      config = { ...config, ...localData };
-    } catch (e) {
-      console.error("Failed to load local config:", e.message);
-    }
+      config = deepMerge(config, localData);
+    } catch {}
   }
 
   return config;
 }
 
-export function saveConfig(config, isGlobal = false) {
+export function saveConfig(newConfig, isGlobal = false) {
   const configPath = isGlobal ? getGlobalConfigPath() : getLocalConfigPath();
+  if (!configPath) return;
+
   const dir = path.dirname(configPath);
-  
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  let existing = {};
+  if (fs.existsSync(configPath)) {
+    try {
+      existing = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    } catch {}
+  }
+
+  const merged = deepMerge(existing, newConfig);
+  fs.writeFileSync(configPath, JSON.stringify(merged, null, 2));
 }

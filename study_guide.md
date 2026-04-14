@@ -911,11 +911,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     - **Safe Transmission:** Switched to a pure JSON-based API (`POST /api/projects/add`) that only sends the directory string, completely eliminating `FormData` and multipart uploads.
     *   **Strict Backend Validation:** Ensured the backend resolves and validates the path (existence + directory check) before updating `projects.json`.
 
-### UNIFIED CONFIGURATION SYSTEM (GLOBAL + LOCAL)
-*   **Goal:** Consolidate configuration management so both CLI and Web UI share a single source of truth.
+### STABLE CONFIGURATION SYSTEM (DEEP MERGE)
+*   **Goal:** Harden the configuration layer to be safe, non-breaking, and deterministic across CLI and Web.
 *   **Result:**
-    *   **Unified Config Manager:** Refactored `config/configManager.js` to handle the global `config/config.json` (Xentari root) and project-local `.xentari/config.json` simultaneously.
-    *   **Tiered Merging:** Implemented a priority merge logic: `Defaults` → `Global` → `Local`. This allows for global provider settings while maintaining project-specific model overrides.
-    *   **CLI Synchronization:** Updated the core CLI config loader (`core/config.js`) to bridge with the `Unified Config Manager`, ensuring any changes made via the Web UI are instantly reflected in the terminal.
-    *   **Persistent Web API:** Upgraded the `/config` endpoints in `app.js` to persist settings to the project-local config file, ensuring settings survive application restarts.
-    *   **Single Configuration Point:** Users can now manage all aspects of Xentari (models, providers, timeouts, weights) from a single coherent JSON structure.
+    *   **Deep Merge Logic:** Implemented a recursive `deepMerge` utility to correctly handle nested configuration blocks (like `providers` or `retrieverWeights`), preventing partial data loss during overrides.
+    *   **Safe Global Storage:** Standardized global configuration storage to the user's home directory (`~/.xentari/config.json`), ensuring settings persist across different Xentari versions.
+    *   **Crash-Proof Project Resolution:** Updated `getLocalConfigPath` to fail gracefully (returning `null`) when no active project directory is present in the runtime context.
+    *   **Lossless Saving:** Upgraded `saveConfig` to perform a disk-read-and-merge cycle. This ensures that saving a subset of settings (e.g., just updating a model name) does not inadvertently wipe out unrelated configuration keys.
+    *   **Safe Defaults:** Updated `DEFAULT_CONFIG` with sane, disabled-by-default states for local providers like `llama` to prevent silent connection errors.
+*   **Validation:** Verified that the system correctly merges tiered configurations (Default → Global → Local) without data corruption.
