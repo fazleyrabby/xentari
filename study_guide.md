@@ -987,3 +987,24 @@ Transition the Web UI from a chat client to a real-time development environment.
 - Verified real-time streaming with `llama-server` on port 8081.
 - Confirmed Markdown rendering of code blocks in chat bubbles.
 - Validated E13 determinism for `runAgent` discovery.
+
+### Phase 80.5: E13.5 SSE True Streaming Protocol
+**Status**: Completed & Verified
+
+#### 🎯 Objective
+Migrate the mock streaming implementation to a fully progressive, true real-time SSE stream structure across backend and frontend, resolving UI blocking states.
+
+#### 🛠 Changes
+- **Backend Infrastructure (`core/server/app.js`)**:
+  - Implemented standard `GET /chat/stream` SSE endpoint adhering to explicit `Content-Type: text/event-stream` headers formatting.
+  - Implemented typed JSON stream chunks: `{"type": "status"|"chunk"|"done"}`.
+- **Frontend Streaming Loop (`web/src/App.jsx`)**:
+  - Deprecated blocking `fetch()`/`getReader()` implementations in favor of the native `EventSource` API.
+  - Applied React UI state pattern changes: `bufferRef` accumulation is now independent of render-blocking update loops to improve UX responsiveness.
+- **Micro-Status Reporting (`core/runtime/runAgent.ts`)**:
+  - Injected an `onStatus` tracking closure directly into the core agent pipeline.
+  - Automatically transitions system through contextual phases: *scanning project* -> *analyzing context* -> *generating response*, before handing progressive chunking to UI.
+
+#### 🧪 Verification
+- Verified buffer streaming logic doesn't drop strings or lag on large API outputs.
+- Closed memory leaks matching proper graceful exit strategy via `eventSource.close()`.
