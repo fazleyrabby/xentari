@@ -9,6 +9,7 @@ import { sessionManager } from "../session/sessionManager.js";
 import modelsRouter from "./routes/models.js";
 import filesRouter from "./routes/files.js";
 import { providerRuntime } from "../../runtime/providerRuntime.js";
+import { loadConfig, saveConfig } from "../../config/configManager.js";
 
 // Initial model discovery
 providerRuntime.refresh().catch(console.error);
@@ -59,20 +60,25 @@ app.post("/run", async (req, res) => {
 });
 
 app.post("/config", (req, res) => {
-  const { projectDir, model, provider, apiUrl } = req.body;
-
+  const newConfig = req.body;
+  
+  // 1. Update Runtime
   setRuntime({
-    projectDir,
-    model,
-    provider,
-    apiUrl
+    projectDir: newConfig.projectDir,
+    model: newConfig.model,
+    apiUrl: newConfig.apiUrl
   });
+
+  // 2. Persist to Project (.xentari/config.json)
+  saveConfig(newConfig);
 
   res.json({ success: true });
 });
 
 app.get("/config", (req, res) => {
-  res.json(getRuntime());
+  const runtime = getRuntime();
+  const persistent = loadConfig();
+  res.json({ ...persistent, ...runtime });
 });
 
 app.post("/session/save", (req, res) => {

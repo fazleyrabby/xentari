@@ -1,49 +1,77 @@
 import fs from "fs";
 import path from "path";
 import { getRuntime } from "../core/runtime/context.js";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const XENTARI_ROOT = path.join(__dirname, "..");
 
 const DEFAULT_CONFIG = {
+  baseURL: "http://localhost:8081/v1",
+  model: "qwen",
+  modelTier: "auto",
+  maxFiles: 3,
+  maxFileChars: 1500,
+  maxTokens: 600,
+  temperature: 0.2,
+  dryRun: false,
+  autoRetries: 3,
+  llmTimeoutMs: 60_000,
+  maxPatchChars: 10_000,
   providers: {
-    ollama: {
-      enabled: true,
-      baseUrl: "http://localhost:11434"
-    },
-    lmstudio: {
-      enabled: true,
-      baseUrl: "http://localhost:1234"
-    },
-    llama: {
-      enabled: true,
-      baseUrl: "http://localhost:8081"
-    }
+    ollama: { enabled: true, baseUrl: "http://localhost:11434" },
+    lmstudio: { enabled: true, baseUrl: "http://localhost:1234" },
+    llama: { enabled: true, baseUrl: "http://localhost:8081" }
   },
-  defaultModel: "qwen"
+  retrieverWeights: {
+    filename: 2,
+    content: 1,
+    priority: 1.5,
+    memory: 1,
+  }
 };
 
-function getConfigPath() {
+function getGlobalConfigPath() {
+   return path.join(XENTARI_ROOT, "config", "config.json");
+}
+
+function getLocalConfigPath() {
   const { projectDir } = getRuntime();
   return path.join(projectDir, ".xentari", "config.json");
 }
 
 export function loadConfig() {
-  const configPath = getConfigPath();
+  const globalPath = getGlobalConfigPath();
+  const localPath = getLocalConfigPath();
   
-  if (!fs.existsSync(configPath)) {
-    saveConfig(DEFAULT_CONFIG);
-    return DEFAULT_CONFIG;
+  let config = { ...DEFAULT_CONFIG };
+
+  // 1. Merge Global Config (User settings in Xentari root)
+  if (fs.existsSync(globalPath)) {
+    try {
+      const globalData = JSON.parse(fs.readFileSync(globalPath, "utf-8"));
+      config = { ...config, ...globalData };
+    } catch (e) {
+      console.error("Failed to load global config:", e.message);
+    }
   }
 
-  try {
-    const data = fs.readFileSync(configPath, "utf-8");
-    return { ...DEFAULT_CONFIG, ...JSON.parse(data) };
-  } catch (e) {
-    console.error("Failed to load config, using defaults", e);
-    return DEFAULT_CONFIG;
+  // 2. Merge Local Config (Project-specific settings)
+  if (fs.existsSync(localPath)) {
+    try {
+      const localData = JSON.parse(fs.readFileSync(localPath, "utf-8"));
+      config = { ...config, ...localData };
+    } catch (e) {
+      console.error("Failed to load local config:", e.message);
+    }
   }
+
+  return config;
 }
 
-export function saveConfig(config) {
-  const configPath = getConfigPath();
+export function saveConfig(config, isGlobal = false) {
+  const configPath = isGlobal ? getGlobalConfigPath() : getLocalConfigPath();
   const dir = path.dirname(configPath);
   
   if (!fs.existsSync(dir)) {
