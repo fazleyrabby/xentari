@@ -898,3 +898,13 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Unified File API:** Created `/api/files` and `/api/file` endpoints in `core/server/routes/files.js` to expose the filesystem to the Web UI.
     *   **Workspace Integration:** Linked file operations directly to the `workspaceManager`, ensuring that all file actions are verified against user-approved project roots.
     *   **Security Model:** Implemented a backend-controlled access model where the client only provides relative paths, which are then validated against the server-side project registry.
+
+### WEB FOLDER SELECTOR (SAFE MODE)
+*   **Goal:** Implement a browser-compatible folder selection UX that avoids file uploads and helps users input valid local paths.
+*   **Rationale:** Standard browser security prevents direct access to absolute paths during folder picking. Uploading entire project folders is inefficient and insecure.
+*   **Result:**
+    *   **Folder Name Extraction:** Utilized `webkitdirectory` to allow users to select a folder, extracting only the root folder name from `webkitRelativePath` while ignoring all file contents.
+    *   **Path Helper Strategy:** Implemented OS-aware path guessing (Mac, Windows, Linux) to pre-fill an absolute path input, guiding the user towards the correct local directory.
+    *   **Hybrid Confirmation UX:** Added a dedicated "RE-GISTER" panel in the Workspace view where users can review and edit the guessed path before it is saved.
+    - **Safe Transmission:** Switched to a pure JSON-based API (`POST /api/projects/add`) that only sends the directory string, completely eliminating `FormData` and multipart uploads.
+    *   **Strict Backend Validation:** Ensured the backend resolves and validates the path (existence + directory check) before updating `projects.json`.

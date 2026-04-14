@@ -16,6 +16,8 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [availableModels, setAvailableModels] = useState([]);
   const [availableProviders, setAvailableProviders] = useState([]);
+  const [newProjectPath, setNewProjectPath] = useState("");
+  const [showAddProject, setShowAddProject] = useState(false);
 
   const bottomRef = useRef(null);
 
@@ -279,28 +281,79 @@ export default function App() {
         <div className="w-1/4 border-r border-gray-700 flex flex-col overflow-hidden bg-zinc-950">
           <div className="p-3 border-b border-gray-700 flex justify-between items-center bg-zinc-900">
             <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">WORKSPACE</span>
-            <div className="relative">
-               <button 
-                  className="bg-zinc-800 p-1 hover:bg-zinc-700 text-gray-400 border border-gray-700 text-[10px] font-bold"
-                  title="Add Project Folder"
-               >
-                  <input 
-                    type="file" 
-                    webkitdirectory="true" 
-                    directory="true"
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                    onChange={(e) => {
-                      const files = e.target.files;
-                      if (files && files.length > 0) {
-                        const fullPath = prompt("Enter absolute path to the project folder:");
-                        if (fullPath) addProject(fullPath);
-                      }
-                    }}
-                  />
-                  ADD +
-               </button>
-            </div>
+            <button 
+                onClick={() => setShowAddProject(!showAddProject)}
+                className="bg-zinc-800 p-1 hover:bg-zinc-700 text-gray-400 border border-gray-700 text-[10px] font-bold px-2"
+            >
+              PROJECT +
+            </button>
           </div>
+          
+          {showAddProject && (
+            <div className="p-4 border-b border-gray-800 bg-black animate-in fade-in slide-in-from-top-2 duration-200">
+               <div className="text-zinc-600 text-[9px] uppercase font-bold mb-2 tracking-widest">Add Local Project</div>
+               
+               <div className="flex flex-col gap-2">
+                  <div className="flex gap-1">
+                    <button 
+                      className="bg-zinc-800 p-1 hover:bg-zinc-700 text-gray-400 border border-gray-700 text-[10px] w-full"
+                      onClick={() => document.getElementById("hidden-picker").click()}
+                    >
+                      BROWSE...
+                    </button>
+                    <input 
+                      type="file" 
+                      id="hidden-picker"
+                      webkitdirectory="true" 
+                      directory="true"
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files && files.length > 0) {
+                          const folderName = files[0].webkitRelativePath.split("/")[0];
+                          const platform = navigator.platform.toLowerCase();
+                          let base = "/Users/";
+                          if (platform.includes("win")) base = "C:\\Users\\";
+                          else if (!platform.includes("mac")) base = "/home/";
+                          
+                          // Default to a placeholder user or the current one if we had it
+                          setNewProjectPath(`${base}user/${folderName}`);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <input 
+                    type="text"
+                    value={newProjectPath}
+                    onChange={(e) => setNewProjectPath(e.target.value)}
+                    placeholder="/absolute/path/to/project"
+                    className="bg-zinc-950 border border-zinc-800 px-2 py-1.5 text-xs text-gray-300 outline-none focus:border-blue-500 w-full"
+                  />
+
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={() => {
+                        if (newProjectPath) {
+                          addProject(newProjectPath);
+                          setNewProjectPath("");
+                          setShowAddProject(false);
+                        }
+                      }}
+                      className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold p-1 uppercase tracking-widest"
+                    >
+                      REGISTER
+                    </button>
+                    <button 
+                      onClick={() => setShowAddProject(false)}
+                      className="bg-zinc-900 hover:bg-zinc-800 text-zinc-500 text-[10px] font-bold px-2"
+                    >
+                      ✕
+                    </button>
+                  </div>
+               </div>
+            </div>
+          )}
           
           <div className="flex-1 overflow-auto p-4 space-y-2">
              {projects.map(p => (
