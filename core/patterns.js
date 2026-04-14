@@ -8,6 +8,18 @@ import { log } from "./logger.js";
  * E10: Fully Stack-Agnostic. Loads patterns ONLY from the active stack.
  */
 
+function validatePatterns(patterns, stackName) {
+  if (!patterns || typeof patterns !== "object") {
+    throw new Error(`[PATTERN ERROR] Invalid patterns for stack: ${stackName}`);
+  }
+
+  if (Object.keys(patterns).length === 0) {
+    throw new Error(`[PATTERN ERROR] Empty patterns for stack: ${stackName}`);
+  }
+
+  return true;
+}
+
 export async function loadPattern(name) {
   const config = loadConfig();
   const stack = await loadStack(config.stack || "node-basic");
@@ -16,6 +28,8 @@ export async function loadPattern(name) {
     log.error("[PATTERNS] INVALID_STACK_ADAPTER: Missing patterns");
     throw new Error("INVALID_STACK_ADAPTER: Missing patterns");
   }
+
+  validatePatterns(stack.patterns, config.stack || "node-basic");
 
   // E10: Check if stack provides the pattern
   if (stack.patterns[name]) {

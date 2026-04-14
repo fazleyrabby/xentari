@@ -1,6 +1,7 @@
 import { loadConfig } from "../config.js";
 import { loadStack } from "../loadStack.js";
 import { log } from "../logger.js";
+import { validatePlan } from "../validators/planValidator.js";
 
 /**
  * Core Planner Proxy.
@@ -25,15 +26,8 @@ export async function plan(task, { metrics, projectDir } = {}) {
     projectDir
   });
 
-  // Basic validation of plan structure
-  if (!Array.isArray(steps)) {
-    throw new Error("INVALID_PLAN: Planner did not return an array of steps");
-  }
-
-  for (const step of steps) {
-    if (!step.target) throw new Error("INVALID_PLAN_STEP: Missing target");
-    if (!step.type) throw new Error("INVALID_PLAN_STEP: Missing type");
-  }
+  // E11: Plan Structure Validation
+  validatePlan({ steps });
 
   return steps;
 }
