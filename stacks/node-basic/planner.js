@@ -1,8 +1,8 @@
 import { chat } from "../../core/llm.js";
-import { getContext } from "../../core/context.js";
+import { buildContext } from "../../core/context/buildContext.ts";
 import { detectTier } from "../../core/tier.js";
 import { log } from "../../core/logger.js";
-import { loadSession } from "../../core/memory/session.js";
+import { loadHistory } from "../../core/session/store.ts";
 import { getIntelligence } from "../../core/memory.js";
 
 const BASE_SYSTEM = `You are a professional software architect and planner. Given a coding task, you must REASON about the implementation and then produce a structured JSON execution plan.
@@ -103,11 +103,12 @@ export async function generatePlan({ instruction, context: extraContext, metrics
   const complexity = detectComplexity(instruction);
   const maxSteps = tier === "small" ? 3 : tier === "medium" ? 4 : 6;
 
-  const { context } = getContext(instruction, projectDir);
+  const contextData = buildContext(projectDir);
+  const context = `FILES TO LOOK AT:\n${contextData.files.join(", ")}\n\nSNIPPETS:\n${contextData.snippets.map((s: any) => `=== ${s.path} ===\n${s.content}`).join("\n\n")}`;
   
-  const session = loadSession();
-  const memoryHint = session.history.length
-    ? `\n[SESSION MEMORY] Recent task: ${session.history[0].task}. Modified files: ${session.history[0].files.join(", ")}`
+  const historyData = loadHistory(projectDir);
+  const memoryHint = historyData.history.length
+    ? `\n[SESSION MEMORY] Recent task: ${historyData.history[0].task}. Modified files: ${historyData.history[0].files.join(", ")}`
     : "";
   
   const intel = getIntelligence();

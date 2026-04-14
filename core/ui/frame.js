@@ -111,5 +111,11 @@ export function renderFrame() {
   console.log("─".repeat(process.stdout.columns || 80));
   process.stdout.write(renderPanels());
   console.log("─".repeat(process.stdout.columns || 80));
-  console.log(`STATUS: ${state.status.text}`);
+  
+  const m = state.metrics;
+  const metricsLine = m 
+    ? `TOKENS: ${m.totalTokens || "-"} | TPS: ${m.tokensPerSecond || "-"} | LAT: ${m.latencyMs || "-"}ms`
+    : "METRICS: N/A";
+  
+  console.log(`STATUS: ${state.status.text} | ${metricsLine}`);
 }

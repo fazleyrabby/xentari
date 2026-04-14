@@ -1,5 +1,4 @@
 import { chat } from "./llm.js";
-import { getContext } from "./context.js";
 import { detectTier, getTierProfile } from "./tier.js";
 import { log } from "./logger.js";
 import { loadConfig } from "./config.js";

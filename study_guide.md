@@ -1,4 +1,4 @@
-# 🧠 Xentari — The Ultimate Case Study & Product Manual (Phases 1–78)
+# 🧠 Xentari — The Ultimate Case Study & Product Manual (Phases 1–79)
 
 # 🧠 Engine Evolution Layer (E-Phases)
 
@@ -768,3 +768,263 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **React Frontend:** Scaffolded a Vite-powered React application (`web/`) that visualizes internal state, execution traces, and provides a remote command input.
     *   **State-Driven Visualization:** The Web UI consumes the same reactive state machine (`core/ui/state.js`) used by the TUI, ensuring visual parity across interfaces.
     *   **System Decoupling:** Maintained strict separation between the core engine and the interface layer, enabling dual-mode operation (CLI and Web) simultaneously.
+
+### WEB UI — STRUCTURED IDE LAYOUT
+*   **Goal:** Upgrade Xentari Web UI into a structured IDE-like interface with continuous automation support.
+*   **Result:**
+    *   **AUTO mode fix:** Updated backend `/run` endpoint to pass `{ auto: true }` directly, preventing blockages by CLI permission prompts.
+    *   **3-panel system:** Restructured the frontend into dedicated left (Agent), center (Output), and right (Context) panels.
+    *   **Agent panel:** Visualizes real-time execution actions and raw thinking trace data.
+    *   **Context panel:** Continuously displays system stack, phase, and mode attributes.
+    *   **Trace UI:** Styled specific trace markers (`OK`, `FAIL`, `STEP`, `RETRY`) with Neo-Brutalist, high-contrast monospace fonts.
+
+### CHAT + EXECUTION ROUTER
+*   **Goal:** Add conversational capability WITHOUT breaking deterministic execution.
+*   **Result:**
+    *   **Input Classifier:** Implemented heuristic intent engine to dynamically switch between standard conversation (CHAT) and deterministic action generation (EXEC).
+    *   **Routing System:** Extracted request validation into `core/router/index.js` to create an API decoupling layer.
+    *   **Chat handler:** Initialized `core/router/chat.js` for standalone conversational responses.
+    *   **UI Integration:** Repurposed the standard Agent execution panel to render sequential user-agent messages while persisting auto-execution integrity.
+
+### CONTEXT-AWARE CHAT SYSTEM
+*   **Goal:** Upgrade the chat system to be aware of project files, execution history, current stack, and active context.
+*   **Result:**
+    *   **Context Engine:** Implemented `core/context/contextEngine.js` for project scanning (depth-limited) and state retrieval.
+    *   **Project Scanning:** Added logic to walk the project directory and capture file structure (read-only).
+    *   **Trace Awareness:** Integrated recent execution trace (last 5 steps) and actions into the chat context.
+    *   **Smart Chat Responses:** Enhanced `handleChat` to provide keyword-triggered insights about files, system status, and recent activity using the project context.
+    *   **UI Hinting:** Added a visual "Context-aware mode active" indicator to the web interface.
+
+### MODEL METRICS OBSERVABILITY
+*   **Goal:** Implement provider-agnostic model performance metrics to track token usage, speed (TPS), and latency.
+*   **Result:**
+    *   **Normalization Layer:** Created `core/llm/metrics.js` to standardize raw response metadata from diverse providers (llama.cpp, OpenAI, vLLM).
+    *   **Safe Capture:** Integrated fallback-safe metrics extraction within the core `chat` logic in `core/llm.js`.
+    *   **State Integration:** Synchronized normalized metrics with the system state machine (`core/ui/state.js`).
+    *   **Unified UI Display:**
+        *   **Web UI:** Integrated real-time metrics (Tokens, TPS, Latency, Provider) into the Context Panel.
+        *   **TUI:** Standardized the execution footer to display performance stats with a graceful "N/A" fallback.
+    *   **Provider Agnosticism:** Verified support for multi-platform usage data without disrupting the deterministic execution flow.
+
+### WEB UI — UX POLISH
+*   **Goal:** Refine the UI/UX to a professional, IDE-level coding experience while maintaining Neo-Brutalist aesthetics.
+*   **Result:**
+    *   **Auto-Scroll:** Implemented `useRef` based automatic scrolling to keep latest chat messages in view.
+    *   **Message Redesign:** Introduced high-contrast bubble styling for User (Blue) and Xentari (Green) messages with clear role markers.
+    *   **Sticky Input:** Relocated the command input to a fixed footer within the Agent panel for better accessibility.
+    *   **Layout Refinement:** Optimized panel widths (1/4, 2/4, 1/4) and added structured headers to all columns.
+    *   **Status Indicators:** Replaced plain status text with explicit, colored status boxes (RUNNING, SUCCESS, FAILED) in the center output panel.
+    *   **Empty State:** Added a helpful starter prompt for empty message threads.
+
+### WORKSPACE + MODEL CONFIG SYSTEM
+*   **Goal:** Implement a dynamic workspace and model configuration system for multi-project and multi-provider support.
+*   **Result:**
+    *   **Global Runtime Context:** Created `core/runtime/context.js` to manage session-specific project paths, models, and API endpoints.
+    *   **Dynamic Context Engine:** Decoupled `core/context/contextEngine.js` from `process.cwd()`, enabling real-time switching of project scanning targets.
+    *   **API Configuration Layer:** Added `/config` server endpoints to allow external clients (Web UI) to dynamically update the system's operating environment.
+    *   **Integrated Settings UI:**
+        - **Workspace Selector:** Added a project path input to explicitly define the target workspace.
+        - **Model Configurator:** Integrated model name and API URL inputs for on-the-fly LLM provider switching.
+        - **Persistence:** Implemented bi-directional config syncing between the UI and backend runtime.
+    *   **Enhanced Status Header:** Updated the application header to display the currently active workspace path.
+
+### HYBRID CHAT SYSTEM (SYSTEM + MODEL)
+*   **Goal:** Establish a tiered routing system for system queries, model-powered conversation, and deterministic execution.
+*   **Result:**
+    *   **Tiered Classification:** Upgraded `core/router/classifier.js` to distinguish between direct system triggers, execution requests, and natural language chat.
+    *   **System Handler:** Introduced `core/router/system.js` for fast, zero-LLM responses to status, file, and trace queries.
+    *   **Hybrid Chat Handler:** Updated `core/router/chat.js` to leverage the runtime LLM config for general conversation, automatically injecting project context into the prompt.
+    *   **Provider Compatibility:** Ensured chat compatibility with diverse response formats (Ollama vs. OpenAI).
+    *   **UI Clarity:** Updated role labels to clearly distinguish between user messages and AI-generated responses.
+
+### MODEL CONFIG VALIDATION + ALERT SYSTEM
+*   **Goal:** Enhance safety and UX by validating LLM runtime configurations and providing guided error recovery.
+*   **Result:**
+    *   **Strict Runtime Validation:** Implemented multi-state validation in `core/router/chat.js` to detect missing API endpoints, missing models, or full config absence.
+    *   **Actionable Error Messaging:** Replaced silent failures and generic "500" errors with detailed, human-readable terminal/chat responses that provide examples (e.g., Ollama/LM Studio URLs).
+    *   **UI Alert Banner:** Integrated a high-visibility yellow warning banner in the Web UI that activates automatically when the model configuration is invalid.
+    *   **Guided UX Recovery:** 
+        - Added a "Configure" CTA in the application header that anchors the user directly to the settings bar.
+        - Implemented real-time status indicators in the Context Panel ("Model not ready") to prevent unintentional chat usage.
+    *   **Fail-Safe Routing:** Ensured that missing model configurations do not crash the server or block non-LLM system queries.
+
+### SESSION + SEARCH SYSTEM
+*   **Goal:** Provide lightweight, filesystem-based chat persistence and instant search capabilities.
+*   **Result:**
+    *   **Filesystem Session Store:** Created `core/session/store.js` using the workspace `.xentari/sessions/` directory for zero-database persistence.
+    *   **Session State Management:** Integrated session lifecycle (list, load, save) into the Web UI via new `/session` server endpoints.
+    *   **Auto-Persistence:** Configured the Web UI to automatically sync chat history to the workspace after every message.
+    *   **Instant Message Search:** Implemented a real-time client-side search filter enabled by `core/session/search.js`.
+    *   **Session Switching:** Added a dynamic session selector to the settings bar, allowing users to pivot between different conversation contexts and create new threads on the fly.
+
+### CONFIG + PROVIDER DETECTION
+*   **Goal:** Implement a deterministic system for persisting user configurations and auto-detecting local LLM providers (Ollama, LM Studio).
+*   **Result:**
+    *   **Config Management:** Developed `config/configManager.js` to handle `.xentari/config.json` with safe defaults and persistence logic.
+    *   **Modular Provider System:** 
+        - Created `BaseProvider` interface and specific implementations for `OllamaProvider` and `LMStudioProvider`.
+        - Detection is strictly HTTP-based (GET `/api/tags` and GET `/v1/models`) to avoid shell execution.
+    *   **Centralized Discovery:**
+        - **ProviderRegistry:** Manages parallel provider detection and model aggregation with fail-safe error handling.
+        - **ModelRegistry:** Maintains a normalized, in-memory state of discovered models and active providers.
+    *   **Discovery Runtime:** Implemented `runtime/providerRuntime.js` to coordinate the full discovery lifecycle and sync data into the global registry.
+    *   **Discovery API:** Exposed a new `/api/models` endpoint for consistent external access.
+    - **Intelligent UI Integration:** 
+        - Integrated a `datalist` into the Web UI's model input for real-time model suggestions from discovered providers.
+        - Added a manual discovery refresh button (↻) to the settings bar.
+*   **Known Limitations:** Detection is currently limited to localhost; remote providers must still be configured manually in `config.json`.
+
+### WORKSPACE + SESSION PROJECT SYSTEM
+*   **Goal:** Replace manual path entry with a persistent project management system linked to chat sessions.
+*   **Result:**
+    *   **Global Project Storage:** Implemented `.xentari/projects.json` to store user-approved project paths and metadata.
+    *   **Workspace Manager:** Created `core/workspace/workspaceManager.js` to handle global project CRUD operations and path validation.
+    *   **Enhanced Session Linking:**
+        - Upgraded `SessionManager` to link sessions to specific global projects via `activeProjectId`.
+        - Selecting a project in the UI automatically updates the runtime context and switches the agent's target directory.
+    *   **Interactive Workspace UI:**
+        - **Folder Picker:** Integrated a standard browser folder picker (with absolute path fallback) in the left panel.
+        - **Project List:** Added a dedicated Workspace panel for managing all saved projects.
+    *   **Unified API Endpoints:** Added `/api/projects` (GET, POST, DELETE) for global project management.
+    *   **CLI Integration:** Added `xen workspace` commands (`add`, `list`, `use`) for full terminal-based workspace management.
+    *   **Persistence:** Sessions now remember their linked project across restarts, ensuring a seamless development flow.
+
+### FILE SYSTEM LAYER (PRE-MONACO FOUNDATION)
+*   **Goal:** Establish a secure, project-scoped filesystem module for listing, reading, and writing files.
+*   **Result:**
+    *   **Secure Path Resolution:** Implemented `resolveSafePath` in `core/filesystem/fileManager.js` to strictly enforce project boundaries and prevent directory traversal (STRICT startsWith check + realpath validation).
+    *   **Deterministic Listing:** Developed a recursive `listFiles` utility that automatically ignores noisy directories (`node_modules`, `.git`, `.xentari`).
+    *   **Resource Guards:** Added file size limits (1MB) and UTF-8 encoding requirements to ensure system stability during file reads.
+    *   **Unified File API:** Created `/api/files` and `/api/file` endpoints in `core/server/routes/files.js` to expose the filesystem to the Web UI.
+    *   **Workspace Integration:** Linked file operations directly to the `workspaceManager`, ensuring that all file actions are verified against user-approved project roots.
+    *   **Security Model:** Implemented a backend-controlled access model where the client only provides relative paths, which are then validated against the server-side project registry.
+
+### WEB FOLDER SELECTOR (SAFE MODE)
+*   **Goal:** Implement a browser-compatible folder selection UX that avoids file uploads and helps users input valid local paths.
+*   **Rationale:** Standard browser security prevents direct access to absolute paths during folder picking. Uploading entire project folders is inefficient and insecure.
+*   **Result:**
+    *   **Folder Name Extraction:** Implemented a dual-strategy for directory discovery:
+        - **Primary:** Utilized the modern **File System Access API** (`window.showDirectoryPicker()`) to provide a professional "View Files" permission flow instead of a scary "Upload" warning.
+        - **Fallback:** Retained the `webkitdirectory` input for legacy browser support, extracting root folder names while strictly ignoring file contents.
+    *   **Path Helper Strategy:** Implemented OS-aware path guessing (Mac, Windows, Linux) to pre-fill an absolute path input, guiding the user towards the correct local directory.
+    *   **Hybrid Confirmation UX:** Added a dedicated "RE-GISTER" panel in the Workspace view where users can review and edit the guessed path before it is saved.
+    - **Safe Transmission:** Switched to a pure JSON-based API (`POST /api/projects/add`) that only sends the directory string, completely eliminating `FormData` and multipart uploads.
+    *   **Strict Backend Validation:** Ensured the backend resolves and validates the path (existence + directory check) before updating `projects.json`.
+
+### STABLE CONFIGURATION SYSTEM (DEEP MERGE)
+*   **Goal:** Harden the configuration layer to be safe, non-breaking, and deterministic across CLI and Web.
+*   **Result:**
+    *   **Deep Merge Logic:** Implemented a recursive `deepMerge` utility to correctly handle nested configuration blocks (like `providers` or `retrieverWeights`), preventing partial data loss during overrides.
+    *   **Safe Global Storage:** Standardized global configuration storage to the user's home directory (`~/.xentari/config.json`), ensuring settings persist across different Xentari versions.
+    *   **Crash-Proof Project Resolution:** Updated `getLocalConfigPath` to fail gracefully (returning `null`) when no active project directory is present in the runtime context.
+    *   **Lossless Saving:** Upgraded `saveConfig` to perform a disk-read-and-merge cycle. This ensures that saving a subset of settings (e.g., just updating a model name) does not inadvertently wipe out unrelated configuration keys.
+    *   **Safe Defaults:** Updated `DEFAULT_CONFIG` with sane, disabled-by-default states for local providers like `llama` to prevent silent connection errors.
+*   **Validation:** Verified that the system correctly merges tiered configurations (Default → Global → Local) without data corruption.
+
+### HYBRID MODEL REGISTRY (DETECTION + OVERRIDES)
+*   **Goal:** Combine real-time provider detection with persistent configuration overrides for a deterministic, customized model menu.
+*   **Result:**
+    *   **Model ID Normalization:** Implemented a unified ID schema (`provider:modelId`) across all providers (Ollama, LM Studio, Llama-server), enabling reliably merging and identification.
+    *   **Merged Model Logic:** Created `core/models/modelMerger.js` to intelligently combine runtime-detected models with optional overrides from `config.json`.
+    *   **Config Overrides:** Enabled custom labels, context windows, and capability tagging (e.g., "coding", "vision") via the `models` block in configuration.
+    *   **Standardized Defaults:** Integrated `defaultModel` selection at the registry level, automatically marking preferred models as `selected` in the UI if they are physically detected.
+    *   **Runtime Source of Truth:** Maintained a strict "Detection First" architecture where config-only models are ignored if the provider isn't actually accessible at runtime.
+    *   **Enhanced API Response:** Upgraded `GET /api/models` to return rich metadata including `overridden` and `selected` flags, providing a foundation for advanced model switching in the Web UI.
+
+### PROVIDER ENDPOINT NORMALIZATION
+*   **Goal:** Simplify user configuration by automatically cleaning base URLs and ensuring compatibility with `llama-server`.
+*   **Result:**
+    *   **Normalization Utility:** Created `core/providers/normalizeBaseUrl.js` which intelligently strips redundant endpoints (like `/chat/completions`) and enforces the `/v1` suffix for OpenAI-compatible providers.
+    *   **Universal Base URLs:** Updated all providers to utilize normalized base paths, allowing users to input simplified URLs (e.g., `http://localhost:8081`) while the system handles the API routing.
+    *   **OpenAI Detection Upgrade:** switched detection for LM Studio and Llama-server to utilize the standard `GET /models` endpoint, improving reliability and out-of-the-box support for `llama.cpp`.
+    - **Self-Correcting Chat Logic:** Enhanced the chat router to normalize the `apiUrl` at runtime before appending `/chat/completions`, preventing common "404 Not Found" errors caused by misconfigured paths.
+    *   **Actionable Error Guidance:** Improved configuration error messages to provide specific examples and troubleshooting steps (e.g., "Ensure server is running") instead of generic failure notices.
+*   **Validation:** Verified that `llama-server` (without explicit `--api` flags) is correctly detected and usable via the normalized `v1` endpoint.
+
+### MODEL PERFORMANCE METRICS (REAL-TIME SIDEBAR)
+*   **Goal:** Provide visibility into model efficiency, speed, and usage directly within the Web UI sidebar.
+*   **Result:**
+    *   **Unified Metrics Extraction:** Updated the chat pipeline to selectively extract `usage` (total tokens) and `timings` (latency, TPS) from OpenAI-compatible API responses.
+    *   **Llama.cpp Timing Integration:** specifically mapped `predicted_ms` and `predicted_per_second` from `llama-server` responses to the system's global state.
+    *   **Automated State Updates:** Integrated `setMetrics()` into the `handleChat` router, ensuring that the UI sidebar is instantly updated with fresh performance data after every model reply.
+    *   **Fallback Latency Tracking:** Implemented a backend timer fallback to track request duration even if the provider does not supply explicit timing metadata.
+    *   **Live Metrics UI:** Bound the "Latency", "Speed", and "Usage" fields in the Web UI to the live metrics stream, providing immediate feedback on model performance.
+
+### DETERMINISTIC AGENT IDENTITY (SYSTEM PROMPT)
+*   **Goal:** Transform the model from a generic AI assistant into a specialized, task-oriented coding agent.
+*   **Result:**
+    *   **Strict Identity Enforcement:** Implemented a new, comprehensive system prompt that defines Xentari's role as a deterministic agent that prioritizes technical action over conversation.
+    *   **Action-First Rules:** established strict operational rules: no pleasantries, no generic project-gathering questions, and a focus on provided context.
+    *   **Situational Context Injection:** Dynamically injects real-time project state (file structure, active phase, stack) into the system prompt for every request.
+    *   **Capability Awareness:** Informed the model of its internal capabilities (reading/writing files, debugging) to encourage more targeted and useful responses.
+*   **Validation:** Verified that "hi" and other generic prompts now receive a professional, concise, and task-focused reply instead of a multi-bullet generic assistant response.
+
+### Phase 79 — Legacy Cleanup & Architectural Hardening
+*   **Infrastructure Cleanup:** Removed 10+ legacy fallback files (including `retriever.js`, `sessionManager.js`, and `context.js`) to eliminate technical debt and architectural redundancy.
+*   **Modernized Session Store:** Transitioned to project-aware session and history management in `core/session/store.ts`, supporting persistent per-project conversational state.
+*   **Deterministic Context:** Replaced legacy RAG-based context engine with a faster, code-aware `buildContext` utility using `glob` for shallow but highly relevant context discovery.
+*   **Decoupled Runtime:** Established a lean `runAgent.ts` pipeline independent of complex multi-step executor dependencies, ensuring high-speed chat interactions and zero side-effects.
+*   **Advanced Core Tests:** Implemented a new verification suite (`tests/core_suite_advanced.js`) ensuring system stability across CLI and API layers post-refactoring.
+
+### Phase 80: True Streaming & Rich Typography (IDE Evolution)
+**Status**: Decoupled & Hardened
+
+#### 🎯 Objective
+Transition the Web UI from a chat client to a real-time development environment.
+
+#### 🛠 Changes
+- **Core Streaming**: Implemented true token-by-token streaming via SSE.
+  - `core/providers/index.ts`: Added `streamChat` generator.
+  - `core/runtime/runAgent.ts`: Added `onChunk` callback support.
+  - `core/server/app.js`: Refactored `/run/stream` to pipe chunks live.
+- **Rich Rendering**: Integrated `react-markdown` and `Prism` syntax highlighting.
+  - `web/src/App.jsx`: Now renders code blocks, lists, and bold text beautifully.
+- **Config Hardening**: Standardized all configuration keys to `baseUrl` (lowercase).
+  - Repaired `.xentari/config.json` to resolve connectivity hangs.
+- **UI State Safety**: Fixed nested access for `state.header` (Stack, Phase, Mode indicators).
+
+#### 🧪 Verification
+- Verified real-time streaming with `llama-server` on port 8081.
+- Confirmed Markdown rendering of code blocks in chat bubbles.
+- Validated E13 determinism for `runAgent` discovery.
+
+### Phase 80.5: E13.5 SSE True Streaming Protocol
+**Status**: Completed & Verified
+
+#### 🎯 Objective
+Migrate the mock streaming implementation to a fully progressive, true real-time SSE stream structure across backend and frontend, resolving UI blocking states.
+
+#### 🛠 Changes
+- **Backend Infrastructure (`core/server/app.js`)**:
+  - Implemented standard `GET /chat/stream` SSE endpoint adhering to explicit `Content-Type: text/event-stream` headers formatting.
+  - Implemented typed JSON stream chunks: `{"type": "status"|"chunk"|"done"}`.
+- **Frontend Streaming Loop (`web/src/App.jsx`)**:
+  - Deprecated blocking `fetch()`/`getReader()` implementations in favor of the native `EventSource` API.
+  - Applied React UI state pattern changes: `bufferRef` accumulation is now independent of render-blocking update loops to improve UX responsiveness.
+- **Micro-Status Reporting (`core/runtime/runAgent.ts`)**:
+  - Injected an `onStatus` tracking closure directly into the core agent pipeline.
+  - Automatically transitions system through contextual phases: *scanning project* -> *analyzing context* -> *generating response*, before handing progressive chunking to UI.
+
+#### 🧪 Verification
+- Verified buffer streaming logic doesn't drop strings or lag on large API outputs.
+- Closed memory leaks matching proper graceful exit strategy via `eventSource.close()`.
+
+### Phase 81: UI Context Awareness (Context Panel)
+**Status**: Completed & Verified
+
+#### 🎯 Objective
+Expose the backend context awareness in the UI so users can verify exactly which files the AI used for grounding its response.
+
+#### 🛠 Changes
+- **Backend Context Emission (`core/runtime/runAgent.ts` & `core/server/app.js`)**:
+  - Registered an `onContext` callback within the `runAgent` lifecycle that surfaces `.files` out of the buildContext module.
+  - Plumbed `onContext` into the SSE stream handler (`/chat/stream`) to emit a typed JSON package (`type: "context"`).
+- **Frontend Context Catching (`web/src/App.jsx`)**:
+  - Implemented SSE context parsing (`data.type === "context"`) to update localized `contextFiles` state independently of token rendering.
+- **Dedicated UI Component (`web/src/components/ContextPanel.jsx`)**:
+  - Created a scrollable layout displaying file paths and relevancy heuristical scores.
+  - Mounted the panel seamlessly into the three-column layout (between the Chat and Stats columns) without breaking the existing flow.
+
+#### 🧪 Verification
+- Evaluated deterministic discovery runs (e.g., "where is runAgent defined?").
+- Confirmed that the event emits cleanly *before* chunk generation starts, exhibiting zero token-delay or stream friction.

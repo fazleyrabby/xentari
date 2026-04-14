@@ -21,6 +21,7 @@ export const state = {
     offset: 0
   },
   view: "actions", // actions | timeline | debug
+  metrics: null,
   refresh: 0
 };
 
@@ -56,7 +57,6 @@ export function scrollDown(max) {
 export function addAction(action) {
   state.actions.push(action);
   
-  // Cap action history to 20 items to prevent UI overflow (E12/TUI Safety)
   if (state.actions.length > 20) {
     state.actions.shift();
   }
@@ -71,5 +71,10 @@ export function setStatus(statusUpdates) {
 
 export function setMode(mode) {
   state.mode = mode;
+  state.refresh++;
+}
+
+export function setMetrics(metrics) {
+  state.metrics = metrics || null;
   state.refresh++;
 }

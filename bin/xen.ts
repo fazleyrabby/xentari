@@ -1,17 +1,15 @@
 import { parseArgs } from "node:util";
 import { readFileSync, existsSync } from "node:fs";
-import { runAgent, runAgentStep } from "../core/executor.ts";
-import { run, runPlanOnly, runCodeOnly, runReviewOnly } from "../core/pipeline.ts";
-import { undo } from "../core/patcher.js";
+import { runAgent } from "../core/runtime/runAgent.ts";
 import { confirm } from "../core/prompt.js";
 import { log } from "../core/logger.js";
 import { indexProject } from "../core/index.ts";
-import { getContext } from "../core/context.js";
-import { startTUI } from "../core/tui/index.js";
+import { buildContext } from "../core/context/buildContext.ts";
 import { updateDuration } from "../core/metrics.js";
 import { loadPlugins, buildCommandRegistry } from "../core/plugins.js";
 import { loadConfig } from "../core/config.js";
 import { resolveProjectRoot } from "../core/project/resolver.js";
+import { workspaceManager } from "../core/workspace/workspaceManager.js";
 
 let shuttingDown = false;
 
@@ -67,6 +65,9 @@ async function main() {
       xen context             Show current dynamic context
       xen debug "task"        Show retrieval scores and token estimates
       xen undo                Revert last change (git reset --hard HEAD)
+      xen workspace add <path> Add folder to project list
+      xen workspace list      Show all projects
+      xen workspace use <id>  Switch to specific project
       xen --help, xen -h       Show this help
 
     Examples:
@@ -171,10 +172,12 @@ async function main() {
   }
 
   if (task === "context") {
-    const { context, stack } = getContext("", projectDir);
+    const context = buildContext(projectDir);
     log.section("DYNAMIC CONTEXT");
-    log.info(`Stack: ${stack}`);
-    console.log("\n" + context);
+    console.log(`Files: ${context.files.join(", ")}`);
+    context.snippets.forEach((s: any) => {
+      console.log(`\n=== FILE: ${s.path} ===\n${s.content}`);
+    });
     process.exit(0);
   }
 
@@ -186,12 +189,13 @@ async function main() {
     }
 
     log.section("DEBUG MODE");
-    const { stack } = getContext(debugTask, projectDir);
-    log.info(`Detected Stack: ${stack}`);
+    const context = buildContext(projectDir);
+    log.info(`Detected Files: ${context.files.length}`);
 
     // Run a dry agent run to get real metrics
     log.info("Running diagnostic session...");
-    const { metrics } = await runAgent({
+    const { runAgent: runLegacyAgent } = await import("../core/executor.ts");
+    const { metrics } = await runLegacyAgent({
       task: debugTask,
       projectDir,
       dryRun: true,
@@ -228,6 +232,7 @@ Constraint Engine:
   }
 
   if (task === "undo") {
+    const { undo } = await import("../core/patcher.js");
     if (!existsSync(".git")) {
       log.error("Not a git repository. Undo unavailable.");
       process.exit(1);
@@ -247,7 +252,37 @@ Constraint Engine:
     process.exit(0);
   }
 
+  if (task.startsWith("workspace ")) {
+    const sub = task.replace("workspace ", "").trim();
+    const parts = sub.split(" ");
+    const cmd = parts[0];
+    const val = parts.slice(1).join(" ");
+
+    if (cmd === "add") {
+       if (!val) { log.error("Provide a path. Example: xen workspace add /path/to/my-project"); process.exit(1); }
+       try {
+          const p = workspaceManager.addProject(val);
+          log.ok(`Added project: ${p.name} (${p.id})`);
+       } catch (e) { log.error(e.message); }
+    } else if (cmd === "list") {
+       const ps = workspaceManager.getProjects();
+       log.section("WORKSPACE PROJECTS");
+       ps.forEach(p => console.log(` - ${p.name.padEnd(20)} [${p.id.slice(0, 8)}] ${p.path}`));
+    } else if (cmd === "use") {
+       if (!val) { log.error("Provide a projectId"); process.exit(1); }
+       const p = workspaceManager.getProjectById(val) || workspaceManager.getProjects().find(proj => proj.id.startsWith(val));
+       if (!p) { log.error("Project not found"); process.exit(1); }
+       log.ok(`Switched to: ${p.path}`);
+       // Note: CLI usage is usually scoped to CWD or --project flag, 
+       // but we persist this selection if needed.
+    } else {
+       log.error("Unknown workspace command. Use add, list, or use.");
+    }
+    process.exit(0);
+  }
+
   if (!task && process.stdin.isTTY) {
+    const { startTUI } = await import("../core/tui/index.js");
     await startTUI();
     return;
   }
@@ -260,6 +295,7 @@ if (values.review && !task && !process.stdin.isTTY) {
   });
 
   process.stdin.on("end", async () => {
+    const { runReviewOnly } = await import("../core/pipeline.ts");
     await runReviewOnly({ patch });
     process.exit(0);
   });
@@ -273,21 +309,24 @@ if (values.review && !task && !process.stdin.isTTY) {
   }
 
   if (values.plan) {
+    const { runPlanOnly } = await import("../core/pipeline.ts");
     await runPlanOnly({ task, projectDir });
   } else if (values.code) {
+    const { runCodeOnly } = await import("../core/pipeline.ts");
     await runCodeOnly({ task, projectDir });
   } else if (values.review) {
+    const { runReviewOnly } = await import("../core/pipeline.ts");
     await runReviewOnly({ task });
   } else if (values.step) {
+    const { runAgentStep } = await import("../core/executor.ts");
     await runAgentStep({ task, projectDir });
   } else {
-    await runAgent({
-      task,
-      projectDir,
-      dryRun: values.dry,
-      autoMode: values.auto,
-      sandbox: values.sandbox
+    const result = await runAgent({
+      input: task,
+      projectDir: process.cwd()
     });
+
+    console.log(result.message);
   }
 }
 

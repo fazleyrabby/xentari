@@ -1,11 +1,11 @@
 import { mkdirSync } from "node:fs";
 import { loadConfig } from "./config.js";
 import { log, logToFile } from "./logger.js";
-import { plan } from "./planner.js";
-import { retrieve } from "./retriever.js";
+import { plan } from "./agents/planner.agent.js";
+import { selectContext, formatContext } from "./retrieval/contextEngine.ts";
 import { generatePatch } from "./coder.js";
 import { patchToUnified } from "./diff.ts";
-import { review, isApproved } from "./reviewer.js";
+import { review, isApproved } from "./agents/reviewer.agent.js";
 import { applyPatch, validatePatch } from "./patcher.js";
 import { remember, trackRecentFiles, recordPattern } from "./memory.js";
 import { summarizePatch } from "./summarizer.js";
@@ -161,16 +161,13 @@ async function processStep(step: TaskType, index: number, opts: any, chain: any)
     }];
   } catch (e: any) {
     log.warn(`Fallback to legacy retrieval: ${e.message}`);
-    log.info("Retrieving files...");
-    const keywords = [...(step.files || []), ...step.step.split(/\s+/)];
-    try {
-      files = await retrieve(projectDir, keywords, chain.modifiedFiles);
-    } catch (err: any) {
-      log.error(`Retrieval failed: ${err.message}`);
-      logToFile({ task, mode, step: step.step, status: "fail", timestamp: new Date().toISOString(), duration_ms: elapsed(stepStart) });
-      remember({ task, step: step.step, status: "retrieval_failed" });
-      return;
-    }
+    log.info("Retrieving context...");
+    const bundle = selectContext((step.filePath || (step.files && step.files[0]) || "") as string, projectDir);
+    files = [{
+      file: (step.filePath || (step.files && step.files[0]) || "") as string,
+      content: bundle.target,
+      score: 1.0
+    }];
   }
 
   if (files && files.length > 0) {
@@ -246,17 +243,20 @@ async function processStep(step: TaskType, index: number, opts: any, chain: any)
 
 export async function runPlanOnly({ task, projectDir }: { task: string; projectDir?: string }): Promise<any[]> {
   log.section("PLAN");
-  const steps = await plan(task, projectDir || process.cwd());
+  const steps = await plan(task, { projectDir: projectDir || process.cwd() });
   steps.forEach((s, i) => log.info(`${i + 1}. ${s.step} [${s.files.join(", ")}]`));
   return steps;
 }
 
 export async function runCodeOnly({ task, projectDir }: { task: string; projectDir: string }): Promise<string | null> {
   log.section("PATCH");
-  log.info("Retrieving files...");
-  const keywords = task.split(/\s+/);
-  const files = await retrieve(projectDir, keywords);
-  log.info(`Files: ${files.map((f: any) => `${f.file} (${f.score})`).join(", ") || "(none)"}`);
+  log.info("Retrieving context...");
+  const bundle = selectContext(task, projectDir);
+  const files = [{
+    file: task,
+    content: bundle.target,
+    score: 1.0
+  }];
 
   log.info("Generating updated file content...");
   const fileUpdates = await generatePatch(task, files, null, null);
@@ -306,7 +306,7 @@ export async function run({ task, projectDir, dryRun, autoMode }: { task: string
 
   log.section("PLAN");
   log.info("Planning...");
-  const steps = await plan(task, projectDir);
+  const steps = await plan(task, { projectDir });
   log.info(`${steps.length} step(s):`);
   steps.forEach((s, i) => log.info(`  ${i + 1}. ${s.step}`));
 
