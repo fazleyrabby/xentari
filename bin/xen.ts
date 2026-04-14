@@ -1,13 +1,10 @@
 import { parseArgs } from "node:util";
 import { readFileSync, existsSync } from "node:fs";
-import { runAgent, runAgentStep } from "../core/executor.ts";
-import { run, runPlanOnly, runCodeOnly, runReviewOnly } from "../core/pipeline.ts";
-import { undo } from "../core/patcher.js";
+import { runAgent } from "../core/runtime/runAgent.ts";
 import { confirm } from "../core/prompt.js";
 import { log } from "../core/logger.js";
 import { indexProject } from "../core/index.ts";
 import { getContext } from "../core/context.js";
-import { startTUI } from "../core/tui/index.js";
 import { updateDuration } from "../core/metrics.js";
 import { loadPlugins, buildCommandRegistry } from "../core/plugins.js";
 import { loadConfig } from "../core/config.js";
@@ -195,7 +192,8 @@ async function main() {
 
     // Run a dry agent run to get real metrics
     log.info("Running diagnostic session...");
-    const { metrics } = await runAgent({
+    const { runAgent: runLegacyAgent } = await import("../core/executor.ts");
+    const { metrics } = await runLegacyAgent({
       task: debugTask,
       projectDir,
       dryRun: true,
@@ -232,6 +230,7 @@ Constraint Engine:
   }
 
   if (task === "undo") {
+    const { undo } = await import("../core/patcher.js");
     if (!existsSync(".git")) {
       log.error("Not a git repository. Undo unavailable.");
       process.exit(1);
@@ -281,6 +280,7 @@ Constraint Engine:
   }
 
   if (!task && process.stdin.isTTY) {
+    const { startTUI } = await import("../core/tui/index.js");
     await startTUI();
     return;
   }
@@ -293,6 +293,7 @@ if (values.review && !task && !process.stdin.isTTY) {
   });
 
   process.stdin.on("end", async () => {
+    const { runReviewOnly } = await import("../core/pipeline.ts");
     await runReviewOnly({ patch });
     process.exit(0);
   });
@@ -306,21 +307,24 @@ if (values.review && !task && !process.stdin.isTTY) {
   }
 
   if (values.plan) {
+    const { runPlanOnly } = await import("../core/pipeline.ts");
     await runPlanOnly({ task, projectDir });
   } else if (values.code) {
+    const { runCodeOnly } = await import("../core/pipeline.ts");
     await runCodeOnly({ task, projectDir });
   } else if (values.review) {
+    const { runReviewOnly } = await import("../core/pipeline.ts");
     await runReviewOnly({ task });
   } else if (values.step) {
+    const { runAgentStep } = await import("../core/executor.ts");
     await runAgentStep({ task, projectDir });
   } else {
-    await runAgent({
-      task,
-      projectDir,
-      dryRun: values.dry,
-      autoMode: values.auto,
-      sandbox: values.sandbox
+    const result = await runAgent({
+      input: task,
+      projectDir: process.cwd()
     });
+
+    console.log(result.message);
   }
 }
 

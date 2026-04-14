@@ -4,49 +4,76 @@ import { getState } from "../ui/state.js";
 import { getRuntime } from "../runtime/context.js";
 
 function getProjectFiles() {
-  const { projectDir } = getRuntime();
-  
-  function walk(current, level) {
-    if (level > depth) return [];
+  try {
+    const { projectDir } = getRuntime();
+    if (!projectDir) return [];
 
-    try {
-      return fs.readdirSync(current).flatMap(file => {
-        const full = path.join(current, file);
-        
-        // Skip hidden files/folders and node_modules
-        if (file.startsWith(".") || file === "node_modules") return [];
+    function walk(current, depth = 0) {
+      if (typeof depth !== "number") depth = 0;
+      
+      const maxDepth = 2;
+      if (depth > maxDepth) return [];
+      if (!current.startsWith(projectDir)) return [];
 
-        const stat = fs.statSync(full);
-        if (stat.isDirectory()) {
-          return [{
-            type: "dir",
-            name: file,
-            children: walk(full, level + 1)
-          }];
-        }
+      try {
+        const entries = fs.readdirSync(current);
+        return entries.flatMap(file => {
+          const full = path.join(current, file);
 
-        return [{
-          type: "file",
-          name: file
-        }];
-      });
-    } catch (err) {
-      return [];
+          if (file.startsWith(".") || file === "node_modules") return [];
+
+          try {
+            const stat = fs.statSync(full);
+
+            if (stat.isDirectory()) {
+              return [{
+                type: "dir",
+                name: file,
+                children: walk(full, depth + 1)
+              }];
+            }
+
+            return [{
+              type: "file",
+              name: file
+            }];
+          } catch {
+            return [];
+          }
+        });
+      } catch {
+        return [];
+      }
     }
-  }
 
-  return walk(projectDir, 0);
+    return walk(projectDir);
+  } catch (err) {
+    console.error("Critical error in getProjectFiles:", err);
+    return [];
+  }
 }
 
 export function getContext() {
-  const state = getState();
+  try {
+    const state = getState();
 
-  return {
-    stack: state.stack,
-    phase: state.phase,
-    mode: state.mode,
-    trace: state.trace?.slice(-5) || [],
-    actions: state.actions?.slice(-5) || [],
-    files: getProjectFiles()
-  };
+    return {
+      stack: state.stack || null,
+      phase: state.phase || null,
+      mode: state.mode || "safe",
+      trace: state.trace?.slice(-5) || [],
+      actions: state.actions?.slice(-5) || [],
+      files: getProjectFiles() || []
+    };
+  } catch (e) {
+    console.error("Context error:", e);
+    return {
+      stack: null,
+      phase: null,
+      mode: "safe",
+      trace: [],
+      actions: [],
+      files: []
+    };
+  }
 }

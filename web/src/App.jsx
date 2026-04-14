@@ -1,128 +1,30 @@
 import { useEffect, useState, useRef } from "react";
 
+const PHASE_LABELS = {
+  thinking: "Thinking",
+  planning: "Planning solution",
+  executing: "Executing steps",
+  responding: "Generating response"
+};
+
 export default function App() {
   const [state, setState] = useState({});
   const [prompt, setPrompt] = useState("");
   const [running, setRunning] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [config, setConfig] = useState({
-    projectDir: "",
-    model: "",
-    apiUrl: ""
-  });
+  const [config, setConfig] = useState({ projectDir: "", model: "", apiUrl: "" });
   const [session, setSession] = useState({ id: "default", messages: [], activeProjectId: null });
   const [sessions, setSessions] = useState(["default"]);
   const [projects, setProjects] = useState([]);
-  const [search, setSearch] = useState("");
   const [availableModels, setAvailableModels] = useState([]);
   const [availableProviders, setAvailableProviders] = useState([]);
+  const [showSettings, setShowSettings] = useState(false);
   const [newProjectPath, setNewProjectPath] = useState("");
-  const [showAddProject, setShowAddProject] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState(null);
 
   const bottomRef = useRef(null);
+  const hiddenPickerRef = useRef(null);
 
-  useEffect(() => {
-    const ws = new WebSocket("ws://localhost:3000");
-
-    ws.onmessage = (msg) => {
-      const data = JSON.parse(msg.data);
-      if (data.type === "STATE_UPDATE") {
-        setState(data.state);
-      }
-    };
-
-    fetchConfig();
-    fetchSessions();
-    fetchDiscovery();
-    fetchProjects();
-  }, []);
-
-  const fetchProjects = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/api/projects");
-      setProjects(await res.json());
-    } catch (err) {}
-  };
-
-  const addProject = async (path) => {
-    try {
-      await fetch("http://localhost:3000/api/projects/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path })
-      });
-      fetchProjects();
-    } catch (err) {}
-  };
-
-  const removeProject = async (id) => {
-    try {
-      await fetch(`http://localhost:3000/api/projects/${id}`, { method: "DELETE" });
-      fetchProjects();
-    } catch (err) {}
-  };
-
-  const selectProject = async (projectId) => {
-    try {
-      const res = await fetch("http://localhost:3000/session/set-project", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: session.id, projectId })
-      });
-      const updatedSession = await res.json();
-      setSession(updatedSession);
-      fetchConfig();
-    } catch (err) {}
-  };
-
-  const fetchDiscovery = async (force = false) => {
-    try {
-      const res = await fetch(`http://localhost:3000/api/models${force ? "?refresh=true" : ""}`);
-      const data = await res.json();
-      setAvailableModels(data.models || []);
-      setAvailableProviders(data.providers || []);
-    } catch (err) {}
-  };
-
-  useEffect(() => {
-    if (session.messages.length > 0) {
-      saveChat(session);
-    }
-  }, [session.messages]);
-
-  const fetchSessions = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/session/list");
-      const list = await res.json();
-      if (list.length > 0) setSessions(list);
-    } catch (err) {}
-  };
-
-  const loadChat = async (id) => {
-    try {
-      const res = await fetch(`http://localhost:3000/session/load/${id}`);
-      const data = await res.json();
-      setSession(data);
-    } catch (err) {}
-  };
-
-  const saveChat = async (s) => {
-    await fetch("http://localhost:3000/session/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session: s })
-    });
-  };
-
-  const createNewSession = async () => {
-    try {
-      const res = await fetch("http://localhost:3000/session/create", { method: "POST" });
-      const newSession = await res.json();
-      setSession(newSession);
-      fetchSessions();
-    } catch (err) {}
-  };
-
+  // --- API Sync ---
   const fetchConfig = async () => {
     try {
       const res = await fetch("http://localhost:3000/config");
@@ -137,413 +39,422 @@ export default function App() {
     } catch (err) {}
   };
 
-  const saveConfig = async () => {
+  const saveConfig = async (newCfg) => {
     await fetch("http://localhost:3000/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(config)
+      body: JSON.stringify(newCfg || config)
     });
+    fetchConfig();
   };
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/projects");
+      const list = await res.json();
+      setProjects(list);
+    } catch (err) {}
+  };
 
+  const fetchModels = async (force = false) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/models${force ? "?refresh=true" : ""}`);
+      const data = await res.json();
+      setAvailableModels(data.models || []);
+      setAvailableProviders(data.providers || []);
+    } catch (err) {}
+  };
+
+  const fetchSession = async (id = "default") => {
+    try {
+      const res = await fetch(`http://localhost:3000/session/${id}`);
+      const data = await res.json();
+      setSession(data);
+    } catch (err) {}
+  };
+
+  // --- Handlers ---
   const run = async () => {
     if (!prompt.trim() || running) return;
 
     const currentPrompt = prompt;
+    const userMsg = { role: "user", content: currentPrompt };
+    const historyBefore = [...session.messages, userMsg];
+    
+    setSession(prev => ({ ...prev, messages: historyBefore }));
     setPrompt("");
     setRunning(true);
-
-    // Add user message to session
-    const userMsg = { role: "user", content: currentPrompt };
-    setSession(prev => ({ ...prev, messages: [...prev.messages, userMsg] }));
+    setCurrentPhase("thinking");
 
     try {
-      const res = await fetch("http://localhost:3000/run", {
+      const res = await fetch("http://localhost:3000/run/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: currentPrompt, auto: true })
+        body: JSON.stringify({ 
+          prompt: currentPrompt, 
+          messages: historyBefore 
+        })
       });
 
-      const data = await res.json();
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      
+      let fullAIContent = "";
+      
+      // Update planning phase briefly
+      setTimeout(() => setCurrentPhase("planning"), 1200);
 
-      if (data.type === "chat") {
-        const aiMsg = { role: "assistant", content: data.message };
-        setSession(prev => ({ ...prev, messages: [...prev.messages, aiMsg] }));
-      } else if (data.type === "exec") {
-        const aiMsg = { role: "assistant", content: "⚡ Task execution started. Check the OUTPUT panel for results." };
-        setSession(prev => ({ ...prev, messages: [...prev.messages, aiMsg] }));
-      } else if (data.error) {
-        const aiMsg = { role: "assistant", content: `❌ Error: ${data.error}` };
-        setSession(prev => ({ ...prev, messages: [...prev.messages, aiMsg] }));
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          const jsonStr = line.replace("data:", "").trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const data = JSON.parse(jsonStr);
+            
+            if (data.error) throw new Error(data.error);
+            
+            if (data.fullText !== undefined) {
+              setCurrentPhase("responding");
+              fullAIContent = data.fullText;
+              
+              // Update message list in real-time
+              const aiMsg = { role: "assistant", content: fullAIContent };
+              setSession(prev => ({
+                ...prev,
+                messages: [...historyBefore, aiMsg]
+              }));
+
+              // Update metrics sidebar
+              setState(prev => ({
+                ...prev,
+                metrics: {
+                  ...prev.metrics,
+                  latencyMs: data.latency,
+                  tokensPerSecond: data.tps?.toFixed(1),
+                  totalTokens: data.tokens,
+                  provider: config.model?.split(":")[0] || "N/A"
+                }
+              }));
+            }
+          } catch (e) {}
+        }
       }
     } catch (err) {
-      const errMsg = { role: "assistant", content: `❌ Connection error: ${err.message}` };
-      setSession(prev => ({ ...prev, messages: [...prev.messages, errMsg] }));
+      setSession(prev => ({
+        ...prev, 
+        messages: [...historyBefore, { role: "assistant", content: `❌ Error: ${err.message}` }]
+      }));
+    } finally {
+      setRunning(false);
+      setCurrentPhase(null);
     }
-
-    setRunning(false);
   };
 
+  const registerProject = async () => {
+    if (!newProjectPath) return;
+    try {
+      await fetch("http://localhost:3000/api/projects/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: newProjectPath })
+      });
+      fetchProjects();
+      setNewProjectPath("");
+    } catch (err) {}
+  };
+
+  const setProject = (p) => {
+    const newCfg = { ...config, projectDir: p.path };
+    setConfig(newCfg);
+    saveConfig(newCfg);
+  };
+
+  // --- Lifecycle ---
+  useEffect(() => {
+    fetchConfig();
+    fetchProjects();
+    fetchModels();
+    fetchSession();
+
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:3000/state");
+        const data = await res.json();
+        setState(data.state);
+      } catch (err) {}
+    }, 1000);
+
+    return () => clearInterval(poll);
+  }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [session.messages, currentPhase]);
+
   return (
-    <div className="h-screen flex flex-col bg-black text-gray-100 font-mono">
-
-      {/* WARNING BANNER */}
-      {(!config.apiUrl || !config.model) && (
-        <div className="bg-yellow-900/50 text-yellow-500 p-2 text-[10px] font-bold border-b border-yellow-900 flex justify-between items-center px-4 uppercase tracking-widest">
-          <span>⚠ Model not configured. Set API & Model in settings.</span>
-          <span className="text-gray-400">SAFE MODE ACTIVE</span>
+    <div className="flex h-screen w-full bg-zinc-950 text-gray-300">
+      
+      {/* LEFT SIDEBAR — EXPLORER */}
+      <div className="w-64 border-r border-zinc-900 flex flex-col bg-zinc-950/50">
+        <div className="p-4 border-b border-zinc-900 flex justify-between items-center">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Workspace</span>
+          <button onClick={() => setShowSettings(!showSettings)} className="hover:text-white">
+            <SettingsIcon />
+          </button>
         </div>
-      )}
-
-      {/* HEADER */}
-      <div className="border-b border-gray-700 p-3 flex justify-between bg-black items-center">
-        <div>
-          <div className="font-bold uppercase tracking-tighter">🧠 XENTARI</div>
-          <div className="text-[10px] text-gray-500 uppercase truncate max-w-[300px]">
-            {config.projectDir || "No project selected"}
-          </div>
-        </div>
-        <div className="flex gap-2 items-center">
-          {(!config.apiUrl || !config.model) && (
-            <button 
-              onClick={() => document.getElementById("config-bar").scrollIntoView({ behavior: "smooth" })}
-              className="text-yellow-500 border border-yellow-500 px-2 py-0.5 text-[9px] font-bold uppercase hover:bg-yellow-500 hover:text-black transition-all"
-            >
-              Configure
-            </button>
-          )}
-          <div className="text-yellow-400 font-bold uppercase text-[10px] px-2 py-1 border border-yellow-400">
-            AUTO ⚡
-          </div>
-        </div>
-      </div>
-
-      {/* TOP SETTINGS BAR */}
-      <div id="config-bar" className="border-b border-gray-700 p-2 flex gap-2 bg-zinc-900 items-center">
-        <input
-          placeholder="Project Path (/Users/...)"
-          value={config.projectDir}
-          onChange={(e) => setConfig({...config, projectDir: e.target.value})}
-          className="bg-black border border-gray-700 px-2 py-1 text-xs text-gray-300 w-1/3 outline-none focus:border-blue-500"
-        />
-
-        <input
-          placeholder="Model (qwen, llama, gpt-4)"
-          value={config.model}
-          onChange={(e) => setConfig({...config, model: e.target.value})}
-          list="model-list"
-          className="bg-black border border-gray-700 px-2 py-1 text-xs text-gray-300 w-1/4 outline-none focus:border-blue-500"
-        />
-        <datalist id="model-list">
-          {availableModels.map(m => (
-            <option key={m.id} value={m.id}>{m.name} ({m.provider})</option>
-          ))}
-        </datalist>
-
-        <input
-          placeholder="API URL (http://localhost:11434)"
-          value={config.apiUrl}
-          onChange={(e) => setConfig({...config, apiUrl: e.target.value})}
-          className="bg-black border border-gray-700 px-2 py-1 text-xs text-gray-300 w-1/4 outline-none focus:border-blue-500"
-        />
-
-        <button 
-          onClick={saveConfig}
-          className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest transition-colors"
-        >
-          Apply
-        </button>
-
-        <button 
-          onClick={() => fetchDiscovery(true)}
-          className="bg-zinc-800 hover:bg-zinc-700 text-gray-400 text-[10px] font-bold px-3 py-1 uppercase tracking-widest transition-colors border border-gray-700"
-          title="Refresh available models"
-        >
-          ↻
-        </button>
-
-        <div className="h-4 w-px bg-gray-700 mx-1"></div>
-
-        <select 
-          value={session.id}
-          onChange={(e) => {
-            if (e.target.value === "new") createNewSession();
-            else loadChat(e.target.value);
-          }}
-          className="bg-black border border-gray-700 px-2 py-1 text-[10px] text-gray-400 outline-none"
-        >
-          {sessions.map(s => <option key={s} value={s}>{s === "default" ? "Session: Default" : `Session: ${s.slice(0, 8)}`}</option>)}
-          <option value="new">+ New Session</option>
-        </select>
-
-        <input
-          placeholder="Search chat..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="bg-black border border-gray-700 px-2 py-1 text-[10px] text-gray-400 outline-none w-32 focus:border-white"
-        />
-      </div>
-
-      {/* MAIN GRID */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* LEFT PANEL: WORKSPACE */}
-        <div className="w-1/4 border-r border-gray-700 flex flex-col overflow-hidden bg-zinc-950">
-          <div className="p-3 border-b border-gray-700 flex justify-between items-center bg-zinc-900">
-            <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">WORKSPACE</span>
-            <button 
-                onClick={() => setShowAddProject(!showAddProject)}
-                className="bg-zinc-800 p-1 hover:bg-zinc-700 text-gray-400 border border-gray-700 text-[10px] font-bold px-2"
-            >
-              PROJECT +
-            </button>
-          </div>
-          
-          {showAddProject && (
-            <div className="p-4 border-b border-gray-800 bg-black animate-in fade-in slide-in-from-top-2 duration-200">
-               <div className="text-zinc-600 text-[9px] uppercase font-bold mb-2 tracking-widest">Add Local Project</div>
-               
-               <div className="flex flex-col gap-2">
-                  <div className="flex gap-1">
-                    <button 
-                      className="bg-zinc-800 p-1 hover:bg-zinc-700 text-gray-400 border border-gray-700 text-[10px] w-full"
-                      onClick={async () => {
-                        try {
-                          const handle = await window.showDirectoryPicker();
-                          const folderName = handle.name;
-                          const platform = navigator.platform.toLowerCase();
-                          let base = "/Users/";
-                          if (platform.includes("win")) base = "C:\\Users\\";
-                          else if (!platform.includes("mac")) base = "/home/";
-                          setNewProjectPath(`${base}user/${folderName}`);
-                        } catch (err) {
-                          if (err.name !== "AbortError") {
-                            document.getElementById("hidden-picker").click();
-                          }
-                        }
-                      }}
-                    >
-                      BROWSE...
-                    </button>
-                    <input 
-                      type="file" 
-                      id="hidden-picker"
-                      webkitdirectory="true" 
-                      directory="true"
-                      className="hidden"
-                      onChange={(e) => {
-                        const files = e.target.files;
-                        if (files && files.length > 0) {
-                          const folderName = files[0].webkitRelativePath.split("/")[0];
-                          const platform = navigator.platform.toLowerCase();
-                          let base = "/Users/";
-                          if (platform.includes("win")) base = "C:\\Users\\";
-                          else if (!platform.includes("mac")) base = "/home/";
-                          setNewProjectPath(`${base}user/${folderName}`);
-                        }
-                      }}
-                    />
-                  </div>
-
-                  <input 
-                    type="text"
-                    value={newProjectPath}
-                    onChange={(e) => setNewProjectPath(e.target.value)}
-                    placeholder="/absolute/path/to/project"
-                    className="bg-zinc-950 border border-zinc-800 px-2 py-1.5 text-xs text-gray-300 outline-none focus:border-blue-500 w-full"
-                  />
-
-                  <div className="flex gap-1">
-                    <button 
-                      onClick={() => {
-                        if (newProjectPath) {
-                          addProject(newProjectPath);
-                          setNewProjectPath("");
-                          setShowAddProject(false);
-                        }
-                      }}
-                      className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold p-1 uppercase tracking-widest"
-                    >
-                      REGISTER
-                    </button>
-                    <button 
-                      onClick={() => setShowAddProject(false)}
-                      className="bg-zinc-900 hover:bg-zinc-800 text-zinc-500 text-[10px] font-bold px-2"
-                    >
-                      ✕
-                    </button>
-                  </div>
-               </div>
-            </div>
-          )}
-          
-          <div className="flex-1 overflow-auto p-4 space-y-2">
-             {projects.map(p => (
-                <div 
-                  key={p.id} 
-                  onClick={() => selectProject(p.id)}
-                  className={`p-3 border border-zinc-800 cursor-pointer group hover:border-blue-500 transition-all ${
-                    session.activeProjectId === p.id ? "bg-blue-900/10 border-blue-500/50" : "bg-black"
-                  }`}
-                >
-                   <div className="flex justify-between items-center">
-                      <div className="truncate pr-2">
-                        <div className="font-bold text-xs uppercase tracking-tight text-zinc-300">{p.name}</div>
-                        <div className="text-[9px] text-zinc-600 truncate">{p.path}</div>
-                      </div>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); removeProject(p.id); }}
-                        className="opacity-0 group-hover:opacity-100 text-zinc-700 hover:text-red-500 text-[10px] transition-opacity"
-                      >
-                        ✕
-                      </button>
-                   </div>
-                </div>
-             ))}
-
-             {projects.length === 0 && (
-                <div className="text-center py-8">
-                   <div className="text-zinc-700 text-[10px] uppercase font-bold mb-2 tracking-widest">No Projects</div>
-                   <div className="text-zinc-800 text-[9px] px-4 leading-relaxed italic">Select a folder to begin agentic development.</div>
-                </div>
-             )}
-          </div>
-        </div>
-
-        {/* AGENT PANEL */}
-        <div className="w-1/4 border-r border-gray-700 flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-gray-700 bg-zinc-900 text-xs font-bold uppercase tracking-widest text-gray-400">
-            AGENT
-          </div>
-          
-          <div className="flex-1 overflow-auto p-3 scrollbar-hide">
-            {!session.messages.length && (
-              <div className="text-gray-600 text-sm italic">
-                Awaiting instructions...
+        
+        <div className="flex-1 overflow-y-auto p-2 space-y-4">
+          <div>
+            <div className="text-[9px] uppercase text-zinc-600 px-2 mb-2 tracking-tighter">Projects</div>
+            {projects.map(p => (
+              <div 
+                key={p.id} 
+                onClick={() => setProject(p)}
+                className={`sidebar-item rounded ${config.projectDir === p.path ? 'active' : ''}`}
+              >
+                <FolderIcon />
+                <span className="truncate">{p.name}</span>
               </div>
-            )}
-
-            <div className="space-y-3">
-              {session.messages
-                .filter(m => !search || m.content.toLowerCase().includes(search.toLowerCase()))
-                .map((m, i) => (
-                <div key={i} className={`p-3 border ${
-                  m.role === "user"
-                    ? "border-blue-500 bg-blue-950"
-                    : "border-green-500 bg-green-950"
-                }`}>
-                  <div className={`text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-tighter`}>
-                  {m.role === "user" ? "YOU" : "XENTARI (AI)"}
-                </div>
-                  <div className="text-sm leading-relaxed text-zinc-200">{m.content}</div>
-                </div>
-              ))}
-              <div ref={bottomRef} />
+            ))}
+            <div className="mt-2 px-2">
+               <button 
+                  onClick={() => {
+                    const path = prompt("Enter local project path:");
+                    if (path) {
+                      setNewProjectPath(path);
+                      registerProject();
+                    }
+                  }}
+                  className="w-full border border-zinc-800 border-dashed py-1 text-[9px] hover:bg-zinc-900 text-zinc-500"
+               >
+                 + ADD LOCAL
+               </button>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* STICKY INPUT BAR */}
-          <div className="border-t border-gray-700 p-2 bg-black">
-            <input
-              autoFocus
+      {/* MAIN — CHAT AREA */}
+      <div className="flex-1 flex flex-col relative bg-zinc-950">
+        
+        {/* HEADER */}
+        <div className="h-12 border-b border-zinc-900 flex items-center justify-between px-4 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10">
+          <div className="flex items-center gap-2">
+            <span className="text-white font-bold text-xs tracking-widest italic">XENTARI</span>
+            <span className="text-[10px] text-zinc-600">/</span>
+            <span className="text-[11px] text-zinc-400 font-medium truncate max-w-sm">
+              {config.projectDir?.split("/").pop() || "Select Project"}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="text-[10px] flex items-center gap-1.5 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
+                <div className={`w-1.5 h-1.5 rounded-full ${availableModels.length > 0 ? 'bg-green-500 shadow-[0_0_5px_green]' : 'bg-red-500'}`} />
+                <span className="text-zinc-400">{config.model?.split(":")[0] || "No Model"}</span>
+             </div>
+          </div>
+        </div>
+
+        {/* MESSAGES */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-8 max-w-4xl mx-auto w-full">
+          {session.messages.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-4 pt-32">
+              <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/5">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <h1 className="text-xl font-bold text-white tracking-tight">How can I help you today?</h1>
+              <p className="text-zinc-500 text-xs max-w-xs leading-relaxed">
+                Connect to local models, scan your project context, and build deterministic code.
+              </p>
+            </div>
+          )}
+
+          {session.messages.map((m, i) => (
+            <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className={`chat-bubble ${m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}`}>
+                {m.content}
+              </div>
+            </div>
+          ))}
+
+          {currentPhase && (
+            <div className="flex flex-col items-start animate-fade-in">
+              <div className="chat-bubble chat-bubble-assistant text-zinc-500 flex items-center gap-2 italic">
+                <span className="agent-dot" />
+                {PHASE_LABELS[currentPhase]}...
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* INPUT BAR */}
+        <div className="p-4 bg-gradient-to-t from-zinc-950 via-zinc-950 to-transparent">
+          <div className="max-w-4xl mx-auto relative group">
+            <textarea 
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && run()}
-              className="w-full bg-zinc-900 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-white transition-colors"
-              placeholder="Type a message..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  run();
+                }
+              }}
+              placeholder="Ask anything..."
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 pb-12 text-sm focus:outline-none focus:border-zinc-600 transition-all resize-none min-h-[56px] shadow-2xl"
+              style={{ maxHeight: '200px' }}
             />
+            <div className="absolute bottom-3 left-4 flex items-center gap-2">
+               <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">Enter to send</span>
+            </div>
+            <button 
+              onClick={run}
+              disabled={running || !prompt.trim()}
+              className={`absolute bottom-3 right-3 p-2 rounded-lg transition-all ${running || !prompt.trim() ? 'bg-zinc-800 text-zinc-600' : 'bg-white text-black hover:scale-105'}`}
+            >
+              <SendIcon />
+            </button>
           </div>
         </div>
-
-        {/* CENTER — MAIN VIEW */}
-        <div className="w-2/4 flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-gray-700 bg-zinc-900 text-xs font-bold uppercase tracking-widest text-gray-400">
-            OUTPUT
-          </div>
-          
-          <div className="flex-1 overflow-auto p-4 flex flex-col items-center justify-center">
-             {state.status?.text === "READY" && (
-                <div className="text-gray-600 text-sm">System ready for tasks</div>
-             )}
-
-             {state.status?.text?.includes("FAILED") && (
-                <div className="border border-red-500 p-4 bg-red-950/20 text-red-500 font-bold w-full max-w-md text-center uppercase tracking-tighter">
-                  ✖ FAILED — {state.status.text.split(":")[1] || "UNKNOWN ERROR"}
-                </div>
-             )}
-
-             {state.status?.text === "SUCCESS" && (
-                <div className="border border-green-500 p-4 bg-green-950/20 text-green-500 font-bold w-full max-w-md text-center uppercase tracking-tighter">
-                  ✔ SUCCESS
-                </div>
-             )}
-
-             {state.status?.text === "RUNNING" && (
-                <div className="border border-blue-500 p-4 bg-blue-950/20 text-blue-500 font-bold w-full max-w-md text-center animate-pulse uppercase tracking-tighter">
-                  ▶ RUNNING
-                </div>
-             )}
-          </div>
-        </div>
-
-        {/* RIGHT — CONTEXT PANEL */}
-        <div className="w-1/4 border-l border-gray-700 bg-zinc-950 flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-gray-700 bg-zinc-900 text-xs font-bold uppercase tracking-widest text-gray-400">
-            CONTEXT
-          </div>
-
-          <div className="p-4 space-y-3 text-xs">
-            <div className="flex justify-between border-b border-zinc-800 pb-1">
-              <span className="text-zinc-500">STACK</span>
-              <span className="text-gray-100 font-bold">{state.stack || "-"}</span>
-            </div>
-            <div className="flex justify-between border-b border-zinc-800 pb-1">
-              <span className="text-zinc-500">PHASE</span>
-              <span className="text-gray-100 font-bold">{state.phase || "-"}</span>
-            </div>
-            <div className="flex justify-between border-b border-zinc-800 pb-1">
-              <span className="text-zinc-500">MODE</span>
-              <span className="text-gray-100 font-bold uppercase">{state.mode || "SAFE"}</span>
-            </div>
-
-            <div className="mt-8 pt-4 border-t border-zinc-800">
-              <div className="text-gray-500 font-bold mb-3 uppercase tracking-widest text-[10px]">Model Performance</div>
-              
-              <div className="mb-4 bg-black border border-zinc-800 p-2 text-[10px]">
-                <div className="text-zinc-600 mb-1">ACTIVE MODEL</div>
-                <div className="text-gray-200 font-bold">{config.model || "N/A"}</div>
-                <div className="text-zinc-700 truncate">{config.apiUrl || "NOT CONFIGURED"}</div>
-                {(!config.model || !config.apiUrl) && (
-                  <div className="mt-2 text-red-500 font-bold animate-pulse uppercase">
-                    ⚠ Model not ready
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                 <div className="flex flex-col">
-                    <span className="text-zinc-600 text-[10px]">LATENCY</span>
-                    <span className="text-gray-200 text-lg">{state.metrics?.latencyMs ?? "-"} <span className="text-[10px]">ms</span></span>
-                 </div>
-                 <div className="flex flex-col">
-                    <span className="text-zinc-600 text-[10px]">SPEED</span>
-                    <span className="text-gray-200 text-lg">{state.metrics?.tokensPerSecond ?? "-"} <span className="text-[10px]">TPS</span></span>
-                 </div>
-                 <div className="flex flex-col">
-                    <span className="text-zinc-600 text-[10px]">USAGE</span>
-                    <span className="text-gray-200 text-lg">{state.metrics?.totalTokens ?? "-"} <span className="text-[10px]">TKN</span></span>
-                 </div>
-                 <div className="pt-2 text-[9px] text-zinc-700 uppercase">
-                    Provider: {state.metrics?.provider || "N/A"}
-                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
+
+      {/* RIGHT — CONTEXT PANEL */}
+      <div className="w-80 border-l border-zinc-900 bg-zinc-950/50 flex flex-col overflow-hidden">
+        <div className="p-4 border-b border-zinc-900">
+           <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Inference stats</span>
+        </div>
+        <div className="p-4 space-y-6">
+           <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                 <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Latency</div>
+                 <div className="text-lg font-bold text-white tabular-nums">{state.metrics?.latencyMs ?? "-"} <span className="text-[9px] text-zinc-700">ms</span></div>
+              </div>
+              <div className="space-y-1">
+                 <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Speed</div>
+                 <div className="text-lg font-bold text-white tabular-nums">{state.metrics?.tokensPerSecond ?? "-"} <span className="text-[9px] text-zinc-700">TPS</span></div>
+              </div>
+           </div>
+
+           <div className="space-y-2">
+              <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Usage</div>
+              <div className="h-1 bg-zinc-900 rounded-full overflow-hidden">
+                 <div 
+                   className="h-full bg-zinc-500 transition-all duration-1000" 
+                   style={{ width: `${Math.min(100, (state.metrics?.totalTokens || 0) / 10)}%` }}
+                 />
+              </div>
+              <div className="flex justify-between text-[10px] text-zinc-500 font-medium">
+                 <span>{state.metrics?.totalTokens ?? 0} tokens used</span>
+                 <span>{state.metrics?.provider || "N/A"}</span>
+              </div>
+           </div>
+
+           <div className="pt-4 border-t border-zinc-900 space-y-3">
+              <div className="text-[9px] uppercase text-zinc-600 tracking-tight">System state</div>
+              <div className="space-y-2">
+                 {[
+                   { label: "Stack", value: state.stack || "NODE" },
+                   { label: "Phase", value: state.phase || "IDLE" },
+                   { label: "Mode", value: state.mode || "SAFE" }
+                 ].map(item => (
+                   <div key={item.label} className="flex justify-between items-center text-[10px]">
+                      <span className="text-zinc-500">{item.label}</span>
+                      <span className="text-zinc-300 font-bold bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">{item.value}</span>
+                   </div>
+                 ))}
+              </div>
+           </div>
+        </div>
+      </div>
+
+      {/* SETTINGS MODAL */}
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-6 space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-bold text-white tracking-widest uppercase italic">Settings</h2>
+              <button onClick={() => setShowSettings(false)} className="text-zinc-500 hover:text-white">✕</button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase text-zinc-500 font-bold">Model Endpoint</label>
+                <input 
+                  type="text"
+                  value={config.apiUrl}
+                  onChange={(e) => setConfig({ ...config, apiUrl: e.target.value })}
+                  placeholder="http://localhost:11434"
+                  className="w-full bg-black border border-zinc-800 rounded-lg px-3 py-2 text-xs focus:border-zinc-600 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] uppercase text-zinc-500 font-bold">Active Model</label>
+                <select 
+                  value={config.model}
+                  onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                  className="w-full bg-black border border-zinc-800 rounded-lg px-3 py-2 text-xs focus:border-zinc-600 transition-all text-zinc-300"
+                >
+                  <option value="">Select a model</option>
+                  {availableModels.map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.provider})</option>
+                  ))}
+                </select>
+                <button 
+                  onClick={() => fetchModels(true)}
+                  className="text-[9px] text-zinc-600 hover:text-white underline"
+                >
+                  Refresh models list
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button 
+                onClick={() => {
+                  saveConfig();
+                  setShowSettings(false);
+                }}
+                className="w-full bg-white text-black font-bold py-2 rounded-lg text-xs hover:bg-zinc-200 transition-all"
+              >
+                SAVE CHANGES
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+// --- Icons ---
+function FolderIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+    </svg>
   );
 }

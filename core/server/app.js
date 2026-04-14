@@ -1,13 +1,15 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import { route } from "../router/index.js";
 import { getState } from "../ui/state.js";
 import { setRuntime, getRuntime } from "../runtime/context.js";
 import { workspaceManager } from "../workspace/workspaceManager.js";
 import { sessionManager } from "../session/sessionManager.js";
 import modelsRouter from "./routes/models.js";
 import filesRouter from "./routes/files.js";
+import { getProvider } from "../providers/registry.js";
+import { getContext } from "../context/contextEngine.js";
+import { runAgent } from "../runtime/runAgent.ts";
 import { providerRuntime } from "../../runtime/providerRuntime.js";
 import { loadConfig, saveConfig } from "../../config/configManager.js";
 
@@ -42,18 +44,63 @@ app.delete("/api/projects/:id", (req, res) => {
   res.json({ success: true });
 });
 
-// Run API
-app.post("/run", async (req, res) => {
-  try {
-    const { prompt } = req.body;
+app.post("/run/stream", async (req, res) => {
+  const { prompt, messages } = req.body;
+  const { apiUrl, model } = getRuntime();
+  
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive"
+  });
 
-    const result = await route(prompt, {
-      auto: true,
-      source: "web"
+  try {
+    const providerKey = model?.split(":")[0] || "ollama";
+    const provider = getProvider(providerKey);
+    
+    if (!provider) throw new Error(`Provider ${providerKey} not found`);
+
+    const context = getContext();
+    const history = (messages || []).map(m => ({
+      role: m.role || "user",
+      content: m.content
+    }));
+
+    const systemPrompt = `You are Xentari, a deterministic AI coding agent.
+CONTEXT:
+${JSON.stringify(context, null, 2)}`;
+
+    const fullMessages = [
+      { role: "system", content: systemPrompt },
+      ...history
+    ];
+
+    await provider.streamChat({
+      model,
+      messages: fullMessages,
+      onToken: (data) => {
+        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      }
+    });
+
+    res.write("data: [DONE]\n\n");
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+  } finally {
+    res.end();
+  }
+});
+
+app.post(["/chat", "/run"], async (req, res) => {
+  try {
+    const { input, prompt, projectDir } = req.body;
+
+    const result = await runAgent({
+      input: input || prompt,
+      projectDir
     });
 
     res.json(result);
-
   } catch (err) {
     res.json({ error: err.message });
   }

@@ -940,3 +940,21 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     - **Self-Correcting Chat Logic:** Enhanced the chat router to normalize the `apiUrl` at runtime before appending `/chat/completions`, preventing common "404 Not Found" errors caused by misconfigured paths.
     *   **Actionable Error Guidance:** Improved configuration error messages to provide specific examples and troubleshooting steps (e.g., "Ensure server is running") instead of generic failure notices.
 *   **Validation:** Verified that `llama-server` (without explicit `--api` flags) is correctly detected and usable via the normalized `v1` endpoint.
+
+### MODEL PERFORMANCE METRICS (REAL-TIME SIDEBAR)
+*   **Goal:** Provide visibility into model efficiency, speed, and usage directly within the Web UI sidebar.
+*   **Result:**
+    *   **Unified Metrics Extraction:** Updated the chat pipeline to selectively extract `usage` (total tokens) and `timings` (latency, TPS) from OpenAI-compatible API responses.
+    *   **Llama.cpp Timing Integration:** specifically mapped `predicted_ms` and `predicted_per_second` from `llama-server` responses to the system's global state.
+    *   **Automated State Updates:** Integrated `setMetrics()` into the `handleChat` router, ensuring that the UI sidebar is instantly updated with fresh performance data after every model reply.
+    *   **Fallback Latency Tracking:** Implemented a backend timer fallback to track request duration even if the provider does not supply explicit timing metadata.
+    *   **Live Metrics UI:** Bound the "Latency", "Speed", and "Usage" fields in the Web UI to the live metrics stream, providing immediate feedback on model performance.
+
+### DETERMINISTIC AGENT IDENTITY (SYSTEM PROMPT)
+*   **Goal:** Transform the model from a generic AI assistant into a specialized, task-oriented coding agent.
+*   **Result:**
+    *   **Strict Identity Enforcement:** Implemented a new, comprehensive system prompt that defines Xentari's role as a deterministic agent that prioritizes technical action over conversation.
+    *   **Action-First Rules:** established strict operational rules: no pleasantries, no generic project-gathering questions, and a focus on provided context.
+    *   **Situational Context Injection:** Dynamically injects real-time project state (file structure, active phase, stack) into the system prompt for every request.
+    *   **Capability Awareness:** Informed the model of its internal capabilities (reading/writing files, debugging) to encourage more targeted and useful responses.
+*   **Validation:** Verified that "hi" and other generic prompts now receive a professional, concise, and task-focused reply instead of a multi-bullet generic assistant response.

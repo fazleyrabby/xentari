@@ -1,6 +1,7 @@
 import { OllamaProvider } from "./ollamaProvider.js";
 import { LMStudioProvider } from "./lmstudioProvider.js";
 import { LlamaProvider } from "./llamaProvider.js";
+import { getRuntime } from "../runtime/context.js";
 
 export class ProviderRegistry {
   constructor(config = {}) {
@@ -22,4 +23,17 @@ export class ProviderRegistry {
     );
     return modelSets.flat();
   }
+}
+
+export function getProvider(name) {
+  const { apiUrl } = getRuntime();
+  const registry = new ProviderRegistry({
+    providers: {
+      ollama: { enabled: true, baseUrl: apiUrl },
+      lmstudio: { enabled: true, baseUrl: apiUrl },
+      llama: { enabled: true, baseUrl: apiUrl }
+    }
+  });
+
+  return registry.providers.find(provider => provider.name === name);
 }

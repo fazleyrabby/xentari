@@ -1,5 +1,54 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-black text-gray-200 font-mono;
+  @apply bg-zinc-950 text-gray-200 font-mono overflow-hidden;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.4; transform: scale(0.9); }
+}
+
+.agent-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.sidebar-item {
+  @apply px-3 py-1.5 text-[11px] cursor-pointer hover:bg-zinc-800/50 transition-colors flex items-center gap-2;
+}
+
+.sidebar-item.active {
+  @apply bg-zinc-800 text-white;
+}
+
+.chat-bubble {
+  @apply p-3 text-[13px] max-w-[85%] leading-relaxed;
+}
+
+.chat-bubble-user {
+  @apply bg-zinc-900 border border-zinc-800 rounded-lg self-end ml-auto;
+}
+
+.chat-bubble-assistant {
+  @apply self-start;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-zinc-800 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-zinc-700;
 }
