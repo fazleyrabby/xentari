@@ -26,8 +26,12 @@
     "build": "tsc"
   },
   "dependencies": {
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
     "diff": "^7.0.0",
-    "glob": "^10.3.10"
+    "express": "^5.2.1",
+    "glob": "^10.3.10",
+    "ws": "^8.20.0"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",

@@ -759,3 +759,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Path Traversal Prevention:** Confirmed that filesystem attacks (e.g., accessing `/etc/passwd` or `../secret.js`) are correctly detected and blocked by the argument validator.
     *   **Deterministic Stability:** Verified that identical task inputs yield consistent execution statuses across multiple runs.
     *   **Regression Fixes:** Identified and resolved two critical `SyntaxError` bugs in the `coder.js` and `agents/index.js` modules discovered during external execution.
+
+### WEB UI PHASE 1 — HEADLESS INTERFACE
+*   **Goal:** Provide a web-based interface for Xentari without modifying core execution logic.
+*   **Result:**
+    *   **HTTP API Layer:** Implemented an Express server (`core/server/app.js`) with a `/run` endpoint to trigger system tasks and a `/state` endpoint for on-demand state retrieval.
+    *   **WebSocket Streaming:** Created a WebSocket server (`core/server/ws.js`) that broadcasts real-time state updates (5fps) to all connected web clients.
+    *   **React Frontend:** Scaffolded a Vite-powered React application (`web/`) that visualizes internal state, execution traces, and provides a remote command input.
+    *   **State-Driven Visualization:** The Web UI consumes the same reactive state machine (`core/ui/state.js`) used by the TUI, ensuring visual parity across interfaces.
+    *   **System Decoupling:** Maintained strict separation between the core engine and the interface layer, enabling dual-mode operation (CLI and Web) simultaneously.
