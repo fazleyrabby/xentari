@@ -35,8 +35,8 @@ export function normalizeMetrics(raw = {}) {
     promptTokens,
     completionTokens,
     totalTokens,
-    tokensPerSecond: tokensPerSecond ? Math.round(tokensPerSecond) : null,
-    latencyMs: latencyMs ? Math.round(latencyMs) : null,
+    tokensPerSecond: (tokensPerSecond && isFinite(tokensPerSecond)) ? Math.round(tokensPerSecond) : null,
+    latencyMs: (latencyMs && isFinite(latencyMs)) ? Math.round(latencyMs) : null,
     provider: raw.provider || "unknown"
   };
 }

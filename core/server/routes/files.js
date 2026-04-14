@@ -8,6 +8,7 @@ function getProjectRoot(projectId) {
   if (!projectId) throw new Error("Project ID is required");
   const project = workspaceManager.getProjectById(projectId);
   if (!project) throw new Error("Project not found");
+  
   return project.path;
 }
 

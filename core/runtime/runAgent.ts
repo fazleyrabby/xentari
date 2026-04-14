@@ -3,6 +3,7 @@ import { normalizeModel } from "../providers/normalizeModel.ts";
 import { createProvider } from "../providers/index.ts";
 import { loadSession, saveSession } from "../session/store.ts";
 import { buildContext, scoreFile } from "../context/buildContext.ts";
+import { optimizeContext } from "../context/optimizeContext.ts";
 import { detectProject } from "../context/projectIntelligence.ts";
 import { createKey, getCache, setCache } from "../context/contextCache.ts";
 import { normalizeMetrics } from "../llm/metrics.js";
@@ -42,9 +43,11 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
 
   if (onStatus) onStatus("analyzing context");
 
-  const rankedSnippets = (context.snippets ?? [])
-    .map(f => ({ ...f, score: scoreFile(f, input, project) }))
-    .sort((a, b) => b.score - a.score)
+  const scoredSnippets = (context.snippets ?? [])
+    .map(f => ({ ...f, score: scoreFile(f, input, project) }));
+
+  const rankedSnippets = optimizeContext(scoredSnippets, input)
+    .sort((a, b) => (b.score || 0) - (a.score || 0))
     .slice(0, 8);
 
   const projectLabel = [project.framework, project.type].filter(Boolean).join(" ");

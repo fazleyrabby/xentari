@@ -49,22 +49,25 @@ export default function App() {
 
   const fetchConfig = async () => {
     try {
-      const res = await fetch("http://localhost:3000/config");
+      const res = await fetch("/config");
       const data = await res.json();
-      const newCfg = {
-        ...config,
-        ...data,
-        projectDir: data.projectDir || "",
-        model: data.model || "",
-        baseUrl: data.baseUrl || ""
-      };
-      setConfig(newCfg);
-      if (newCfg.projectDir) fetchSession("default", newCfg.projectDir);
+      setConfig(prev => {
+        const newCfg = {
+          ...prev,
+          ...data,
+          projectDir: data.projectDir || prev.projectDir || "",
+          model: data.model || prev.model || "",
+          baseUrl: data.baseUrl || prev.baseUrl || "",
+          projectId: prev.projectId || data.projectId || ""
+        };
+        if (newCfg.projectDir) fetchSession("default", newCfg.projectDir);
+        return newCfg;
+      });
     } catch (err) {}
   };
 
   const saveConfig = async (newCfg) => {
-    await fetch("http://localhost:3000/config", {
+    await fetch("/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newCfg || config)
@@ -74,7 +77,7 @@ export default function App() {
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/projects");
+      const res = await fetch("/api/projects");
       const list = await res.json();
       setProjects(list);
     } catch (err) {}
@@ -82,7 +85,7 @@ export default function App() {
 
   const fetchModels = async (force = false) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/models${force ? "?refresh=true" : ""}`);
+      const res = await fetch(`/api/models${force ? "?refresh=true" : ""}`);
       const data = await res.json();
       setAvailableModels(data.models || []);
       setAvailableProviders(data.providers || []);
@@ -92,7 +95,7 @@ export default function App() {
   const fetchSession = async (id = "default", projectDir) => {
     try {
       const dir = projectDir || config.projectDir;
-      const res = await fetch(`http://localhost:3000/session/load/${id}?projectDir=${encodeURIComponent(dir || "")}`);
+      const res = await fetch(`/session/load/${id}?projectDir=${encodeURIComponent(dir || "")}`);
       const data = await res.json();
       setSession(data);
     } catch (err) {}
@@ -103,6 +106,22 @@ export default function App() {
   const runAgent = async (options) => {
     const text = typeof options === "string" ? options : (options?.input ?? prompt);
     if (!text.trim() || running) return;
+
+    if (!config.projectDir) {
+      setSession(prev => ({
+        ...prev,
+        messages: [...prev.messages, { role: "user", content: text }, { role: "assistant", content: "❌ Error: Please select a project first." }]
+      }));
+      return;
+    }
+
+    if (!config.model) {
+      setSession(prev => ({
+        ...prev,
+        messages: [...prev.messages, { role: "user", content: text }, { role: "assistant", content: "❌ Error: Please select a model in Settings." }]
+      }));
+      return;
+    }
 
     const command = parseCommand(text);
     const commandType = (typeof options === "object" && options?.meta?.command) || command.type;
@@ -122,7 +141,7 @@ export default function App() {
     setTimeline([]);
 
     const projectPath = config.projectDir || "";
-    const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectPath=${encodeURIComponent(projectPath)}&command=${encodeURIComponent(commandType)}`;
+    const url = `/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectPath=${encodeURIComponent(projectPath)}&command=${encodeURIComponent(commandType)}`;
     const eventSource = new EventSource(url);
 
     eventSource.onmessage = (event) => {
@@ -181,13 +200,17 @@ export default function App() {
       eventSource.close();
       setRunning(false);
       setCurrentPhase(null);
+      setSession(prev => ({
+        ...prev,
+        messages: [...prev.messages, { role: "assistant", content: "❌ Error: Failed to connect to server stream. Ensure the backend is running at http://localhost:3000" }]
+      }));
     };
   };
 
   const registerProject = async () => {
     if (!newProjectPath) return;
     try {
-      await fetch("http://localhost:3000/api/projects/add", {
+      await fetch("/api/projects/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path: newProjectPath })
@@ -209,7 +232,7 @@ export default function App() {
     setModifiedContent("");
     setHighlightLine(null);
     try {
-      const res = await fetch(`http://localhost:3000/api/file?projectId=${config.projectId}&path=${encodeURIComponent(filePath)}`);
+      const res = await fetch(`/api/file?projectId=${config.projectId}&path=${encodeURIComponent(filePath)}`);
       const data = await res.json();
       setFileContent(data.content || data.error || "");
       setHighlightLine(data.matchLine ?? null);
@@ -220,7 +243,7 @@ export default function App() {
 
   const applyChanges = async (newContent) => {
     try {
-      const res = await fetch("http://localhost:3000/api/file/save", {
+      const res = await fetch("/api/file/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -242,7 +265,7 @@ export default function App() {
 
   const deleteProject = async (id) => {
     try {
-      await fetch(`http://localhost:3000/api/projects/${id}`, { method: "DELETE" });
+      await fetch(`/api/projects/${id}`, { method: "DELETE" });
       fetchProjects();
     } catch (err) {}
   };
@@ -254,7 +277,7 @@ export default function App() {
 
     const poll = setInterval(async () => {
       try {
-        const res = await fetch("http://localhost:3000/state");
+        const res = await fetch("/state");
         const data = await res.json();
         if (data) setState(data);
       } catch (err) {}

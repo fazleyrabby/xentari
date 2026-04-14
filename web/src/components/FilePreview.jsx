@@ -15,7 +15,7 @@ export default function FilePreview({ file, content, highlightLine, onRunAgent }
     const sel = window.getSelection();
     const text = sel?.toString().trim();
 
-    if (!text) {
+    if (!text || sel.rangeCount === 0) {
       setSelection(null);
       return;
     }
@@ -23,16 +23,20 @@ export default function FilePreview({ file, content, highlightLine, onRunAgent }
     // Optional: limit size
     if (text.length > 500) return;
 
-    const range = sel.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
+    try {
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
 
-    setSelection({
-      text,
-      startLine: 0,
-      endLine: 0,
-      top: rect.top - 40,
-      left: rect.left
-    });
+      setSelection({
+        text,
+        startLine: 0,
+        endLine: 0,
+        top: rect.top - 40,
+        left: rect.left
+      });
+    } catch (e) {
+      setSelection(null);
+    }
   };
 
   const handleExplain = () => {

@@ -10,9 +10,10 @@ function FileNode({ node, projectId, onFileClick }) {
     try {
       const res = await fetch(`http://localhost:3000/api/files?projectId=${projectId}&path=${encodeURIComponent(node.path)}`);
       const data = await res.json();
-      setChildren(data);
+      setChildren(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load children", err);
+      setChildren([]);
     } finally {
       setLoading(false);
     }
@@ -20,7 +21,7 @@ function FileNode({ node, projectId, onFileClick }) {
 
   const handleClick = async () => {
     if (node.type === "dir") {
-      if (!open && children.length === 0) await loadChildren();
+      if (!open && (children || []).length === 0) await loadChildren();
       setOpen(!open);
     } else {
       onFileClick(node.path);
@@ -48,7 +49,7 @@ function FileNode({ node, projectId, onFileClick }) {
 
       {open && (
         <div className="ml-3 border-l border-zinc-800 pl-1">
-          {children.map(child => (
+          {(children || []).map(child => (
             <FileNode key={child.path} node={child} projectId={projectId} onFileClick={onFileClick} />
           ))}
         </div>
@@ -64,6 +65,8 @@ export default function FileExplorer({ projectId, onFileClick }) {
   useEffect(() => {
     if (projectId) {
       fetchRoot();
+    } else {
+      setRootFiles([]);
     }
   }, [projectId]);
 
@@ -72,9 +75,10 @@ export default function FileExplorer({ projectId, onFileClick }) {
     try {
       const res = await fetch(`http://localhost:3000/api/files?projectId=${projectId}&path=`);
       const data = await res.json();
-      setRootFiles(data);
+      setRootFiles(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch root files", err);
+      setRootFiles([]);
     } finally {
       setLoading(false);
     }
@@ -83,7 +87,7 @@ export default function FileExplorer({ projectId, onFileClick }) {
   if (!projectId) return <div className="p-4 text-[10px] text-zinc-600 italic">Select a project to explore files.</div>;
 
   return (
-    <div className="flex-1 overflow-y-auto p-2 space-y-1">
+    <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
       <div className="text-[9px] uppercase text-zinc-600 px-2 mb-2 tracking-tighter flex justify-between items-center">
         <span>Files</span>
         <button onClick={fetchRoot} className="hover:text-zinc-400">↻</button>
@@ -91,7 +95,7 @@ export default function FileExplorer({ projectId, onFileClick }) {
       {loading && rootFiles.length === 0 ? (
         <div className="px-2 py-1 text-[10px] text-zinc-600 italic">Loading...</div>
       ) : (
-        rootFiles.map(file => (
+        (rootFiles || []).map(file => (
           <FileNode key={file.path} node={file} projectId={projectId} onFileClick={onFileClick} />
         ))
       )}

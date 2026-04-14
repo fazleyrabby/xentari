@@ -103,6 +103,10 @@ export function readFile(projectPath, relativePath) {
 export function writeFile(projectPath, relativePath, content) {
   const safePath = resolveSafePath(projectPath, relativePath);
 
+  if (content === undefined) {
+    throw new Error("Cannot write undefined content to file: " + relativePath);
+  }
+
   const dir = path.dirname(safePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });

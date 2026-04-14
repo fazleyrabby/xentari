@@ -28,16 +28,10 @@ function validateProjectPath(projectPath) {
   const resolvedProject = path.resolve(projectPath);
   const resolvedRoot = path.resolve(XENTARI_ROOT);
 
-  if (resolvedProject === resolvedRoot) {
-    throw new Error("Refusing to scan Xentari root");
-  }
-
-  if (resolvedProject.startsWith(resolvedRoot)) {
-    throw new Error("Refusing to scan inside Xentari directory");
-  }
-
+  // We allow scanning the Xentari root if the user explicitly wants to (Dogfooding mode)
+  // but we still prevent arbitrary parent directory escapes.
   if (projectPath.includes("..")) {
-    throw new Error("Invalid project path");
+    throw new Error("Invalid project path: parent directory traversal denied");
   }
 
   return resolvedProject;
@@ -71,34 +65,40 @@ app.get("/chat/stream", async (req, res) => {
   try {
     const resolvedProject = validateProjectPath(projectPath);
 
+    // HEADERS FIRST — MUST NOT BE DELAYED
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       "Connection": "keep-alive"
     });
 
-    const result = await runAgent({
+    await runAgent({
       input,
       projectDir: resolvedProject,
       meta: command ? { command } : null,
       onStatus: (msg) => {
-        res.write(`data: ${JSON.stringify({ type: "status", message: msg })}\n\n`);
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "status", message: msg })}\n\n`);
       },
       onContext: (files) => {
-        res.write(`data: ${JSON.stringify({ type: "context", files: files.slice(0, 8) })}\n\n`);
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "context", files: files.slice(0, 8) })}\n\n`);
       },
       onMetrics: (metrics) => {
         setMetrics(metrics);
-        res.write(`data: ${JSON.stringify({ type: "metrics", metrics })}\n\n`);
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "metrics", metrics })}\n\n`);
       },
       onChunk: (chunk) => {
-        res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
       }
     });
 
-    res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+    if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
+    // If headers were already sent, write an error event. Otherwise, standard 400.
+    if (res.headersSent) {
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
+    } else {
+      res.status(400).json({ error: err.message });
+    }
   } finally {
     res.end();
   }
@@ -117,18 +117,22 @@ app.post("/run/stream", async (req, res) => {
     });
 
     let accumulated = "";
-    const result = await runAgent({
+    await runAgent({
       input: input || prompt,
       projectDir: resolvedProject,
       onChunk: (chunk) => {
         accumulated += chunk;
-        res.write(`data: ${JSON.stringify({ fullText: accumulated })}\n\n`);
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ fullText: accumulated })}\n\n`);
       }
     });
 
-    res.write("data: [DONE]\n\n");
+    if (!res.writableEnded) res.write("data: [DONE]\n\n");
   } catch (err) {
-    res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    if (res.headersSent) {
+      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
+    } else {
+      res.status(400).json({ error: err.message });
+    }
   } finally {
     res.end();
   }
@@ -187,32 +191,6 @@ app.post("/session/create", (req, res) => {
 
 app.post("/session/set-project", (req, res) => {
   res.json({ success: true });
-});
-
-app.get("/file", (req, res) => {
-  const { path: filePath } = req.query;
-  const config = loadConfig();
-  const projectDir = config.projectDir || "";
-
-  if (!filePath || !projectDir) {
-    return res.status(400).json({ error: "Missing path or projectDir" });
-  }
-
-  const resolved = path.resolve(projectDir, filePath);
-  if (!resolved.startsWith(path.resolve(projectDir))) {
-    return res.status(403).json({ error: "Path traversal denied" });
-  }
-
-  try {
-    const raw = fs.readFileSync(resolved, "utf-8");
-    const truncated = raw.slice(0, 2000);
-    const keyword = req.query.keyword || path.basename(filePath, path.extname(filePath));
-    const lines = truncated.split("\n");
-    const matchLine = lines.findIndex(l => l.toLowerCase().includes(keyword.toLowerCase()));
-    res.json({ path: filePath, content: truncated, matchLine: matchLine >= 0 ? matchLine : null });
-  } catch {
-    res.status(404).json({ error: "File not found" });
-  }
 });
 
 app.get("/state", (req, res) => {

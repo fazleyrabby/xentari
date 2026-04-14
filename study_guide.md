@@ -1049,6 +1049,12 @@ Expose the backend context awareness in the UI so users can verify exactly which
 - **Visual Diff Engine**: Developed a zero-dependency line-diffing algorithm and `DiffViewer.jsx` for side-by-side comparison of AI suggestions.
 - **Atomic Apply**: Integrated a `POST /file/save` endpoint to allow users to instantly apply approved diffs to the filesystem.
 
+### Phase 86: Context Noise Filter V2 (Signal Optimization)
+- **Noise Elimination**: Developed `noiseFilter.ts` to exclude `node_modules`, `vendor/`, `dist/`, minified files, and locks from context.
+- **Size & Signal Guards**: Implemented strict boundaries (~20KB) and query-term matching to discard low-relevance snippets before they reach the LLM.
+- **Architectural Boosting**: Added priority scoring for `routes`, `controllers`, and `services` to ensure core application logic is always prioritized.
+- **Deterministic Selection**: Integrated the `optimizeContext` pipeline into `runAgent.ts`, resulting in a significantly cleaner prompt and reduced token waste.
+
 ---
 
 ## UI Improvements

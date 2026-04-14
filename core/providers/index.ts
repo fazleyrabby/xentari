@@ -15,16 +15,34 @@ export function createProvider(config) {
     },
 
     async *streamChat({ model, messages }) {
+      if (!model?.id) {
+        throw new Error("Model ID is required for streaming");
+      }
+
+      const body: any = { 
+        model: model.id, 
+        messages,
+        stream: true
+      };
+
+      // Only include stream_options if we think the provider supports it or as a fallback
+      // Most OpenAI-compatible providers (Ollama, vLLM, LM Studio) handle this or ignore it.
+      body.stream_options = { include_usage: true };
+
       const res = await fetch(`${config.baseUrl}/chat/completions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          model: model.id, 
-          messages,
-          stream: true,
-          stream_options: { include_usage: true }
-        })
+        body: JSON.stringify(body)
       });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(error.error?.message || error.error || `LLM Provider Error: ${res.status}`);
+      }
+
+      if (!res.body) {
+        throw new Error("LLM Provider returned an empty response body");
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
