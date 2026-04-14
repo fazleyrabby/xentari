@@ -92,15 +92,16 @@ export default function App() {
 
   const bufferRef = useRef("");
 
-  const run = async () => {
-    if (!prompt.trim() || running) return;
+  const run = async (overridePrompt) => {
+    const text = overridePrompt ?? prompt;
+    if (!text.trim() || running) return;
 
-    const currentPrompt = prompt;
+    const currentPrompt = text;
+    if (!overridePrompt) setPrompt("");
     const userMsg = { role: "user", content: currentPrompt };
     const historyBefore = [...session.messages, userMsg];
-    
+
     setSession(prev => ({ ...prev, messages: historyBefore }));
-    setPrompt("");
     setRunning(true);
     bufferRef.current = "";
     setContextFiles([]);
@@ -444,6 +445,7 @@ export default function App() {
         content={fileContent}
         highlightLine={highlightLine}
         onClose={() => setSelectedFile(null)}
+        onSendToChat={(text) => { setSelectedFile(null); run(text); }}
       />
 
       {/* RIGHT — INFERENCE STATS — toggleable */}
