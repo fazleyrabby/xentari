@@ -10,16 +10,15 @@ app.use(bodyParser.json());
 
 app.post("/run", async (req, res) => {
   try {
-    const { prompt } = req.body;
+    const { prompt, auto = true } = req.body;
     
-    // We wrap prompt in a plan-like structure for the engine
     const plan = {
       steps: [
         { command: prompt, reason: "Web UI Request", stack: "node" }
       ]
     };
 
-    const result = await executionLoop(plan, {});
+    const result = await executionLoop(plan, { auto, source: "web" });
     res.json({ success: true, result });
   } catch (err) {
     res.json({ success: false, error: err.message });

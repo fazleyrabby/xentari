@@ -10,6 +10,7 @@ export const state = {
   status: {
     text: "READY"
   },
+  mode: "SAFE", // SAFE | AUTO
   actions: [
     { icon: "▶", type: "INIT", target: "Xentari System" }
   ],
@@ -65,5 +66,10 @@ export function addAction(action) {
 
 export function setStatus(statusUpdates) {
   state.status = { ...state.status, ...statusUpdates };
+  state.refresh++;
+}
+
+export function setMode(mode) {
+  state.mode = mode;
   state.refresh++;
 }

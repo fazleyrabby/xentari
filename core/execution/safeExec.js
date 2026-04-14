@@ -9,7 +9,7 @@ import { askPermission } from "./permission.js";
  * E11 — Exploit-Resistant Execution Wrapper
  * Zero trust for command strings. Uses tokenized structures and spawn.
  */
-export async function safeExec({ command, reason, stack }) {
+export async function safeExec({ command, reason, stack }, context = {}) {
   try {
     // 1. Tokenize (Normalization + Input Sanitization)
     const parsed = tokenize(command);
@@ -34,8 +34,8 @@ export async function safeExec({ command, reason, stack }) {
       return { success: false, error: argsCheck.reason };
     }
 
-    // 5. User Permission Gate
-    const allowed = await askPermission({ command: parsed.raw, reason, stack });
+    // 5. User Permission Gate (Supports E16 AUTO Mode)
+    const allowed = await askPermission({ command: parsed.raw, reason, stack }, context);
     if (!allowed) {
       return { success: false, error: "User denied execution" };
     }

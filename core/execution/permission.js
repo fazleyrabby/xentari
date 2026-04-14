@@ -1,8 +1,8 @@
 import readline from "node:readline";
 
-export function askPermission({ command, reason, stack }) {
-  // Support for CI/CD and non-interactive testing
-  if (process.env.XEN_AUTO_APPROVE === "true") {
+export function askPermission({ command, reason, stack }, context = {}) {
+  // E16 — AUTO Mode: Controlled Automation
+  if (context.auto === true || process.env.XEN_AUTO_APPROVE === "true") {
     return Promise.resolve(true);
   }
 

@@ -59,9 +59,10 @@ function renderPanels() {
 
   // LEFT: Permanent Status / Info
   const left = [
-    pad(`STACK: ${state.header.stack}`, leftWidth),
-    pad(`PHASE: ${state.header.phase}`, leftWidth),
-    pad(`VIEW:  ${state.view.toUpperCase()}`, leftWidth),
+    pad(`STACK:  ${state.header.stack}`, leftWidth),
+    pad(`PHASE:  ${state.header.phase}`, leftWidth),
+    pad(`MODE:   ${state.mode}${state.mode === 'AUTO' ? ' ⚡' : ''}`, leftWidth),
+    pad(`VIEW:   ${state.view.toUpperCase()}`, leftWidth),
     pad(`SCROLL: ${state.scroll.offset}`, leftWidth),
     "",
     pad("HOTKEYS:", leftWidth),
@@ -106,7 +107,7 @@ export function renderFrame() {
   // Clean terminal and move to top (non-flicker method)
   process.stdout.write('\x1B[2J\x1B[3J\x1B[H');
 
-  console.log(`🧠 XENTARI | ${state.header.stack} | ${state.header.phase}`);
+  console.log(`🧠 XENTARI | ${state.header.stack} | ${state.header.phase} | ${state.mode}${state.mode === 'AUTO' ? ' ⚡' : ''}`);
   console.log("─".repeat(process.stdout.columns || 80));
   process.stdout.write(renderPanels());
   console.log("─".repeat(process.stdout.columns || 80));

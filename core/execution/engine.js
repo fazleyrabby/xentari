@@ -9,6 +9,9 @@ import * as ui from "../ui/state.js";
  * Iterates through a plan, manages retries, and updates UI state.
  */
 export async function executionLoop(plan, context = {}) {
+  // E16 — Set mode based on context
+  ui.setMode(context.auto ? "AUTO" : "SAFE");
+
   // E12 — Plan Validation Gate
   if (!plan || !Array.isArray(plan.steps)) {
     ui.setStatus({ text: "VALIDATION FAILURE", errors: 1 });
@@ -41,7 +44,7 @@ export async function executionLoop(plan, context = {}) {
       command: step.command,
       reason: step.reason || "System execution",
       stack: step.stack || context.stack || "node"
-    });
+    }, context);
 
     // E15 — Execution Snapshot
     saveSnapshot(step, context, result);
