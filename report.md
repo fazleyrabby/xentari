@@ -740,3 +740,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Debug Trace Layer:** Implemented `core/execution/trace.js`, a high-frequency in-memory circular buffer (cap: 50) for real-time observability.
     *   **UI Observability Hook:** Integrated the trace buffer into the TUI state machine, enabling future real-time debugging views within the CLI.
     *   **Normalization Resilience:** Confirmed that the `safeExec` engine correctly normalizes and handles varied whitespace and unicode characters while rejecting dangerous control characters.
+
+### OBSERVABILITY UI — TIMELINE + DEBUG PANEL
+*   **Goal:** Visualize the internal execution trace and provide enhanced debugging tools within the TUI.
+*   **Result:**
+    *   **Execution Timeline System:** Implemented a new panel to visualize the high-frequency trace buffer, showing real-time state transitions (STEP, FAIL, RETRY, OK).
+    *   **Scrollable UI Regions:** Added vertical scrolling support (`j`/`k`) for both Action History and Timeline panels to handle long-running sessions without overflow.
+    *   **Multi-View Panel Switching:** Integrated keyboard shortcuts (`1`, `2`, `3`) to instantly switch between Actions, Timeline, and Debug views.
+    *   **Integrated Debug Panel:** Created a dedicated system status view showing the last execution step, failure types, precise timestamps, and snapshot counts.
+    *   **Reactive UI state:** Extended the state machine to handle view-specific offsets and timeline data, ensuring perfect synchronization between background execution and user display.

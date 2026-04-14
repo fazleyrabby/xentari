@@ -1,4 +1,4 @@
-import { updateState, getState } from "./state.js";
+import { updateState, getState, scrollUp, scrollDown, setView } from "./state.js";
 
 /**
  * Xentari Non-blocking Input Handler
@@ -6,11 +6,27 @@ import { updateState, getState } from "./state.js";
 export function handleInput(key) {
   const state = getState();
 
-  switch (key) {
-    case "q":
-      process.exit();
-      break;
+  if (key === "q") {
+    process.exit();
+  }
 
+  // View Switching
+  if (key === "1") setView("actions");
+  if (key === "2") setView("timeline");
+  if (key === "3") setView("debug");
+
+  // Scrolling
+  if (key === "j") {
+    let max = 0;
+    if (state.view === "actions") max = Math.max(0, state.actions.length - 15);
+    if (state.view === "timeline") max = Math.max(0, state.timeline.length - 15);
+    scrollDown(max);
+  }
+  if (key === "k") {
+    scrollUp();
+  }
+
+  switch (key) {
     case "r":
       updateState({ status: { text: "REFRESHING..." } });
       setTimeout(() => {

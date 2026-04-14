@@ -15,6 +15,11 @@ export const state = {
   ],
   diff: null,
   trace: [],
+  timeline: [],
+  scroll: {
+    offset: 0
+  },
+  view: "actions", // actions | timeline | debug
   refresh: 0
 };
 
@@ -24,6 +29,26 @@ export function getState() {
 
 export function updateState(updates) {
   Object.assign(state, updates);
+  state.refresh++;
+}
+
+export function setTimeline(trace) {
+  state.timeline = trace;
+  state.refresh++;
+}
+
+export function setView(view) {
+  state.view = view;
+  state.refresh++;
+}
+
+export function scrollUp() {
+  state.scroll.offset = Math.max(0, state.scroll.offset - 1);
+  state.refresh++;
+}
+
+export function scrollDown(max) {
+  state.scroll.offset = Math.min(max, state.scroll.offset + 1);
   state.refresh++;
 }
 

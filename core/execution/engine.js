@@ -35,7 +35,7 @@ export async function executionLoop(plan, context = {}) {
     });
 
     addTrace({ type: "STEP", command: step.command });
-    ui.updateState({ trace: getTrace() });
+    ui.setTimeline(getTrace());
 
     const result = await safeExec({
       command: step.command,
@@ -50,7 +50,7 @@ export async function executionLoop(plan, context = {}) {
       const decision = await handleFailure(step, result, context);
 
       addTrace({ type: "FAIL", reason: decision.classification.type });
-      ui.updateState({ trace: getTrace() });
+      ui.setTimeline(getTrace());
 
       ui.addAction({
         type: "FAIL",
@@ -68,7 +68,7 @@ export async function executionLoop(plan, context = {}) {
         });
 
         addTrace({ type: "RETRY", command: step.command });
-        ui.updateState({ trace: getTrace() });
+        ui.setTimeline(getTrace());
 
         // Repeat this step
         i--;
@@ -90,7 +90,7 @@ export async function executionLoop(plan, context = {}) {
     });
 
     addTrace({ type: "OK", command: step.command });
-    ui.updateState({ trace: getTrace() });
+    ui.setTimeline(getTrace());
   }
 
   ui.setStatus({ text: "SUCCESS", errors: 0 });
