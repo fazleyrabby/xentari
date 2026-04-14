@@ -10,6 +10,10 @@ export default function App() {
     model: "",
     apiUrl: ""
   });
+  const [sessionId, setSessionId] = useState("default");
+  const [sessions, setSessions] = useState(["default"]);
+  const [search, setSearch] = useState("");
+
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -23,7 +27,39 @@ export default function App() {
     };
 
     fetchConfig();
+    fetchSessions();
   }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChat(sessionId, messages);
+    }
+  }, [messages]);
+
+  const fetchSessions = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/session/list");
+      const list = await res.json();
+      if (list.length > 0) setSessions(list);
+    } catch (err) {}
+  };
+
+  const loadChat = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:3000/session/load/${id}`);
+      const history = await res.json();
+      setMessages(history);
+      setSessionId(id);
+    } catch (err) {}
+  };
+
+  const saveChat = async (id, msgs) => {
+    await fetch("http://localhost:3000/session/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: id, messages: msgs })
+    });
+  };
 
   const fetchConfig = async () => {
     try {
@@ -146,6 +182,24 @@ export default function App() {
         >
           Apply
         </button>
+
+        <div className="h-4 w-px bg-gray-700 mx-1"></div>
+
+        <select 
+          value={sessionId}
+          onChange={(e) => loadChat(e.target.value)}
+          className="bg-black border border-gray-700 px-2 py-1 text-[10px] text-gray-400 outline-none"
+        >
+          {sessions.map(s => <option key={s} value={s}>{s}</option>)}
+          <option value={`session-${Date.now()}`}>+ New Session</option>
+        </select>
+
+        <input
+          placeholder="Search chat..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-black border border-gray-700 px-2 py-1 text-[10px] text-gray-400 outline-none w-32 focus:border-white"
+        />
       </div>
 
       {/* MAIN GRID */}
@@ -169,7 +223,9 @@ export default function App() {
             )}
 
             <div className="space-y-3">
-              {messages.map((m, i) => (
+              {messages
+                .filter(m => !search || m.content.toLowerCase().includes(search.toLowerCase()))
+                .map((m, i) => (
                 <div key={i} className={`p-3 border ${
                   m.role === "user"
                     ? "border-blue-500 bg-blue-950"

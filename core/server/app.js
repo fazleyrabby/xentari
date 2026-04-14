@@ -4,6 +4,7 @@ import cors from "cors";
 import { route } from "../router/index.js";
 import { getState } from "../ui/state.js";
 import { setRuntime, getRuntime } from "../runtime/context.js";
+import { saveSession, loadSession, listSessions } from "../session/store.js";
 
 const app = express();
 app.use(cors());
@@ -40,6 +41,20 @@ app.post("/config", (req, res) => {
 
 app.get("/config", (req, res) => {
   res.json(getRuntime());
+});
+
+app.post("/session/save", (req, res) => {
+  const { sessionId, messages } = req.body;
+  saveSession(sessionId, messages);
+  res.json({ success: true });
+});
+
+app.get("/session/load/:id", (req, res) => {
+  res.json(loadSession(req.params.id));
+});
+
+app.get("/session/list", (req, res) => {
+  res.json(listSessions());
 });
 
 app.get("/state", (req, res) => {

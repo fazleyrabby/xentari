@@ -847,3 +847,12 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
         - Added a "Configure" CTA in the application header that anchors the user directly to the settings bar.
         - Implemented real-time status indicators in the Context Panel ("Model not ready") to prevent unintentional chat usage.
     *   **Fail-Safe Routing:** Ensured that missing model configurations do not crash the server or block non-LLM system queries.
+
+### SESSION + SEARCH SYSTEM
+*   **Goal:** Provide lightweight, filesystem-based chat persistence and instant search capabilities.
+*   **Result:**
+    *   **Filesystem Session Store:** Created `core/session/store.js` using the workspace `.xentari/sessions/` directory for zero-database persistence.
+    *   **Session State Management:** Integrated session lifecycle (list, load, save) into the Web UI via new `/session` server endpoints.
+    *   **Auto-Persistence:** Configured the Web UI to automatically sync chat history to the workspace after every message.
+    *   **Instant Message Search:** Implemented a real-time client-side search filter enabled by `core/session/search.js`.
+    *   **Session Switching:** Added a dynamic session selector to the settings bar, allowing users to pivot between different conversation contexts and create new threads on the fly.
