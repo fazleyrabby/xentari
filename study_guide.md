@@ -805,3 +805,13 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
         *   **Web UI:** Integrated real-time metrics (Tokens, TPS, Latency, Provider) into the Context Panel.
         *   **TUI:** Standardized the execution footer to display performance stats with a graceful "N/A" fallback.
     *   **Provider Agnosticism:** Verified support for multi-platform usage data without disrupting the deterministic execution flow.
+
+### WEB UI — UX POLISH
+*   **Goal:** Refine the UI/UX to a professional, IDE-level coding experience while maintaining Neo-Brutalist aesthetics.
+*   **Result:**
+    *   **Auto-Scroll:** Implemented `useRef` based automatic scrolling to keep latest chat messages in view.
+    *   **Message Redesign:** Introduced high-contrast bubble styling for User (Blue) and Xentari (Green) messages with clear role markers.
+    *   **Sticky Input:** Relocated the command input to a fixed footer within the Agent panel for better accessibility.
+    *   **Layout Refinement:** Optimized panel widths (1/4, 2/4, 1/4) and added structured headers to all columns.
+    *   **Status Indicators:** Replaced plain status text with explicit, colored status boxes (RUNNING, SUCCESS, FAILED) in the center output panel.
+    *   **Empty State:** Added a helpful starter prompt for empty message threads.

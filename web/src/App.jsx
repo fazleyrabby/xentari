@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export default function App() {
   const [state, setState] = useState({});
   const [prompt, setPrompt] = useState("");
   const [running, setRunning] = useState(false);
   const [messages, setMessages] = useState([]);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:3000");
@@ -16,6 +17,10 @@ export default function App() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const run = async () => {
     if (!prompt || running) return;
@@ -59,108 +64,132 @@ export default function App() {
     <div className="h-screen flex flex-col bg-black text-gray-100 font-mono">
 
       {/* HEADER */}
-      <div className="border-b-4 border-white p-3 flex justify-between items-center bg-zinc-900">
-        <div className="text-xl font-bold tracking-tighter">🧠 XENTARI</div>
-        <div className="text-yellow-400 font-bold px-2 py-1 border-2 border-yellow-400 uppercase text-xs">
+      <div className="border-b border-gray-700 p-3 flex justify-between bg-black">
+        <div className="font-bold uppercase tracking-tighter">🧠 XENTARI</div>
+        <div className="text-yellow-400 font-bold uppercase text-xs px-2 py-1 border border-yellow-400">
           AUTO ⚡
         </div>
       </div>
 
-      {/* INPUT */}
-      <div className="border-b-4 border-white p-3 flex gap-2 bg-zinc-900">
-        <input
-          autoFocus
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && run()}
-          className="flex-1 bg-black border-2 border-white px-3 py-2 text-white outline-none focus:bg-zinc-800 transition-colors"
-          placeholder="Ask Xentari..."
-        />
-      </div>
-
       {/* MAIN GRID */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden gap-0">
 
         {/* LEFT — AGENT PANEL */}
-        <div className="w-1/4 border-r-4 border-white p-4 overflow-auto scrollbar-hide">
-          <div className="text-sm font-bold bg-white text-black px-2 py-1 mb-4 inline-block">
+        <div className="w-1/4 border-r border-gray-700 flex flex-col overflow-hidden">
+          <div className="p-3 border-b border-gray-700 bg-zinc-900 text-xs font-bold uppercase tracking-widest text-gray-400">
             AGENT
           </div>
+          
+          <div className="flex-1 overflow-auto p-3 scrollbar-hide">
+            <div className="text-gray-500 text-[10px] mb-4 uppercase tracking-widest">
+              Context-aware mode active
+            </div>
 
-          <div className="text-zinc-500 text-xs mb-4 uppercase tracking-widest">
-            Context-aware mode active
+            {!messages.length && (
+              <div className="text-gray-600 text-sm italic">
+                Start by asking something...
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {messages.map((m, i) => (
+                <div key={i} className={`p-3 border ${
+                  m.role === "user"
+                    ? "border-blue-500 bg-blue-950"
+                    : "border-green-500 bg-green-950"
+                }`}>
+                  <div className="text-[10px] text-gray-400 mb-1 font-bold uppercase tracking-tighter">
+                    {m.role === "user" ? "YOU" : "XENTARI"}
+                  </div>
+                  <div className="text-sm leading-relaxed">{m.content}</div>
+                </div>
+              ))}
+              <div ref={bottomRef} />
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {messages.map((m, i) => (
-              <div key={i} className={`p-3 border-2 ${m.role === "user" ? "border-blue-500 bg-blue-900/20" : "border-green-500 bg-green-900/20"}`}>
-                <div className={`text-xs font-bold mb-1 ${m.role === "user" ? "text-blue-400" : "text-green-400"}`}>
-                  {m.role === "user" ? "YOU" : "XENTARI"}
-                </div>
-                <div className="leading-relaxed">{m.content}</div>
-              </div>
-            ))}
+          {/* STICKY INPUT BAR */}
+          <div className="border-t border-gray-700 p-2 bg-black">
+            <input
+              autoFocus
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && run()}
+              className="w-full bg-zinc-900 border border-gray-600 px-3 py-2 text-sm text-white outline-none focus:border-white transition-colors"
+              placeholder="Type a message..."
+            />
           </div>
         </div>
 
         {/* CENTER — MAIN VIEW */}
-        <div className="w-2/4 p-4 overflow-auto">
-          <div className="text-sm font-bold bg-white text-black px-2 py-1 mb-4 inline-block">
+        <div className="w-2/4 flex flex-col overflow-hidden">
+          <div className="p-3 border-b border-gray-700 bg-zinc-900 text-xs font-bold uppercase tracking-widest text-gray-400">
             OUTPUT
           </div>
+          
+          <div className="flex-1 overflow-auto p-4 flex flex-col items-center justify-center">
+             {state.status?.text === "READY" && (
+                <div className="text-gray-600 text-sm">System ready for tasks</div>
+             )}
 
-          <div className="bg-zinc-900 border-2 border-white p-4">
-            <div className="text-zinc-400 text-xs mb-1">EXECUTION ENGINE</div>
-            <div className="text-xl">
-              STATUS: <span className={state.status?.text === "SUCCESS" ? "text-green-400" : "text-red-400"}>{state.status?.text}</span>
-            </div>
+             {state.status?.text?.includes("FAILED") && (
+                <div className="border border-red-500 p-4 bg-red-950/20 text-red-500 font-bold w-full max-w-md text-center uppercase tracking-tighter">
+                  ✖ FAILED — {state.status.text.split(":")[1] || "UNKNOWN ERROR"}
+                </div>
+             )}
 
-            {state.status?.text === "SUCCESS" && (
-              <div className="mt-4 text-green-400 font-bold border-t border-green-900 pt-2 animate-pulse">
-                ✔ Execution Complete
-              </div>
-            )}
+             {state.status?.text === "SUCCESS" && (
+                <div className="border border-green-500 p-4 bg-green-950/20 text-green-500 font-bold w-full max-w-md text-center uppercase tracking-tighter">
+                  ✔ SUCCESS
+                </div>
+             )}
+
+             {state.status?.text === "RUNNING" && (
+                <div className="border border-blue-500 p-4 bg-blue-950/20 text-blue-500 font-bold w-full max-w-md text-center animate-pulse uppercase tracking-tighter">
+                  ▶ RUNNING
+                </div>
+             )}
           </div>
         </div>
 
         {/* RIGHT — CONTEXT PANEL */}
-        <div className="w-1/4 border-l-4 border-white p-4 overflow-auto bg-zinc-900">
-          <div className="text-sm font-bold bg-white text-black px-2 py-1 mb-4 inline-block">
+        <div className="w-1/4 border-l border-gray-700 bg-zinc-950 flex flex-col overflow-hidden">
+          <div className="p-3 border-b border-gray-700 bg-zinc-900 text-xs font-bold uppercase tracking-widest text-gray-400">
             CONTEXT
           </div>
 
-          <div className="space-y-2 text-sm">
+          <div className="p-4 space-y-3 text-xs">
             <div className="flex justify-between border-b border-zinc-800 pb-1">
-              <span className="text-zinc-400">STACK:</span>
-              <span className="text-white font-bold">{state.stack}</span>
+              <span className="text-zinc-500">STACK</span>
+              <span className="text-gray-100 font-bold">{state.stack || "-"}</span>
             </div>
             <div className="flex justify-between border-b border-zinc-800 pb-1">
-              <span className="text-zinc-400">PHASE:</span>
-              <span className="text-white font-bold">{state.phase}</span>
+              <span className="text-zinc-500">PHASE</span>
+              <span className="text-gray-100 font-bold">{state.phase || "-"}</span>
             </div>
             <div className="flex justify-between border-b border-zinc-800 pb-1">
-              <span className="text-zinc-400">MODE:</span>
-              <span className="text-white font-bold">{state.mode}</span>
+              <span className="text-zinc-500">MODE</span>
+              <span className="text-gray-100 font-bold uppercase">{state.mode || "SAFE"}</span>
             </div>
-          </div>
 
-          <div className="mt-8">
-            <div className="text-zinc-500 text-xs mb-2 font-bold uppercase tracking-widest">Model Metrics</div>
-            <div className="bg-black border-2 border-zinc-700 p-3 space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Tokens:</span>
-                <span className="text-white">{state.metrics?.totalTokens ?? "-"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">TPS:</span>
-                <span className="text-white">{state.metrics?.tokensPerSecond ?? "-"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Latency:</span>
-                <span className="text-white">{state.metrics?.latencyMs ?? "-"} ms</span>
-              </div>
-              <div className="pt-2 mt-2 border-t border-zinc-800 text-[10px] text-zinc-600 truncate">
-                PROV: {state.metrics?.provider ?? "unknown"}
+            <div className="mt-8 pt-4 border-t border-zinc-800">
+              <div className="text-gray-500 font-bold mb-3 uppercase tracking-widest text-[10px]">Model Performance</div>
+              <div className="space-y-4">
+                 <div className="flex flex-col">
+                    <span className="text-zinc-600 text-[10px]">LATENCY</span>
+                    <span className="text-gray-200 text-lg">{state.metrics?.latencyMs ?? "-"} <span className="text-[10px]">ms</span></span>
+                 </div>
+                 <div className="flex flex-col">
+                    <span className="text-zinc-600 text-[10px]">SPEED</span>
+                    <span className="text-gray-200 text-lg">{state.metrics?.tokensPerSecond ?? "-"} <span className="text-[10px]">TPS</span></span>
+                 </div>
+                 <div className="flex flex-col">
+                    <span className="text-zinc-600 text-[10px]">USAGE</span>
+                    <span className="text-gray-200 text-lg">{state.metrics?.totalTokens ?? "-"} <span className="text-[10px]">TKN</span></span>
+                 </div>
+                 <div className="pt-2 text-[9px] text-zinc-700 uppercase">
+                    Provider: {state.metrics?.provider || "N/A"}
+                 </div>
               </div>
             </div>
           </div>
@@ -169,14 +198,4 @@ export default function App() {
       </div>
     </div>
   );
-}
-
-function getTraceColor(type) {
-  switch (type) {
-    case "OK": return "text-green-400";
-    case "FAIL": return "text-red-400";
-    case "STEP": return "text-gray-400";
-    case "RETRY": return "text-yellow-400";
-    default: return "";
-  }
 }
