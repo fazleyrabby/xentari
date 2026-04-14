@@ -1,4 +1,8 @@
 import { useEffect, useState, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 const PHASE_LABELS = {
   thinking: "Thinking",
@@ -11,7 +15,7 @@ export default function App() {
   const [state, setState] = useState({});
   const [prompt, setPrompt] = useState("");
   const [running, setRunning] = useState(false);
-  const [config, setConfig] = useState({ projectDir: "", model: "", apiUrl: "" });
+  const [config, setConfig] = useState({ projectDir: "", model: "", baseUrl: "" });
   const [session, setSession] = useState({ id: "default", messages: [], activeProjectId: null });
   const [sessions, setSessions] = useState(["default"]);
   const [projects, setProjects] = useState([]);
@@ -20,6 +24,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [newProjectPath, setNewProjectPath] = useState("");
   const [currentPhase, setCurrentPhase] = useState(null);
+  const [showAddProject, setShowAddProject] = useState(false);
 
   const bottomRef = useRef(null);
   const hiddenPickerRef = useRef(null);
@@ -34,7 +39,7 @@ export default function App() {
         ...data,
         projectDir: data.projectDir || "",
         model: data.model || "",
-        apiUrl: data.apiUrl || ""
+        baseUrl: data.baseUrl || ""
       }));
     } catch (err) {}
   };
@@ -177,6 +182,13 @@ export default function App() {
     saveConfig(newCfg);
   };
 
+  const deleteProject = async (id) => {
+    try {
+      await fetch(`http://localhost:3000/api/projects/${id}`, { method: "DELETE" });
+      fetchProjects();
+    } catch (err) {}
+  };
+
   // --- Lifecycle ---
   useEffect(() => {
     fetchConfig();
@@ -188,7 +200,7 @@ export default function App() {
       try {
         const res = await fetch("http://localhost:3000/state");
         const data = await res.json();
-        setState(data.state);
+        if (data) setState(data);
       } catch (err) {}
     }, 1000);
 
@@ -217,26 +229,66 @@ export default function App() {
             {projects.map(p => (
               <div 
                 key={p.id} 
-                onClick={() => setProject(p)}
-                className={`sidebar-item rounded ${config.projectDir === p.path ? 'active' : ''}`}
+                className={`sidebar-item group rounded flex items-center justify-between ${config.projectDir === p.path ? 'active' : ''}`}
               >
-                <FolderIcon />
-                <span className="truncate">{p.name}</span>
-              </div>
-            ))}
-            <div className="mt-2 px-2">
-               <button 
-                  onClick={() => {
-                    const path = prompt("Enter local project path:");
-                    if (path) {
-                      setNewProjectPath(path);
-                      registerProject();
+                <div onClick={() => setProject(p)} className="flex items-center gap-2 flex-1 cursor-pointer truncate">
+                  <FolderIcon />
+                  <span className="truncate">{p.name}</span>
+                </div>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`Remove ${p.name} from workspace?`)) {
+                      deleteProject(p.id);
                     }
                   }}
-                  className="w-full border border-zinc-800 border-dashed py-1 text-[9px] hover:bg-zinc-900 text-zinc-500"
-               >
-                 + ADD LOCAL
-               </button>
+                  className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-500 px-1 transition-opacity"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <div className="mt-2 px-2 space-y-2">
+               {showAddProject ? (
+                 <div className="space-y-2 animate-fade-in">
+                   <input 
+                     autoFocus
+                     type="text"
+                     value={newProjectPath}
+                     onChange={(e) => setNewProjectPath(e.target.value)}
+                     onKeyDown={(e) => {
+                       if (e.key === 'Enter') {
+                         registerProject();
+                         setShowAddProject(false);
+                       }
+                       if (e.key === 'Escape') setShowAddProject(false);
+                     }}
+                     placeholder="Absolute path..."
+                     className="w-full bg-black border border-zinc-800 rounded px-2 py-1 text-[10px] focus:outline-none focus:border-zinc-600"
+                   />
+                   <div className="flex gap-1">
+                     <button 
+                       onClick={() => { registerProject(); setShowAddProject(false); }}
+                       className="flex-1 bg-zinc-100 text-black text-[9px] font-bold py-1 rounded"
+                     >
+                       ADD
+                     </button>
+                     <button 
+                       onClick={() => setShowAddProject(false)}
+                       className="px-2 bg-zinc-800 text-[9px] py-1 rounded"
+                     >
+                       ✕
+                     </button>
+                   </div>
+                 </div>
+               ) : (
+                 <button 
+                    onClick={() => setShowAddProject(true)}
+                    className="w-full border border-zinc-800 border-dashed py-1 text-[9px] hover:bg-zinc-900 text-zinc-500 rounded"
+                 >
+                   + ADD LOCAL
+                 </button>
+               )}
             </div>
           </div>
         </div>
@@ -278,8 +330,31 @@ export default function App() {
 
           {session.messages.map((m, i) => (
             <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className={`chat-bubble ${m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}`}>
-                {m.content}
+              <div className={`chat-bubble ${m.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant opacity-0 animate-fade-in'}`} style={{ animationFillMode: 'forwards' }}>
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code({node, inline, className, children, ...props}) {
+                      const match = /language-(\w+)/.exec(className || '')
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          children={String(children).replace(/\n$/, '')}
+                          style={oneDark}
+                          language={match[1]}
+                          PreTag="div"
+                          className="rounded-lg my-2 text-[11px] border border-white/10"
+                          {...props}
+                        />
+                      ) : (
+                        <code className={`${className} bg-white/10 px-1 rounded text-[11px]`} {...props}>
+                          {children}
+                        </code>
+                      )
+                    }
+                  }}
+                >
+                  {m.content}
+                </ReactMarkdown>
               </div>
             </div>
           ))}
@@ -360,9 +435,9 @@ export default function App() {
               <div className="text-[9px] uppercase text-zinc-600 tracking-tight">System state</div>
               <div className="space-y-2">
                  {[
-                   { label: "Stack", value: state.stack || "NODE" },
-                   { label: "Phase", value: state.phase || "IDLE" },
-                   { label: "Mode", value: state.mode || "SAFE" }
+                   { label: "Stack", value: state.header?.stack || "NODE" },
+                   { label: "Phase", value: state.header?.phase || "IDLE" },
+                   { label: "Mode", value: state.header?.mode || "SAFE" }
                  ].map(item => (
                    <div key={item.label} className="flex justify-between items-center text-[10px]">
                       <span className="text-zinc-500">{item.label}</span>
@@ -388,8 +463,8 @@ export default function App() {
                 <label className="text-[10px] uppercase text-zinc-500 font-bold">Model Endpoint</label>
                 <input 
                   type="text"
-                  value={config.apiUrl}
-                  onChange={(e) => setConfig({ ...config, apiUrl: e.target.value })}
+                  value={config.baseUrl}
+                  onChange={(e) => setConfig({ ...config, baseUrl: e.target.value })}
                   placeholder="http://localhost:11434"
                   className="w-full bg-black border border-zinc-800 rounded-lg px-3 py-2 text-xs focus:border-zinc-600 transition-all"
                 />
@@ -404,7 +479,9 @@ export default function App() {
                 >
                   <option value="">Select a model</option>
                   {availableModels.map(m => (
-                    <option key={m.id} value={m.id}>{m.name} ({m.provider})</option>
+                    <option key={m.id} value={m.id}>
+                      {m.name || m.id} {m.provider ? `(${m.provider})` : ''}
+                    </option>
                   ))}
                 </select>
                 <button 

@@ -4,15 +4,11 @@ import { createProvider } from "../providers/index.ts";
 import { loadSession, saveSession } from "../session/store.ts";
 import { buildContext } from "../context/buildContext.ts";
 
-export async function runAgent({ input, projectDir, sessionId = "default" }) {
+export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null }) {
   const config = loadConfig(projectDir);
-
   const model = normalizeModel(config.provider, config.model);
-
   const provider = createProvider(config);
-
   const history = loadSession(projectDir, sessionId);
-
   const context = buildContext(projectDir);
 
   const systemPrompt = `You are Xentari AI.
@@ -28,21 +24,38 @@ ${JSON.stringify(context, null, 2)}`;
     { role: "user", content: input }
   ];
 
-  const result = await provider.chat({ model, messages });
+  if (onChunk) {
+    let fullContent = "";
+    const stream = provider.streamChat({ model, messages });
+    for await (const chunk of stream) {
+      fullContent += chunk;
+      onChunk(chunk);
+    }
+    
+    // Finalize session
+    const updated = [
+      ...history,
+      { role: "user", content: input },
+      { role: "assistant", content: fullContent }
+    ];
+    saveSession(projectDir, sessionId, updated);
 
-  const reply = result.content;
+    return { fullText: fullContent };
+  } else {
+    const result = await provider.chat({ model, messages });
+    const reply = result.content;
 
-  const updated = [
-    ...history,
-    { role: "user", content: input },
-    { role: "assistant", content: reply }
-  ];
+    const updated = [
+      ...history,
+      { role: "user", content: input },
+      { role: "assistant", content: reply }
+    ];
+    saveSession(projectDir, sessionId, updated);
 
-  saveSession(projectDir, sessionId, updated);
-
-  return {
-    message: reply,
-    model,
-    usage: result.usage
-  };
+    return {
+      message: reply,
+      model,
+      usage: result.usage
+    };
+  }
 }

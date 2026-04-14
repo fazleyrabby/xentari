@@ -1,4 +1,4 @@
-# 🧠 Xentari — The Ultimate Case Study & Product Manual (Phases 1–78)
+# 🧠 Xentari — The Ultimate Case Study & Product Manual (Phases 1–79)
 
 # 🧠 Engine Evolution Layer (E-Phases)
 
@@ -958,3 +958,32 @@ Xentari succeeds because it prioritizes **Transparency and Control**. By combini
     *   **Situational Context Injection:** Dynamically injects real-time project state (file structure, active phase, stack) into the system prompt for every request.
     *   **Capability Awareness:** Informed the model of its internal capabilities (reading/writing files, debugging) to encourage more targeted and useful responses.
 *   **Validation:** Verified that "hi" and other generic prompts now receive a professional, concise, and task-focused reply instead of a multi-bullet generic assistant response.
+
+### Phase 79 — Legacy Cleanup & Architectural Hardening
+*   **Infrastructure Cleanup:** Removed 10+ legacy fallback files (including `retriever.js`, `sessionManager.js`, and `context.js`) to eliminate technical debt and architectural redundancy.
+*   **Modernized Session Store:** Transitioned to project-aware session and history management in `core/session/store.ts`, supporting persistent per-project conversational state.
+*   **Deterministic Context:** Replaced legacy RAG-based context engine with a faster, code-aware `buildContext` utility using `glob` for shallow but highly relevant context discovery.
+*   **Decoupled Runtime:** Established a lean `runAgent.ts` pipeline independent of complex multi-step executor dependencies, ensuring high-speed chat interactions and zero side-effects.
+*   **Advanced Core Tests:** Implemented a new verification suite (`tests/core_suite_advanced.js`) ensuring system stability across CLI and API layers post-refactoring.
+
+### Phase 80: True Streaming & Rich Typography (IDE Evolution)
+**Status**: Decoupled & Hardened
+
+#### 🎯 Objective
+Transition the Web UI from a chat client to a real-time development environment.
+
+#### 🛠 Changes
+- **Core Streaming**: Implemented true token-by-token streaming via SSE.
+  - `core/providers/index.ts`: Added `streamChat` generator.
+  - `core/runtime/runAgent.ts`: Added `onChunk` callback support.
+  - `core/server/app.js`: Refactored `/run/stream` to pipe chunks live.
+- **Rich Rendering**: Integrated `react-markdown` and `Prism` syntax highlighting.
+  - `web/src/App.jsx`: Now renders code blocks, lists, and bold text beautifully.
+- **Config Hardening**: Standardized all configuration keys to `baseUrl` (lowercase).
+  - Repaired `.xentari/config.json` to resolve connectivity hangs.
+- **UI State Safety**: Fixed nested access for `state.header` (Stack, Phase, Mode indicators).
+
+#### 🧪 Verification
+- Verified real-time streaming with `llama-server` on port 8081.
+- Confirmed Markdown rendering of code blocks in chat bubbles.
+- Validated E13 determinism for `runAgent` discovery.

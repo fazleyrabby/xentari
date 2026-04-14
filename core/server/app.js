@@ -49,12 +49,16 @@ app.post("/run/stream", async (req, res) => {
   });
 
   try {
+    let accumulated = "";
     const result = await runAgent({
       input: input || prompt,
-      projectDir
+      projectDir,
+      onChunk: (chunk) => {
+        accumulated += chunk;
+        res.write(`data: ${JSON.stringify({ fullText: accumulated })}\n\n`);
+      }
     });
 
-    res.write(`data: ${JSON.stringify(result)}\n\n`);
     res.write("data: [DONE]\n\n");
   } catch (err) {
     res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);

@@ -52,3 +52,15 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-zinc-700;
 }
+/* Markdown Adjustments */
+.chat-bubble-assistant p { @apply mb-2 last:mb-0; }
+.chat-bubble-assistant ul { @apply list-disc list-inside mb-2 space-y-1; }
+.chat-bubble-assistant ol { @apply list-decimal list-inside mb-2 space-y-1; }
+.chat-bubble-assistant pre { @apply overflow-x-auto; }
+.chat-bubble-assistant strong { @apply text-white font-bold; }
+.chat-bubble-assistant h1, .chat-bubble-assistant h2, .chat-bubble-assistant h3 { 
+  @apply text-white font-bold mt-4 mb-2 first:mt-0; 
+}
+.chat-bubble-assistant h1 { @apply text-base; }
+.chat-bubble-assistant h2 { @apply text-sm; }
+.chat-bubble-assistant h3 { @apply text-[11px] uppercase tracking-wider; }

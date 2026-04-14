@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const HOME = process.env.HOME || process.env.USERPROFILE || process.env.HOMEPATH;
 
 const DEFAULT_CONFIG = {
-  baseURL: "http://localhost:8081/v1",
+  baseUrl: "http://localhost:8081/v1",
   model: "qwen",
   modelTier: "auto",
   maxFiles: 3,
