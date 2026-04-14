@@ -7,8 +7,11 @@ export function tokenize(command) {
     throw new Error("Command must be string");
   }
 
+  // Normalization (NFKC) prevents unicode bypasses (e.g. using full-width ampersands)
+  const normalizedText = command.normalize("NFKC");
+  
   // Normalize whitespace
-  const normalized = command.trim().replace(/\s+/g, " ");
+  const normalized = normalizedText.trim().replace(/\s+/g, " ");
 
   if (normalized.length === 0) {
     return { valid: false, reason: "Empty command" };

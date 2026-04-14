@@ -3,8 +3,8 @@
  * Defines specific allowed commands and their argument patterns.
  */
 const whitelist = {
-  npm: ["install", "run", "test"],
-  node: ["index.js", "server.js", "app.js"],
+  npm: ["install", "run", "test", "-v", "--version"],
+  node: ["index.js", "server.js", "app.js", "-v", "--version"],
   php: ["artisan"],
   go: ["run", "test", "build"],
   cargo: ["run", "test", "build"],

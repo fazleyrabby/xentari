@@ -1,6 +1,11 @@
 import readline from "node:readline";
 
 export function askPermission({ command, reason, stack }) {
+  // Support for CI/CD and non-interactive testing
+  if (process.env.XEN_AUTO_APPROVE === "true") {
+    return Promise.resolve(true);
+  }
+
   return new Promise((resolve) => {
     const rl = readline.createInterface({
       input: process.stdin,

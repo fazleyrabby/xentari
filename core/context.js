@@ -1,4 +1,4 @@
-import { selectContext, formatContext } from "./retrieval/contextEngine.js";
+import { selectContext, formatContext } from "./retrieval/contextEngine.ts";
 import { loadConfig } from "./config.js";
 
 export function getContext(task, projectDir = process.cwd()) {
