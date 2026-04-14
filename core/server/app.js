@@ -39,6 +39,38 @@ app.delete("/api/projects/:id", (req, res) => {
   res.json({ success: true });
 });
 
+app.get("/chat/stream", async (req, res) => {
+  const { input, projectDir } = req.query;
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive"
+  });
+
+  try {
+    const result = await runAgent({
+      input,
+      projectDir,
+      onStatus: (msg) => {
+        res.write(`data: ${JSON.stringify({ type: "status", message: msg })}\n\n`);
+      },
+      onContext: (files) => {
+        res.write(`data: ${JSON.stringify({ type: "context", files: files.slice(0, 8) })}\n\n`);
+      },
+      onChunk: (chunk) => {
+        res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
+      }
+    });
+
+    res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
+  } finally {
+    res.end();
+  }
+});
+
 app.post("/run/stream", async (req, res) => {
   const { input, prompt, projectDir } = req.body;
 

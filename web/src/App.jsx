@@ -3,12 +3,15 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import ContextPanel from "./components/ContextPanel";
 
 const PHASE_LABELS = {
   thinking: "Thinking",
   planning: "Planning solution",
   executing: "Executing steps",
-  responding: "Generating response"
+  responding: "Generating response",
+  "scanning-project": "Scanning project",
+  "analyzing-context": "Analyzing context"
 };
 
 export default function App() {
@@ -25,6 +28,7 @@ export default function App() {
   const [newProjectPath, setNewProjectPath] = useState("");
   const [currentPhase, setCurrentPhase] = useState(null);
   const [showAddProject, setShowAddProject] = useState(false);
+  const [contextFiles, setContextFiles] = useState([]);
 
   const bottomRef = useRef(null);
   const hiddenPickerRef = useRef(null);
@@ -78,7 +82,8 @@ export default function App() {
     } catch (err) {}
   };
 
-  // --- Handlers ---
+  const bufferRef = useRef("");
+
   const run = async () => {
     if (!prompt.trim() || running) return;
 
@@ -89,78 +94,59 @@ export default function App() {
     setSession(prev => ({ ...prev, messages: historyBefore }));
     setPrompt("");
     setRunning(true);
-    setCurrentPhase("thinking");
+    bufferRef.current = "";
+    setContextFiles([]);
 
-    try {
-      const res = await fetch("http://localhost:3000/run/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          prompt: currentPrompt, 
-          messages: historyBefore 
-        })
-      });
+    const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectDir=${encodeURIComponent(config.projectDir)}`;
+    const eventSource = new EventSource(url);
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      
-      let fullAIContent = "";
-      
-      // Update planning phase briefly
-      setTimeout(() => setCurrentPhase("planning"), 1200);
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (!line.startsWith("data:")) continue;
-          const jsonStr = line.replace("data:", "").trim();
-          if (jsonStr === "[DONE]") break;
-
-          try {
-            const data = JSON.parse(jsonStr);
-            
-            if (data.error) throw new Error(data.error);
-            
-            if (data.fullText !== undefined) {
-              setCurrentPhase("responding");
-              fullAIContent = data.fullText;
-              
-              // Update message list in real-time
-              const aiMsg = { role: "assistant", content: fullAIContent };
-              setSession(prev => ({
-                ...prev,
-                messages: [...historyBefore, aiMsg]
-              }));
-
-              // Update metrics sidebar
-              setState(prev => ({
-                ...prev,
-                metrics: {
-                  ...prev.metrics,
-                  latencyMs: data.latency,
-                  tokensPerSecond: data.tps?.toFixed(1),
-                  totalTokens: data.tokens,
-                  provider: config.model?.split(":")[0] || "N/A"
-                }
-              }));
-            }
-          } catch (e) {}
+        if (data.type === "status") {
+          // Map backend status to our phase labels or custom logic
+          if (data.message === "generating response") {
+            setCurrentPhase("responding");
+          } else {
+            setCurrentPhase(data.message.replace(" ", "-")); // e.g. "scanning-project"
+          }
         }
+
+        if (data.type === "chunk") {
+          bufferRef.current += data.content;
+          const aiMsg = { role: "assistant", content: bufferRef.current };
+          setSession(prev => ({
+            ...prev,
+            messages: [...historyBefore, aiMsg]
+          }));
+        }
+
+        if (data.type === "context") {
+          setContextFiles(data.files || []);
+        }
+
+        if (data.type === "done" || data.type === "error") {
+          if (data.type === "error") {
+             setSession(prev => ({
+                ...prev,
+                messages: [...historyBefore, { role: "assistant", content: `❌ Error: ${data.message}` }]
+             }));
+          }
+          eventSource.close();
+          setRunning(false);
+          setCurrentPhase(null);
+        }
+      } catch (e) {
+        console.error("SSE Parse Error", e);
       }
-    } catch (err) {
-      setSession(prev => ({
-        ...prev, 
-        messages: [...historyBefore, { role: "assistant", content: `❌ Error: ${err.message}` }]
-      }));
-    } finally {
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
       setRunning(false);
       setCurrentPhase(null);
-    }
+    };
   };
 
   const registerProject = async () => {
@@ -400,7 +386,10 @@ export default function App() {
         </div>
       </div>
 
-      {/* RIGHT — CONTEXT PANEL */}
+      {/* CONTEXT PANEL */}
+      <ContextPanel files={contextFiles} />
+
+      {/* RIGHT — INFERENCE STATS */}
       <div className="w-80 border-l border-zinc-900 bg-zinc-950/50 flex flex-col overflow-hidden">
         <div className="p-4 border-b border-zinc-900">
            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Inference stats</span>

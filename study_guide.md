@@ -1008,3 +1008,23 @@ Migrate the mock streaming implementation to a fully progressive, true real-time
 #### 🧪 Verification
 - Verified buffer streaming logic doesn't drop strings or lag on large API outputs.
 - Closed memory leaks matching proper graceful exit strategy via `eventSource.close()`.
+
+### Phase 81: UI Context Awareness (Context Panel)
+**Status**: Completed & Verified
+
+#### 🎯 Objective
+Expose the backend context awareness in the UI so users can verify exactly which files the AI used for grounding its response.
+
+#### 🛠 Changes
+- **Backend Context Emission (`core/runtime/runAgent.ts` & `core/server/app.js`)**:
+  - Registered an `onContext` callback within the `runAgent` lifecycle that surfaces `.files` out of the buildContext module.
+  - Plumbed `onContext` into the SSE stream handler (`/chat/stream`) to emit a typed JSON package (`type: "context"`).
+- **Frontend Context Catching (`web/src/App.jsx`)**:
+  - Implemented SSE context parsing (`data.type === "context"`) to update localized `contextFiles` state independently of token rendering.
+- **Dedicated UI Component (`web/src/components/ContextPanel.jsx`)**:
+  - Created a scrollable layout displaying file paths and relevancy heuristical scores.
+  - Mounted the panel seamlessly into the three-column layout (between the Chat and Stats columns) without breaking the existing flow.
+
+#### 🧪 Verification
+- Evaluated deterministic discovery runs (e.g., "where is runAgent defined?").
+- Confirmed that the event emits cleanly *before* chunk generation starts, exhibiting zero token-delay or stream friction.
