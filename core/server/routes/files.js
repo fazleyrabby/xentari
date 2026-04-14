@@ -1,6 +1,6 @@
 import express from "express";
 import { workspaceManager } from "../../workspace/workspaceManager.js";
-import { listFiles, readFile, writeFile } from "../../filesystem/fileManager.js";
+import { listDirectory, readFile, writeFile } from "../../filesystem/fileManager.js";
 
 const router = express.Router();
 
@@ -13,8 +13,9 @@ function getProjectRoot(projectId) {
 
 router.get("/files", (req, res) => {
   try {
-    const root = getProjectRoot(req.query.projectId);
-    res.json({ files: listFiles(root) });
+    const { projectId, path: relativePath } = req.query;
+    const root = getProjectRoot(projectId);
+    res.json(listDirectory(root, relativePath || ""));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -22,8 +23,9 @@ router.get("/files", (req, res) => {
 
 router.get("/file", (req, res) => {
   try {
-    const root = getProjectRoot(req.query.projectId);
-    const data = readFile(root, req.query.path);
+    const { projectId, path: relativePath } = req.query;
+    const root = getProjectRoot(projectId);
+    const data = readFile(root, relativePath);
     res.json(data);
   } catch (err) {
     res.status(400).json({ error: err.message });

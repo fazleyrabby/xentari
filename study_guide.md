@@ -1029,6 +1029,26 @@ Expose the backend context awareness in the UI so users can verify exactly which
 - Evaluated deterministic discovery runs (e.g., "where is runAgent defined?").
 - Confirmed that the event emits cleanly *before* chunk generation starts, exhibiting zero token-delay or stream friction.
 
+### Phase 82: Inline Code Actions (Interactive Preview)
+- **Selection Capture**: Implemented `FilePreview.jsx` with `window.getSelection()` logic to detect user clicks on code.
+- **Floating Toolbar**: Added a context-aware action bar for "Explain" and "Refactor" triggered by selection.
+- **SSE Metadata**: Updated `runAgent` to accept `meta` overrides, allowing the UI to force specific command types (e.g., `/explain`) for inline actions.
+
+### Phase 83: Real-Time Inference Metrics (Provider Agnostic)
+- **Universal Normalization**: Hardened `core/llm/metrics.js` to recognize varied keys from Ollama, LM Studio, and llama-server.
+- **Fallback Calculation**: Implemented manual TPS and Latency calculation in `runAgent.ts` for providers that do not supply usage metadata.
+- **Live Stream Events**: Added a `metrics` SSE event to push performance data to the Web UI as soon as generation completes.
+
+### Phase 84: Project Isolation Guard (System Integrity)
+- **Strict Path Validation**: Implemented `validateProjectPath` in `core/server/app.js` to prevent directory traversal (`..`) and self-scanning of the Xentari root.
+- **Hard Fail Policy**: Removed all implicit fallbacks to `process.cwd()`. The system now throws an explicit error if a valid project path is not provided.
+- **UI Binding**: Updated `App.jsx` to treat the selected project as the "Single Source of Truth" for all backend execution.
+
+### Phase 85: File Explorer & Diff Viewer (IDE Evolution)
+- **VS Code-style Explorer**: Created a lazy-loading tree view (`FileExplorer.jsx`) using a new non-recursive `listDirectory` backend endpoint.
+- **Visual Diff Engine**: Developed a zero-dependency line-diffing algorithm and `DiffViewer.jsx` for side-by-side comparison of AI suggestions.
+- **Atomic Apply**: Integrated a `POST /file/save` endpoint to allow users to instantly apply approved diffs to the filesystem.
+
 ---
 
 ## UI Improvements

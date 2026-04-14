@@ -21,7 +21,8 @@ export function createProvider(config) {
         body: JSON.stringify({ 
           model: model.id, 
           messages,
-          stream: true 
+          stream: true,
+          stream_options: { include_usage: true }
         })
       });
 
@@ -36,12 +37,20 @@ export function createProvider(config) {
         const lines = chunk.split("\n");
 
         for (const line of lines) {
-          if (!line.trim() || line.includes("[DONE]")) continue;
-          if (line.startsWith("data: ")) {
+          const l = line.trim();
+          if (!l || l.includes("[DONE]")) continue;
+          if (l.startsWith("data: ")) {
             try {
-              const data = JSON.parse(line.replace("data: ", ""));
+              const data = JSON.parse(l.replace("data: ", ""));
+              
+              // Handle content
               const content = data.choices?.[0]?.delta?.content || "";
-              if (content) yield content;
+              if (content) yield { type: "chunk", content };
+
+              // Handle usage (sent by some providers in the last chunk)
+              if (data.usage) {
+                yield { type: "usage", usage: data.usage };
+              }
             } catch (e) {}
           }
         }

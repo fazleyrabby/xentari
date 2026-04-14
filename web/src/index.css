@@ -10,6 +10,15 @@ body {
   100% { opacity: 0.4; transform: scale(0.9); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
 .agent-dot {
   width: 6px;
   height: 6px;
@@ -52,6 +61,11 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-zinc-700;
 }
+
+::selection {
+  @apply bg-blue-500/20 text-white;
+}
+
 /* Markdown Adjustments */
 .chat-bubble-assistant p { @apply mb-2 last:mb-0; }
 .chat-bubble-assistant ul { @apply list-disc list-inside mb-2 space-y-1; }

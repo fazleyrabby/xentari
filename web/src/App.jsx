@@ -6,6 +6,7 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ContextPanel from "./components/ContextPanel";
 import Timeline from "./components/Timeline";
 import FileDrawer from "./components/FileDrawer";
+import FileExplorer from "./components/FileExplorer";
 import { parseCommand } from "./utils/parseCommand";
 import { getCommandPrompt } from "./utils/commandPrompts";
 
@@ -22,7 +23,7 @@ export default function App() {
   const [state, setState] = useState({});
   const [prompt, setPrompt] = useState("");
   const [running, setRunning] = useState(false);
-  const [config, setConfig] = useState({ projectDir: "", model: "", baseUrl: "" });
+  const [config, setConfig] = useState({ projectDir: "", model: "", baseUrl: "", projectId: "" });
   const [session, setSession] = useState({ id: "default", messages: [], activeProjectId: null });
   const [sessions, setSessions] = useState(["default"]);
   const [projects, setProjects] = useState([]);
@@ -40,6 +41,7 @@ export default function App() {
   const [activeCommand, setActiveCommand] = useState("chat");
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileContent, setFileContent] = useState("");
+  const [modifiedContent, setModifiedContent] = useState("");
   const [highlightLine, setHighlightLine] = useState(null);
 
   const bottomRef = useRef(null);
@@ -49,13 +51,15 @@ export default function App() {
     try {
       const res = await fetch("http://localhost:3000/config");
       const data = await res.json();
-      setConfig(prev => ({
-        ...prev,
+      const newCfg = {
+        ...config,
         ...data,
         projectDir: data.projectDir || "",
         model: data.model || "",
         baseUrl: data.baseUrl || ""
-      }));
+      };
+      setConfig(newCfg);
+      if (newCfg.projectDir) fetchSession("default", newCfg.projectDir);
     } catch (err) {}
   };
 
@@ -85,9 +89,10 @@ export default function App() {
     } catch (err) {}
   };
 
-  const fetchSession = async (id = "default") => {
+  const fetchSession = async (id = "default", projectDir) => {
     try {
-      const res = await fetch(`http://localhost:3000/session/${id}`);
+      const dir = projectDir || config.projectDir;
+      const res = await fetch(`http://localhost:3000/session/load/${id}?projectDir=${encodeURIComponent(dir || "")}`);
       const data = await res.json();
       setSession(data);
     } catch (err) {}
@@ -95,16 +100,18 @@ export default function App() {
 
   const bufferRef = useRef("");
 
-  const run = async (overridePrompt) => {
-    const text = overridePrompt ?? prompt;
+  const runAgent = async (options) => {
+    const text = typeof options === "string" ? options : (options?.input ?? prompt);
     if (!text.trim() || running) return;
 
     const command = parseCommand(text);
+    const commandType = (typeof options === "object" && options?.meta?.command) || command.type;
+
     const currentPrompt = command.type === "chat"
       ? command.query
       : getCommandPrompt(command.type, command.query);
 
-    if (!overridePrompt) { setPrompt(""); setActiveCommand("chat"); }
+    if (typeof options === "string" || !options) { setPrompt(""); setActiveCommand("chat"); }
     const userMsg = { role: "user", content: currentPrompt };
     const historyBefore = [...session.messages, userMsg];
 
@@ -114,8 +121,8 @@ export default function App() {
     setContextFiles([]);
     setTimeline([]);
 
-    const projectDir = config.projectDir || "";
-    const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectDir=${encodeURIComponent(projectDir)}&command=${encodeURIComponent(command.type)}`;
+    const projectPath = config.projectDir || "";
+    const url = `http://localhost:3000/chat/stream?input=${encodeURIComponent(currentPrompt)}&projectPath=${encodeURIComponent(projectPath)}&command=${encodeURIComponent(commandType)}`;
     const eventSource = new EventSource(url);
 
     eventSource.onmessage = (event) => {
@@ -138,10 +145,20 @@ export default function App() {
             ...prev,
             messages: [...historyBefore, aiMsg]
           }));
+
+          // Simple code block detection for diff
+          const match = bufferRef.current.match(/```(?:\w+)?\n([\s\S]+?)```/);
+          if (match && match[1] && selectedFile) {
+            setModifiedContent(match[1].trim());
+          }
         }
 
         if (data.type === "context") {
           setContextFiles(data.files || []);
+        }
+
+        if (data.type === "metrics") {
+          setState(prev => ({ ...prev, metrics: data.metrics }));
         }
 
         if (data.type === "done" || data.type === "error") {
@@ -181,7 +198,7 @@ export default function App() {
   };
 
   const setProject = (p) => {
-    const newCfg = { ...config, projectDir: p.path };
+    const newCfg = { ...config, projectDir: p.path, projectId: p.id };
     setConfig(newCfg);
     saveConfig(newCfg);
   };
@@ -189,14 +206,37 @@ export default function App() {
   const openFile = async (filePath) => {
     setSelectedFile(filePath);
     setFileContent("");
+    setModifiedContent("");
     setHighlightLine(null);
     try {
-      const res = await fetch(`http://localhost:3000/file?path=${encodeURIComponent(filePath)}`);
+      const res = await fetch(`http://localhost:3000/api/file?projectId=${config.projectId}&path=${encodeURIComponent(filePath)}`);
       const data = await res.json();
       setFileContent(data.content || data.error || "");
       setHighlightLine(data.matchLine ?? null);
     } catch {
       setFileContent("Failed to load file.");
+    }
+  };
+
+  const applyChanges = async (newContent) => {
+    try {
+      const res = await fetch("http://localhost:3000/api/file/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: config.projectId,
+          path: selectedFile,
+          content: newContent
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFileContent(newContent);
+        setModifiedContent("");
+        alert("Changes applied successfully!");
+      }
+    } catch (err) {
+      alert("Failed to apply changes: " + err.message);
     }
   };
 
@@ -211,7 +251,6 @@ export default function App() {
     fetchConfig();
     fetchProjects();
     fetchModels();
-    fetchSession();
 
     const poll = setInterval(async () => {
       try {
@@ -307,6 +346,13 @@ export default function App() {
                  </button>
                )}
             </div>
+          </div>
+
+          <div className="border-t border-zinc-900 pt-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+            <FileExplorer 
+              projectId={config.projectId}
+              onFileClick={openFile}
+            />
           </div>
         </div>
       </div>
@@ -448,7 +494,7 @@ export default function App() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  run();
+                  runAgent();
                 }
               }}
               placeholder="Ask anything..."
@@ -459,7 +505,7 @@ export default function App() {
                <span className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">Enter to send</span>
             </div>
             <button 
-              onClick={run}
+              onClick={() => runAgent()}
               disabled={running || !prompt.trim()}
               className={`absolute bottom-3 right-3 p-2 rounded-lg transition-all ${running || !prompt.trim() ? 'bg-zinc-800 text-zinc-600' : 'bg-white text-black hover:scale-105'}`}
             >
@@ -475,9 +521,11 @@ export default function App() {
       <FileDrawer
         file={selectedFile}
         content={fileContent}
+        modifiedContent={modifiedContent}
         highlightLine={highlightLine}
-        onClose={() => setSelectedFile(null)}
-        onSendToChat={(text) => { setSelectedFile(null); run(text); }}
+        onClose={() => { setSelectedFile(null); setModifiedContent(""); }}
+        onRunAgent={(options) => { setSelectedFile(null); runAgent(options); }}
+        onApplyChanges={applyChanges}
       />
 
       {/* RIGHT — INFERENCE STATS — toggleable */}

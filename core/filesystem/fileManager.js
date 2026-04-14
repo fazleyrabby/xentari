@@ -22,6 +22,29 @@ export function resolveSafePath(projectPath, targetPath) {
   return absTarget;
 }
 
+export function listDirectory(projectPath, relativePath = "") {
+  const absPath = path.resolve(projectPath, relativePath);
+  
+  if (!fs.existsSync(absPath)) {
+    throw new Error("Directory not found");
+  }
+
+  const ignore = ["node_modules", ".git", ".xentari", "dist", "build", ".DS_Store", "package-lock.json", "yarn.lock"];
+  const entries = fs.readdirSync(absPath, { withFileTypes: true });
+
+  return entries
+    .filter(entry => !ignore.includes(entry.name))
+    .map(entry => ({
+      name: entry.name,
+      path: path.join(relativePath, entry.name),
+      type: entry.isDirectory() ? "dir" : "file"
+    }))
+    .sort((a, b) => {
+      if (a.type === b.type) return a.name.localeCompare(b.name);
+      return a.type === "dir" ? -1 : 1;
+    });
+}
+
 export function listFiles(projectPath, currentPath = "", depth = 0, maxDepth = 5) {
   if (depth > maxDepth) return [];
 

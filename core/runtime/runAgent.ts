@@ -5,9 +5,16 @@ import { loadSession, saveSession } from "../session/store.ts";
 import { buildContext, scoreFile } from "../context/buildContext.ts";
 import { detectProject } from "../context/projectIntelligence.ts";
 import { createKey, getCache, setCache } from "../context/contextCache.ts";
+import { normalizeMetrics } from "../llm/metrics.js";
 import crypto from "crypto";
 
-export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null, meta = null }: { input: string; projectDir: string; sessionId?: string; onChunk?: ((chunk: string) => void) | null; onStatus?: ((msg: string) => void) | null; onContext?: ((files: unknown[]) => void) | null; meta?: { command?: string } | null }) {
+export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null, onMetrics = null, meta = null }: { input: string; projectDir: string; sessionId?: string; onChunk?: ((chunk: string) => void) | null; onStatus?: ((msg: string) => void) | null; onContext?: ((files: unknown[]) => void) | null; onMetrics?: ((m: any) => void) | null; meta?: { command?: string } | null }) {
+  if (!projectDir) {
+    throw new Error("projectDir is required");
+  }
+
+  console.log("[XENTARI] ACTIVE PROJECT:", projectDir);
+
   const config = loadConfig(projectDir);
   const model = normalizeModel(config.provider, config.model);
   const provider = createProvider(config);
@@ -69,11 +76,34 @@ ${JSON.stringify(rankedSnippets, null, 2)}`;
   if (onChunk) {
     if (onStatus) onStatus("generating response");
     let fullContent = "";
+    const startTime = Date.now();
     const stream = provider.streamChat({ model, messages });
-    for await (const chunk of stream) {
-      fullContent += chunk;
-      onChunk(chunk);
+    let finalUsage = null;
+
+    for await (const data of stream) {
+      if (data.type === "chunk") {
+        fullContent += data.content;
+        onChunk(data.content);
+      } else if (data.type === "usage") {
+        finalUsage = data.usage;
+      }
     }
+
+    const latency = Date.now() - startTime;
+    // Estimate tokens if usage is missing (fallback: 1 token ~= 4 chars)
+    const usage = finalUsage || {
+      prompt_tokens: Math.ceil((JSON.stringify(messages).length) / 4),
+      completion_tokens: Math.ceil(fullContent.length / 4),
+    };
+
+    const metrics = normalizeMetrics({
+      ...usage,
+      latency,
+      tokens_per_second: (usage.completion_tokens || (fullContent.length / 4)) / (latency / 1000),
+      provider: config.provider || "local"
+    });
+
+    if (onMetrics) onMetrics(metrics);
     
     // Finalize session
     const updated = [
@@ -83,10 +113,21 @@ ${JSON.stringify(rankedSnippets, null, 2)}`;
     ];
     saveSession(projectDir, sessionId, updated);
 
-    return { fullText: fullContent };
+    return { fullText: fullContent, metrics };
   } else {
+    const startTime = Date.now();
     const result = await provider.chat({ model, messages });
+    const latency = Date.now() - startTime;
     const reply = result.content;
+    
+    const metrics = normalizeMetrics({
+      ...result.usage,
+      latency,
+      tokens_per_second: (result.usage?.completion_tokens || (reply.length / 4)) / (latency / 1000),
+      provider: config.provider || "local"
+    });
+
+    if (onMetrics) onMetrics(metrics);
 
     const updated = [
       ...history,
@@ -98,7 +139,7 @@ ${JSON.stringify(rankedSnippets, null, 2)}`;
     return {
       message: reply,
       model,
-      usage: result.usage
+      metrics
     };
   }
 }

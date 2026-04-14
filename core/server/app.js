@@ -11,10 +11,37 @@ import modelsRouter from "./routes/models.js";
 import filesRouter from "./routes/files.js";
 import { runAgent } from "../runtime/runAgent.ts";
 import { loadConfig, saveConfig } from "../../config/configManager.js";
+import { normalizeMetrics } from "../llm/metrics.js";
+import { setMetrics } from "../ui/state.js";
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+
+const XENTARI_ROOT = path.resolve(process.cwd());
+
+function validateProjectPath(projectPath) {
+  if (!projectPath) {
+    throw new Error("Missing projectPath — execution aborted");
+  }
+
+  const resolvedProject = path.resolve(projectPath);
+  const resolvedRoot = path.resolve(XENTARI_ROOT);
+
+  if (resolvedProject === resolvedRoot) {
+    throw new Error("Refusing to scan Xentari root");
+  }
+
+  if (resolvedProject.startsWith(resolvedRoot)) {
+    throw new Error("Refusing to scan inside Xentari directory");
+  }
+
+  if (projectPath.includes("..")) {
+    throw new Error("Invalid project path");
+  }
+
+  return resolvedProject;
+}
 
 app.use("/api", modelsRouter);
 app.use("/api", filesRouter);
@@ -39,24 +66,30 @@ app.delete("/api/projects/:id", (req, res) => {
 });
 
 app.get("/chat/stream", async (req, res) => {
-  const { input, projectDir, command } = req.query;
-
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    "Connection": "keep-alive"
-  });
+  const { input, projectPath, command } = req.query;
 
   try {
+    const resolvedProject = validateProjectPath(projectPath);
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive"
+    });
+
     const result = await runAgent({
       input,
-      projectDir,
+      projectDir: resolvedProject,
       meta: command ? { command } : null,
       onStatus: (msg) => {
         res.write(`data: ${JSON.stringify({ type: "status", message: msg })}\n\n`);
       },
       onContext: (files) => {
         res.write(`data: ${JSON.stringify({ type: "context", files: files.slice(0, 8) })}\n\n`);
+      },
+      onMetrics: (metrics) => {
+        setMetrics(metrics);
+        res.write(`data: ${JSON.stringify({ type: "metrics", metrics })}\n\n`);
       },
       onChunk: (chunk) => {
         res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
@@ -72,19 +105,21 @@ app.get("/chat/stream", async (req, res) => {
 });
 
 app.post("/run/stream", async (req, res) => {
-  const { input, prompt, projectDir } = req.body;
-
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    "Connection": "keep-alive"
-  });
+  const { input, prompt, projectPath, projectDir } = req.body;
 
   try {
+    const resolvedProject = validateProjectPath(projectPath || projectDir);
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive"
+    });
+
     let accumulated = "";
     const result = await runAgent({
       input: input || prompt,
-      projectDir,
+      projectDir: resolvedProject,
       onChunk: (chunk) => {
         accumulated += chunk;
         res.write(`data: ${JSON.stringify({ fullText: accumulated })}\n\n`);
@@ -101,11 +136,12 @@ app.post("/run/stream", async (req, res) => {
 
 app.post(["/chat", "/run"], async (req, res) => {
   try {
-    const { input, prompt, projectDir } = req.body;
+    const { input, prompt, projectPath, projectDir } = req.body;
+    const resolvedProject = validateProjectPath(projectPath || projectDir);
 
     const result = await runAgent({
       input: input || prompt,
-      projectDir
+      projectDir: resolvedProject
     });
 
     res.json(result);

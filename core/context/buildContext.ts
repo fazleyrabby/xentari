@@ -33,23 +33,25 @@ export function buildContext(projectDir) {
     nodir: true
   });
 
-  // Smart selection of important files
-  const priorityTerms = ["runAgent", "index", "app", "server", "pipeline", "executor"];
+  // Smart selection of important files based on structure and common patterns
+  const priorityTerms = ["index", "main", "app", "server", "routes", "api", "service", "model", "controller"];
   
   const importantFiles = allFiles
-    .filter(f => f.includes("core/") || f.includes("bin/") || f === "server.js")
     .sort((a, b) => {
       const aScore = priorityTerms.reduce((s, term) => {
-        const weight = term === "runAgent" ? 5 : 1; // Heavy weight for runAgent
-        return s + (a.toLowerCase().includes(term.toLowerCase()) ? weight : 0);
+        return s + (a.toLowerCase().includes(term.toLowerCase()) ? 2 : 0);
       }, 0);
       const bScore = priorityTerms.reduce((s, term) => {
-        const weight = term === "runAgent" ? 5 : 1;
-        return s + (b.toLowerCase().includes(term.toLowerCase()) ? weight : 0);
+        return s + (b.toLowerCase().includes(term.toLowerCase()) ? 2 : 0);
       }, 0);
-      return bScore - aScore;
+
+      // Favor shallow files
+      const aDepth = a.split("/").length;
+      const bDepth = b.split("/").length;
+      
+      return (bScore - bDepth) - (aScore - aDepth);
     })
-    .slice(0, 15); // Increase to 15 files for better coverage
+    .slice(0, 20); // Top 20 candidate files
 
   return {
     structure: allFiles.slice(0, 100), // Show more structure (up to 100 files)

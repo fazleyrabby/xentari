@@ -92,7 +92,10 @@ This ensures:
 ### 🔹 Dual Interface System
 
 * **Interactive TUI:** Persistent CLI session with split-panel layout (lazygit-style) and real-time streaming.
-* **Web UI (Beta):** Headless interface with React + Vite frontend, broadcasting live state via WebSockets.
+* **Web UI (Beta):** Professional IDE-like interface with:
+    * **File Explorer:** VS Code-like tree view with lazy loading.
+    * **Inline Actions:** Select code in preview to "Explain" or "Refactor" instantly.
+    * **Diff Viewer:** Side-by-side comparison of AI suggestions with "Apply" support.
 
 ### 🔹 Self-Healing Execution (E12)
 
