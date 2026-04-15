@@ -8,6 +8,12 @@ export default function FilePreview({ file, content, highlightLine, onRunAgent, 
   // Reset active line when file changes
   useEffect(() => { setActiveLine(null); setMenu(null); }, [file]);
 
+  if (typeof content !== "string") {
+    return <div className="p-4 text-zinc-500 italic">File content is not available or invalid format.</div>;
+  }
+
+  const lines = content.split("\n");
+
   const handleMouseUp = (e) => {
     const sel = window.getSelection();
     const text = sel?.toString().trim();
