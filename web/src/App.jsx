@@ -7,6 +7,8 @@ import ContextPanel from "./components/ContextPanel";
 import Timeline from "./components/Timeline";
 import FileDrawer from "./components/FileDrawer";
 import FileExplorer from "./components/FileExplorer";
+import ChangesPanel from "./components/ChangesPanel";
+import DiffViewer from "./components/DiffViewer";
 import { parseCommand } from "./utils/parseCommand";
 import { getCommandPrompt } from "./utils/commandPrompts";
 import { detectFileReference } from "./utils/detectFileReference";
@@ -45,6 +47,8 @@ export default function App() {
   const [modifiedContent, setModifiedContent] = useState("");
   const [highlightLine, setHighlightLine] = useState(null);
   const [detectedModelName, setDetectedModelName] = useState("");
+  const [pendingChanges, setPendingChanges] = useState([]);
+  const [activeDiff, setActiveDiff] = useState(null);
 
   const bottomRef = useRef(null);
   const hiddenPickerRef = useRef(null);
@@ -276,7 +280,19 @@ ${input}`;
             };
           });
 
-          // Simple code block detection for diff
+          // Structured JSON Detection
+          if (currentText.trim().startsWith("{")) {
+            try {
+              const parsed = JSON.parse(currentText);
+              if (parsed.changes) {
+                setPendingChanges(parsed.changes);
+              }
+            } catch (e) {
+              // Partial JSON, wait for more chunks
+            }
+          }
+
+          // Legacy: Simple code block detection for diff
           const match = currentText.match(/```(?:\w+)?\n([\s\S]+?)```/);
           if (match && match[1] && selectedFile) {
             setModifiedContent(match[1].trim());
@@ -404,6 +420,53 @@ ${input}`;
       await fetch(`/api/projects/${id}`, { method: "DELETE" });
       fetchProjects();
     } catch (err) {}
+  };
+
+  const fetchDiff = async (file, newContent) => {
+    try {
+      const res = await fetch("/api/diff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: config.projectId,
+          path: file,
+          newContent
+        })
+      });
+      const data = await res.json();
+      setActiveDiff({ file, data, content: newContent });
+    } catch (err) {
+      alert("Failed to fetch diff: " + err.message);
+    }
+  };
+
+  const applyChange = async (file, content) => {
+    if (!confirm(`Apply changes to ${file}?`)) return;
+    try {
+      const res = await fetch("/api/file/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: config.projectId,
+          path: file,
+          content
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPendingChanges(prev => prev.filter(c => c.file !== file));
+        setActiveDiff(null);
+      }
+    } catch (err) {
+      alert("Failed to apply: " + err.message);
+    }
+  };
+
+  const applyAllChanges = async () => {
+    if (!confirm(`Apply all ${pendingChanges.length} changes?`)) return;
+    for (const change of pendingChanges) {
+      await applyChange(change.file, change.content);
+    }
   };
 
   useEffect(() => {
@@ -736,62 +799,92 @@ ${input}`;
       />
 
       {/* RIGHT — INFERENCE STATS — toggleable */}
-      {showStats && <div className="w-64 flex-shrink-0 border-l border-zinc-900 bg-zinc-950/50 flex flex-col overflow-hidden">
-        <div className="p-4 border-b border-zinc-900">
-           <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Inference stats</span>
+      {(showStats || pendingChanges.length > 0) && (
+        <div className="w-64 flex-shrink-0 border-l border-zinc-900 bg-zinc-950/50 flex flex-col overflow-hidden">
+          {pendingChanges.length > 0 ? (
+            <ChangesPanel 
+              changes={pendingChanges}
+              selectedFile={activeDiff?.file}
+              onSelectFile={(file) => {
+                const change = pendingChanges.find(c => c.file === file);
+                if (change) fetchDiff(file, change.content);
+              }}
+              onApplyAll={applyAllChanges}
+              onRejectAll={() => setPendingChanges([])}
+            />
+          ) : (
+            <>
+              <div className="p-4 border-b border-zinc-900">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Inference stats</span>
+              </div>
+              <div className="p-4 space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Latency</div>
+                      <div className="text-lg font-bold text-white tabular-nums">{state.metrics?.latencyMs ?? "-"} <span className="text-[9px] text-zinc-700">ms</span></div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[9px] uppercase text-zinc-600 tracking-tight">First Token</div>
+                      <div className="text-lg font-bold text-zinc-400 tabular-nums">{state.metrics?.ttf ?? "-"} <span className="text-[9px] text-zinc-700">ms</span></div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Speed</div>
+                      <div className="text-lg font-bold text-white tabular-nums">{state.metrics?.tokensPerSecond ?? "-"} <span className="text-[9px] text-zinc-700">TPS</span></div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Discovery</div>
+                      <div className="text-lg font-bold text-zinc-400 tabular-nums">{(state.metrics?.perf?.scan || 0) + (state.metrics?.perf?.analysis || 0)} <span className="text-[9px] text-zinc-700">ms</span></div>
+                    </div>
+                </div>
+
+                <div className="space-y-2">
+                    <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Usage</div>
+                    <div className="h-1 bg-zinc-900 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-zinc-500 transition-all duration-1000" 
+                        style={{ width: `${Math.min(100, (state.metrics?.totalTokens || 0) / 10)}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-zinc-500 font-medium">
+                      <span>{state.metrics?.totalTokens ?? 0} tokens used</span>
+                      <span>{state.metrics?.provider || "N/A"}</span>
+                    </div>
+                </div>
+
+                <div className="pt-4 border-t border-zinc-900 space-y-3">
+                    <div className="text-[9px] uppercase text-zinc-600 tracking-tight">System state</div>
+                    <div className="space-y-2">
+                      {[
+                        { label: "Stack", value: state.header?.stack || "NODE" },
+                        { label: "Phase", value: state.header?.phase || "IDLE" },
+                        { label: "Mode", value: state.header?.mode || "SAFE" }
+                      ].map(item => (
+                        <div key={item.label} className="flex justify-between items-center text-[10px]">
+                            <span className="text-zinc-500">{item.label}</span>
+                            <span className="text-zinc-300 font-bold bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">{item.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
-        <div className="p-4 space-y-6">
-           <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                 <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Latency</div>
-                 <div className="text-lg font-bold text-white tabular-nums">{state.metrics?.latencyMs ?? "-"} <span className="text-[9px] text-zinc-700">ms</span></div>
-              </div>
-              <div className="space-y-1">
-                 <div className="text-[9px] uppercase text-zinc-600 tracking-tight">First Token</div>
-                 <div className="text-lg font-bold text-zinc-400 tabular-nums">{state.metrics?.ttf ?? "-"} <span className="text-[9px] text-zinc-700">ms</span></div>
-              </div>
-              <div className="space-y-1">
-                 <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Speed</div>
-                 <div className="text-lg font-bold text-white tabular-nums">{state.metrics?.tokensPerSecond ?? "-"} <span className="text-[9px] text-zinc-700">TPS</span></div>
-              </div>
-              <div className="space-y-1">
-                 <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Discovery</div>
-                 <div className="text-lg font-bold text-zinc-400 tabular-nums">{(state.metrics?.perf?.scan || 0) + (state.metrics?.perf?.analysis || 0)} <span className="text-[9px] text-zinc-700">ms</span></div>
-              </div>
-           </div>
+      )}
 
-           <div className="space-y-2">
-              <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Usage</div>
-              <div className="h-1 bg-zinc-900 rounded-full overflow-hidden">
-                 <div 
-                   className="h-full bg-zinc-500 transition-all duration-1000" 
-                   style={{ width: `${Math.min(100, (state.metrics?.totalTokens || 0) / 10)}%` }}
-                 />
-              </div>
-              <div className="flex justify-between text-[10px] text-zinc-500 font-medium">
-                 <span>{state.metrics?.totalTokens ?? 0} tokens used</span>
-                 <span>{state.metrics?.provider || "N/A"}</span>
-              </div>
-           </div>
-
-           <div className="pt-4 border-t border-zinc-900 space-y-3">
-              <div className="text-[9px] uppercase text-zinc-600 tracking-tight">System state</div>
-              <div className="space-y-2">
-                 {[
-                   { label: "Stack", value: state.header?.stack || "NODE" },
-                   { label: "Phase", value: state.header?.phase || "IDLE" },
-                   { label: "Mode", value: state.header?.mode || "SAFE" }
-                 ].map(item => (
-                   <div key={item.label} className="flex justify-between items-center text-[10px]">
-                      <span className="text-zinc-500">{item.label}</span>
-                      <span className="text-zinc-300 font-bold bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">{item.value}</span>
-                   </div>
-                 ))}
-              </div>
-           </div>
-         </div>
-      </div>}
-
+      {/* DIFF OVERLAY */}
+      {activeDiff && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-8 animate-fade-in">
+          <div className="w-full h-full max-w-6xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+            <DiffViewer 
+              file={activeDiff.file}
+              diffData={activeDiff.data}
+              onApply={() => applyChange(activeDiff.file, activeDiff.content)}
+              onCancel={() => setActiveDiff(null)}
+            />
+          </div>
+        </div>
+      )}
       {/* SETTINGS MODAL */}
       {showSettings && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">

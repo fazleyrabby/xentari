@@ -2,37 +2,75 @@ import fs from "fs";
 import path from "path";
 import { globSync } from "glob";
 
-export function scoreFile(file: { path: string; content: string }, input: string, project?: { type?: string }): number {
+export type ScoringResult = {
+  score: number;
+  steps: { label: string; value: number }[];
+};
+
+export function scoreFile(file: { path: string; content: string }, input: string, intelligence?: { primary?: string }): ScoringResult {
   let score = 0;
+  const steps: { label: string; value: number }[] = [];
   const p = file.path.toLowerCase();
   const c = file.content.toLowerCase();
 
+  // 1. Term Match
+  let termScore = 0;
   for (const k of input.toLowerCase().split(/\s+/)) {
-    if (p.includes(k)) score += 3;
-    if (c.includes(k)) score += 1;
+    if (k.length < 3) continue;
+    if (p.includes(k)) termScore += 3;
+    if (c.includes(k)) termScore += 1;
+  }
+  if (termScore !== 0) {
+    score += termScore;
+    steps.push({ label: "Term matches", value: termScore });
   }
 
-  if (p.split("/").length <= 2) score += 2;
+  // 2. Depth Penalty/Boost (Favor shallow files)
+  const depth = p.split("/").length;
+  if (depth <= 2) {
+    score += 2;
+    steps.push({ label: "Shallow file boost", value: 2 });
+  }
 
-  if (p.includes("index") || p.includes("main") || p.includes("app") || p.includes("server")) score += 3;
-  if (p.includes("config") || p.includes("routes") || p.includes("package") || p.includes("composer") || p.endsWith(".php")) score += 2;
+  // 3. Structural Boosts (Auditor V2 Weights)
+  if (p.includes("controller")) {
+    score += 3;
+    steps.push({ label: "Controller boost", value: 3 });
+  }
+  if (p.includes("model") || p.includes("entities") || p.includes("schema")) {
+    score += 3;
+    steps.push({ label: "Model/Schema boost", value: 3 });
+  }
+  if (p.includes("service") || p.includes("logic") || p.includes("usecase")) {
+    score += 2;
+    steps.push({ label: "Domain service boost", value: 2 });
+  }
+  if (p.includes("index") || p.includes("main") || p.includes("app") || p.includes("server")) {
+    score += 2;
+    steps.push({ label: "Entry point boost", value: 2 });
+  }
+
+  // 4. Noise Penalties
+  if (p.includes("provider") || p.includes("adapter")) {
+    score -= 2;
+    steps.push({ label: "Boilerplate penalty (Provider/Adapter)", value: -2 });
+  }
+  if (p.includes("config") || p.includes(".json") || p.includes(".yaml")) {
+    score -= 1;
+    steps.push({ label: "Config noise penalty", value: -1 });
+  }
   
-  // Noise Penalties
-  if (p.includes('/public/')) score -= 4;
-  if (p.includes('/vendor/')) score -= 4;
-  if (p.includes('/node_modules/')) score -= 5;
+  if (p.includes('/public/')) { score -= 4; steps.push({ label: "Public asset penalty", value: -4 }); }
+  if (p.includes('/vendor/')) { score -= 4; steps.push({ label: "Vendor penalty", value: -4 }); }
+  if (p.includes('/node_modules/')) { score -= 5; steps.push({ label: "Dependency penalty", value: -5 }); }
 
-  // Core Boosts
-  if (p.includes('/routes/')) score += 3;
-  if (p.includes('/app/')) score += 3;
-  if (p.includes('/src/')) score += 2;
-
-  if (project?.type?.includes("backend")) {
-    if (p.includes("routes")) score += 2;
-    if (p.includes("config")) score += 2;
+  // 5. Stack Alignment
+  if (intelligence?.primary && p.includes(intelligence.primary.toLowerCase())) {
+    score += 2;
+    steps.push({ label: `Stack alignment (${intelligence.primary})`, value: 2 });
   }
 
-  return score;
+  return { score, steps };
 }
 
 const structureCache = new Map<string, { files: string[], ts: number }>();
@@ -96,7 +134,7 @@ export function buildContext(projectDir) {
       if (fs.existsSync(full)) {
         return {
           path: file,
-          content: fs.readFileSync(full, "utf-8").slice(0, 1500) // More content per file
+          content: fs.readFileSync(full, "utf-8").slice(0, 1000) // Reduced from 1500
         };
       }
       return null;

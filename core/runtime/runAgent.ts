@@ -8,6 +8,7 @@ import { detectProject } from "../context/projectIntelligence.ts";
 import { createKey, getCache, setCache } from "../context/contextCache.ts";
 import { normalizeMetrics } from "../llm/metrics.js";
 import { detectModel } from "../utils/detectModel.ts";
+import { buildPromptWithBudget, estimateTokens } from "./contextBudget.ts";
 import crypto from "crypto";
 
 function sanitizeOutput(text: string) {
@@ -54,28 +55,27 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
   if (onIntelligence) onIntelligence(intelligence);
 
   if (onStatus) onStatus("analyzing context");
+  
   const scoredSnippets = (context.snippets ?? [])
-    .map(f => ({ ...f, score: scoreFile(f, input, intelligence) }));
+    .map(f => {
+      const result = scoreFile(f, input, intelligence);
+      return { ...f, score: result.score, steps: result.steps };
+    });
 
   const rankedSnippets = optimizeContext(scoredSnippets, input)
     .sort((a, b) => (b.score || 0) - (a.score || 0))
-    .slice(0, 8);
+    .slice(0, 15); // candidate pool for budget
 
   perf.analysis = Date.now() - perf.start - perf.scan;
-  console.log('[XENTARI] CONTEXT FILES:', rankedSnippets.map(f => f.path));
 
-  if (!rankedSnippets || rankedSnippets.length === 0) {
-    console.warn('[XENTARI] No context files selected');
+  const isLowSignal = !rankedSnippets.some(s => s.score > 5);
+  if (isLowSignal) {
+    console.warn('[XENTARI] LOW_SIGNAL detected');
   }
+const mode = meta?.command || "chat";
+const isCodeMode = mode === "code" || input.toLowerCase().includes("modify") || input.toLowerCase().includes("fix") || input.toLowerCase().includes("add");
 
-  const mode = meta?.command || "chat";
-  
-  // Compact context representation
-  const contextText = rankedSnippets
-    .map(f => `FILE: ${f.path}\nCONTENT:\n${f.content}\n---`)
-    .join('\n\n');
-
-  const systemPrompt = `You are Xentari — a deterministic AI coding system.
+const systemPrompt = `You are Xentari — a deterministic AI coding system.
 
 Execution Context:
 - You are running locally inside a development environment
@@ -90,38 +90,58 @@ Capabilities:
 Rules:
 - NEVER say "I can't access files"
 - NEVER say "I can't analyze the project"
+- NEVER use words like "likely", "probably", "typically", "usually"
 - NEVER behave like a general chatbot
 - NEVER mention OpenAI, GPT-4, or external providers
 
-If something is missing:
-- Say: "This is not present in the current context"
+${isCodeMode ? `Code Modification Mode:
+- When proposing code changes, you MUST return ONLY a JSON object in this format:
+{
+"text": "Brief explanation of changes",
+"changes": [
+  {
+    "file": "relative/path/to/file.js",
+    "action": "modify", 
+    "content": "FULL new content of the file"
+  }
+]
+}
+- Do NOT wrap the JSON in markdown blocks.
+- Do NOT include any text outside the JSON object.` : `Strict Ground Truth:
+- Base your answers ONLY on the provided context
+- If information is missing → say: "This is not present in the current context"`}
+${isLowSignal ? '- WARNING: The current query has low semantic signal. Acknowledge limited context in your response.' : ''}
 
 ---
 
-Project Intelligence:
+Project Intelligence (deterministic):
 Primary: ${intelligence.primary}
 Confidence: ${intelligence.confidence}
 
 ---
 
-Context Files:
-${rankedSnippets.map(f => f.path).join('\n')}
-
----
-
-User Request:
-${input}
-
----
-
 TOP CONTEXT CONTENT:
-${contextText}`;
+\${contextText}`;
 
-  const messages = [
-    { role: "system", content: systemPrompt },
-    ...history,
-    { role: "user", content: input }
-  ];
+  // Build prompt with dynamic budget
+  const budget = buildPromptWithBudget({
+    systemPrompt: baseSystemPrompt,
+    userQuery: input,
+    files: rankedSnippets,
+    history: history,
+    maxTokens: 8192,
+    reservedForOutput: 1024
+  });
+
+  const messages = budget.messages;
+
+  console.log('[XENTARI] BUDGET:', {
+    total: budget.tokens.total,
+    limit: budget.limit,
+    trimmed: budget.trimmed,
+    files: budget.tokens.files,
+    finalHistory: messages.length - 2 
+  });
 
   if (onChunk) {
     if (onStatus) onStatus("generating response");
@@ -144,17 +164,17 @@ ${contextText}`;
     const latency = end - perf.start;
     const ttf = firstTokenTime ? (firstTokenTime - perf.start) : latency;
 
-    // Estimate tokens if usage is missing
+    // Estimate tokens
     const usage = finalUsage || {
-      prompt_tokens: Math.ceil((JSON.stringify(messages).length) / 4),
-      completion_tokens: Math.ceil(fullContent.length / 4),
+      prompt_tokens: budget.tokens.total,
+      completion_tokens: estimateTokens(fullContent),
     };
 
     const metrics = normalizeMetrics({
       ...usage,
       latency,
       ttf,
-      tokens_per_second: (usage.completion_tokens || (fullContent.length / 4)) / (Math.max(1, end - firstTokenTime) / 1000),
+      tokens_per_second: (usage.completion_tokens) / (Math.max(1, end - firstTokenTime) / 1000),
       provider: config.provider || "local",
       perf
     });
@@ -171,7 +191,7 @@ ${contextText}`;
     ];
     saveSession(projectDir, sessionId, updated);
 
-    return { fullText: sanitizedContent, metrics };
+    return { fullText: sanitizedContent, metrics, budget };
   } else {
     const startTime = Date.now();
     const result = await provider.chat({ model, messages });
@@ -179,10 +199,16 @@ ${contextText}`;
     const latency = end - perf.start;
     const reply = sanitizeOutput(result.content);
     
+    // Estimate tokens
+    const usage = result.usage || {
+      prompt_tokens: budget.tokens.total,
+      completion_tokens: estimateTokens(reply),
+    };
+
     const metrics = normalizeMetrics({
-      ...result.usage,
+      ...usage,
       latency,
-      tokens_per_second: (result.usage?.completion_tokens || (reply.length / 4)) / (Math.max(1, end - startTime) / 1000),
+      tokens_per_second: (usage.completion_tokens) / (Math.max(1, end - startTime) / 1000),
       provider: config.provider || "local",
       perf
     });
@@ -199,7 +225,8 @@ ${contextText}`;
     return {
       message: reply,
       model,
-      metrics
+      metrics,
+      budget
     };
   }
 }
