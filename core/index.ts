@@ -155,7 +155,9 @@ function detectFlows(modules: Record<string, string[]>): Record<string, { flow: 
         if (p.includes("model") || p.includes("schema")) return 4;
         return 5;
       };
-      return getRank(a) - getRank(b);
+      const rankDiff = getRank(a) - getRank(b);
+      if (rankDiff !== 0) return rankDiff;
+      return a.localeCompare(b); // Deterministic tie-breaker
     });
     
     flows[modName] = {
@@ -174,11 +176,11 @@ export async function indexProject(projectDir: string) {
   const config = loadConfig();
   log.info("[INDEXER] Building knowledge index...");
   
-  const files = await glob("**/*.*", {
+  const files = (await glob("**/*.*", {
     cwd: projectDir,
     ignore: IGNORE,
     nodir: true,
-  });
+  })).sort(); // Deterministic sort
 
   const knowledge: {
     framework: string | null;

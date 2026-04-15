@@ -79,32 +79,28 @@ const STRUCTURE_TTL = 30 * 1000; // 30 seconds structure cache
 export function buildContext(projectDir) {
   const absProjectDir = path.resolve(projectDir);
   
-  // 1. Get structure from cache or scan
+  // 1. Get structure from scan (deterministic ordering)
   let allFiles: string[] = [];
-  const cached = structureCache.get(absProjectDir);
-  if (cached && (Date.now() - cached.ts < STRUCTURE_TTL)) {
-    allFiles = cached.files;
-  } else {
-    console.log('[XENTARI] SCANNING:', absProjectDir);
-    console.time('[XENTARI] SCAN');
-    allFiles = globSync("**/*.{js,ts,php,py,go,astro,vue,svelte,css,html}", {
-      cwd: absProjectDir,
-      ignore: [
-        "**/node_modules/**", 
-        "**/vendor/**", 
-        "**/dist/**", 
-        "**/build/**", 
-        "**/.*/**",
-        "**/storage/**",
-        "**/bootstrap/cache/**"
-      ],
-      nodir: true,
-      follow: false
-    });
-    structureCache.set(absProjectDir, { files: allFiles, ts: Date.now() });
-    console.timeEnd('[XENTARI] SCAN');
-    console.log('[XENTARI] FILES FOUND:', allFiles.length);
-  }
+  
+  console.log('[XENTARI] SCANNING:', absProjectDir);
+  console.time('[XENTARI] SCAN');
+  allFiles = globSync("**/*.{js,ts,php,py,go,astro,vue,svelte,css,html}", {
+    cwd: absProjectDir,
+    ignore: [
+      "**/node_modules/**", 
+      "**/vendor/**", 
+      "**/dist/**", 
+      "**/build/**", 
+      "**/.*/**",
+      "**/storage/**",
+      "**/bootstrap/cache/**"
+    ],
+    nodir: true,
+    follow: false
+  }).sort((a, b) => a.localeCompare(b)); // Deterministic sort
+  
+  console.timeEnd('[XENTARI] SCAN');
+  console.log('[XENTARI] FILES FOUND:', allFiles.length);
 
   // Smart selection of important files based on structure and common patterns
   const priorityTerms = ["index", "main", "app", "server", "routes", "api", "service", "model", "controller"];
@@ -122,7 +118,11 @@ export function buildContext(projectDir) {
       const aDepth = a.split("/").length;
       const bDepth = b.split("/").length;
       
-      return (bScore - bDepth) - (aScore - aDepth);
+      const scoreDiff = (bScore - bDepth) - (aScore - aDepth);
+      if (scoreDiff !== 0) return scoreDiff;
+      
+      // Deterministic tie-breaker
+      return a.localeCompare(b);
     })
     .slice(0, 20); // Top 20 candidate files
 

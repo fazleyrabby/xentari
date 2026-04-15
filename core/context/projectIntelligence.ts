@@ -115,8 +115,8 @@ export function getCachedProject(projectDir: string): ProjectIntelligence | null
   if (!fs.existsSync(p)) return null;
   try {
     const data = JSON.parse(fs.readFileSync(p, "utf-8"));
-    // TTL Check (10 minutes)
-    if (Date.now() - data.timestamp > 10 * 60 * 1000) return null;
+    // TTL Check DISABLED for determinism
+    // if (Date.now() - data.timestamp > 10 * 60 * 1000) return null;
     return data;
   } catch {
     return null;
@@ -144,7 +144,10 @@ export async function detectProject({
 
   const signals = collectSignals(projectDir, files);
   const scores = aggregateSignals(signals);
-  const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  const ranked = Object.entries(scores).sort((a, b) => {
+    if (b[1] !== a[1]) return b[1] - a[1];
+    return a[0].localeCompare(b[0]); // Deterministic tie-breaker
+  });
 
   const confidence = computeConfidence(ranked);
   const primary = ranked[0]?.[0] || 'unknown';

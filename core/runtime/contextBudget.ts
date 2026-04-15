@@ -77,7 +77,10 @@ export function buildPromptWithBudget({
   }
 
   // 3. Files (Higher Priority than History)
-  const sortedFiles = [...files].sort((a, b) => (b.score || 0) - (a.score || 0));
+  const sortedFiles = [...files].sort((a, b) => {
+    if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+    return a.path.localeCompare(b.path); // Deterministic tie-breaker
+  });
   const includedFiles: FileSnippet[] = [];
   let filesTokens = 0;
 

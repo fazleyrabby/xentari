@@ -29,18 +29,14 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
   const config = loadConfig(projectDir);
   const model = normalizeModel(config.provider, config.model);
   const provider = createProvider(config);
-  const history = loadSession(projectDir, sessionId);
+  
+  // RESET HISTORY (CRITICAL): Ensure no state leakage between runs
+  const history: any[] = [];
   const modelName = detectModel();
 
   if (onStatus) onStatus("scanning project");
-  const dirHash = crypto.createHash("md5").update(projectDir).digest("hex");
-  const cacheKey = createKey(input, dirHash);
-  let context = getCache(cacheKey);
-  
-  if (!context || !context.snippets || context.snippets.length === 0) {
-    context = buildContext(projectDir);
-    setCache(cacheKey, context);
-  }
+  // ALWAYS scan fresh for deterministic results (ignore cache in runAgent)
+  const context = buildContext(projectDir);
   perf.scan = Date.now() - perf.start;
 
   if (onContext && context.files) {
@@ -63,7 +59,10 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     });
 
   const rankedSnippets = optimizeContext(scoredSnippets, input)
-    .sort((a, b) => (b.score || 0) - (a.score || 0))
+    .sort((a, b) => {
+      if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+      return a.path.localeCompare(b.path); // Deterministic tie-breaker
+    })
     .slice(0, 15); // candidate pool for budget
 
   perf.analysis = Date.now() - perf.start - perf.scan;
@@ -125,7 +124,7 @@ TOP CONTEXT CONTENT:
 
   // Build prompt with dynamic budget
   const budget = buildPromptWithBudget({
-    systemPrompt: baseSystemPrompt,
+    systemPrompt: systemPrompt,
     userQuery: input,
     files: rankedSnippets,
     history: history,
