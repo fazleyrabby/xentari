@@ -21,6 +21,10 @@ export function isTooLarge(content: string) {
 export function hasLowSignal(content: string, terms: string[]) {
   if (terms.length === 0) return false;
   
+  // Broad queries like "analyze project" shouldn't filter by signal
+  const broadTerms = ['analyze', 'project', 'structure', 'architecture', 'overview'];
+  if (terms.some(t => broadTerms.includes(t))) return false;
+
   let matches = 0;
   const lowerContent = content.toLowerCase();
 
@@ -28,6 +32,10 @@ export function hasLowSignal(content: string, terms: string[]) {
     if (lowerContent.includes(term.toLowerCase())) matches++;
   }
 
+  // If we only have 1-2 search terms, be very lenient
+  if (terms.length <= 2) return matches === 0;
+  
+  // Otherwise require at least a small signal
   return matches === 0;
 }
 

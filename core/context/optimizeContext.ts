@@ -1,4 +1,4 @@
-import { isNoiseFile, isTooLarge, hasLowSignal, extractQueryTerms, boostImportant } from './noiseFilter';
+import { isNoiseFile, isTooLarge, hasLowSignal, extractQueryTerms, boostImportant } from './noiseFilter.ts';
 
 export interface FileSnippet {
   path: string;

@@ -323,7 +323,7 @@ if (values.review && !task && !process.stdin.isTTY) {
   } else {
     const result = await runAgent({
       input: task,
-      projectDir: process.cwd()
+      projectDir
     });
 
     console.log(result.message);

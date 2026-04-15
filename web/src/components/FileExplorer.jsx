@@ -44,6 +44,15 @@ function FileNode({ node, projectId, onFileClick }) {
           )}
         </span>
         <span className="truncate">{node.name}</span>
+        {node.type === "file" && (
+          <button 
+            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(node.path); }}
+            className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-zinc-300 ml-auto"
+            title="Copy relative path"
+          >
+            <CopyIcon />
+          </button>
+        )}
         {loading && <span className="animate-spin text-[8px]">⌛</span>}
       </div>
 
@@ -84,7 +93,9 @@ export default function FileExplorer({ projectId, onFileClick }) {
     }
   };
 
-  if (!projectId) return <div className="p-4 text-[10px] text-zinc-600 italic">Select a project to explore files.</div>;
+  const hasProject = !!projectId;
+
+  if (!hasProject) return <div className="p-4 text-[10px] text-zinc-600 italic">Select a project to explore files.</div>;
 
   return (
     <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
@@ -115,6 +126,14 @@ function FileIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-500">
       <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
     </svg>
   );
 }

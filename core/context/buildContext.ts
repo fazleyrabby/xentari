@@ -15,8 +15,17 @@ export function scoreFile(file: { path: string; content: string }, input: string
   if (p.split("/").length <= 2) score += 2;
 
   if (p.includes("index") || p.includes("main") || p.includes("app") || p.includes("server")) score += 3;
-  if (p.includes("config") || p.includes("routes") || p.includes("package") || p.includes("composer")) score += 3;
-  if (p.includes("node_modules") || p.includes("dist") || p.includes("build") || p.includes("public")) score -= 3;
+  if (p.includes("config") || p.includes("routes") || p.includes("package") || p.includes("composer") || p.endsWith(".php")) score += 2;
+  
+  // Noise Penalties
+  if (p.includes('/public/')) score -= 4;
+  if (p.includes('/vendor/')) score -= 4;
+  if (p.includes('/node_modules/')) score -= 5;
+
+  // Core Boosts
+  if (p.includes('/routes/')) score += 3;
+  if (p.includes('/app/')) score += 3;
+  if (p.includes('/src/')) score += 2;
 
   if (project?.type?.includes("backend")) {
     if (p.includes("routes")) score += 2;
@@ -27,11 +36,26 @@ export function scoreFile(file: { path: string; content: string }, input: string
 }
 
 export function buildContext(projectDir) {
-  const allFiles = globSync("**/*.{js,ts}", {
-    cwd: projectDir,
-    ignore: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.*/**"],
-    nodir: true
+  const absProjectDir = path.resolve(projectDir);
+  console.log('[XENTARI] SCANNING:', absProjectDir);
+  
+  console.time('[XENTARI] SCAN');
+  const allFiles = globSync("**/*.{js,ts,php,py,go,astro,vue,svelte,css,html}", {
+    cwd: absProjectDir,
+    ignore: [
+      "**/node_modules/**", 
+      "**/vendor/**", 
+      "**/dist/**", 
+      "**/build/**", 
+      "**/.*/**",
+      "**/storage/**",
+      "**/bootstrap/cache/**"
+    ],
+    nodir: true,
+    follow: false
   });
+  console.timeEnd('[XENTARI] SCAN');
+  console.log('[XENTARI] FILES FOUND:', allFiles.length);
 
   // Smart selection of important files based on structure and common patterns
   const priorityTerms = ["index", "main", "app", "server", "routes", "api", "service", "model", "controller"];

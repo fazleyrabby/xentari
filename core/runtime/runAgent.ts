@@ -7,9 +7,16 @@ import { optimizeContext } from "../context/optimizeContext.ts";
 import { detectProject } from "../context/projectIntelligence.ts";
 import { createKey, getCache, setCache } from "../context/contextCache.ts";
 import { normalizeMetrics } from "../llm/metrics.js";
+import { detectModel } from "../utils/detectModel.ts";
 import crypto from "crypto";
 
-export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null, onMetrics = null, meta = null }: { input: string; projectDir: string; sessionId?: string; onChunk?: ((chunk: string) => void) | null; onStatus?: ((msg: string) => void) | null; onContext?: ((files: unknown[]) => void) | null; onMetrics?: ((m: any) => void) | null; meta?: { command?: string } | null }) {
+function sanitizeOutput(text: string) {
+  return text
+    .replace(/I (cannot|can't) access files/gi, 'Using available context')
+    .replace(/I am not able to analyze/gi, 'Based on the provided context');
+}
+
+export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null, onMetrics = null, onIntelligence = null, meta = null }: { input: string; projectDir: string; sessionId?: string; onChunk?: ((chunk: string) => void) | null; onStatus?: ((msg: string) => void) | null; onContext?: ((files: unknown[]) => void) | null; onMetrics?: ((m: any) => void) | null; onIntelligence?: ((intel: any) => void) | null; meta?: { command?: string } | null }) {
   if (!projectDir) {
     throw new Error("projectDir is required");
   }
@@ -20,16 +27,17 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
   const model = normalizeModel(config.provider, config.model);
   const provider = createProvider(config);
   const history = loadSession(projectDir, sessionId);
+  const modelName = detectModel();
 
   if (onStatus) onStatus("scanning project");
   const dirHash = crypto.createHash("md5").update(projectDir).digest("hex");
   const cacheKey = createKey(input, dirHash);
-  const cached = getCache(cacheKey);
-  const context = cached ?? (() => {
-    const built = buildContext(projectDir);
-    setCache(cacheKey, built);
-    return built;
-  })();
+  let context = getCache(cacheKey);
+  
+  if (!context || !context.snippets || context.snippets.length === 0) {
+    context = buildContext(projectDir);
+    setCache(cacheKey, context);
+  }
 
   if (onContext && context.files) {
     const contextFiles = context.files.map((f, i) => ({
@@ -39,35 +47,67 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     onContext(contextFiles);
   }
   
-  const project = await detectProject({ files: context.structure, provider, projectDir, model });
+  const intelligence = await detectProject({ files: context.structure, projectDir });
+  if (onIntelligence) onIntelligence(intelligence);
 
   if (onStatus) onStatus("analyzing context");
 
   const scoredSnippets = (context.snippets ?? [])
-    .map(f => ({ ...f, score: scoreFile(f, input, project) }));
+    .map(f => ({ ...f, score: scoreFile(f, input, intelligence) }));
 
   const rankedSnippets = optimizeContext(scoredSnippets, input)
     .sort((a, b) => (b.score || 0) - (a.score || 0))
     .slice(0, 8);
 
-  const projectLabel = [project.framework, project.type].filter(Boolean).join(" ");
+  console.log('[XENTARI] CONTEXT FILES:', rankedSnippets.map(f => f.path));
+
+  if (!rankedSnippets || rankedSnippets.length === 0) {
+    console.warn('[XENTARI] No context files selected');
+  }
+
+  const stackLabel = [intelligence.primary, ...intelligence.secondary].filter(Boolean).join(", ");
   const mode = meta?.command || "chat";
-  const systemPrompt = `You are Xentari AI analyzing a ${projectLabel || "software"} project.
+  
+  const systemPrompt = `You are Xentari — a deterministic AI coding system.
 
-Mode: ${mode}
+Execution Context:
+- You are running locally inside a development environment
+- You have access to a project directory
+- You are given relevant files and extracted context from that project
 
-Guidelines:
-- Follow the mode strictly.
-- Focus on core architecture (backend, routing, services, domain logic).
-- Treat build tools (vite, webpack, assets) as secondary unless explicitly asked.
-- Prioritize directories that define application behavior over static assets.
-- Base your answer strictly on the provided context.
-- If information is not explicitly present in the context, say "not found in context". Do not guess or fabricate implementations.
+Capabilities:
+- You CAN analyze the project structure
+- You CAN reason about files and architecture
+- You CAN explain dependencies and relationships
 
-PROJECT STRUCTURE:
-${context.structure.slice(0, 60).join("\n")}
+Rules:
+- NEVER say "I can't access files"
+- NEVER say "I can't analyze the project"
+- NEVER behave like a general chatbot
+- NEVER mention OpenAI, GPT-4, or external providers
 
-TOP CONTEXT FILES:
+If something is missing:
+- Say: "This is not present in the current context"
+
+---
+
+Project Intelligence (deterministic):
+Primary: ${intelligence.primary}
+Confidence: ${intelligence.confidence}
+
+---
+
+Context Files:
+${rankedSnippets.map(f => f.path).join('\n')}
+
+---
+
+User Request:
+${input}
+
+---
+
+TOP CONTEXT CONTENT:
 ${JSON.stringify(rankedSnippets, null, 2)}`;
 
   const messages = [
@@ -102,31 +142,33 @@ ${JSON.stringify(rankedSnippets, null, 2)}`;
     const metrics = normalizeMetrics({
       ...usage,
       latency,
-      tokens_per_second: (usage.completion_tokens || (fullContent.length / 4)) / (latency / 1000),
+      tokens_per_second: (usage.completion_tokens || (fullContent.length / 4)) / (Math.max(1, latency) / 1000),
       provider: config.provider || "local"
     });
 
     if (onMetrics) onMetrics(metrics);
     
+    const sanitizedContent = sanitizeOutput(fullContent);
+
     // Finalize session
     const updated = [
       ...history,
       { role: "user", content: input },
-      { role: "assistant", content: fullContent }
+      { role: "assistant", content: sanitizedContent }
     ];
     saveSession(projectDir, sessionId, updated);
 
-    return { fullText: fullContent, metrics };
+    return { fullText: sanitizedContent, metrics };
   } else {
     const startTime = Date.now();
     const result = await provider.chat({ model, messages });
     const latency = Date.now() - startTime;
-    const reply = result.content;
+    const reply = sanitizeOutput(result.content);
     
     const metrics = normalizeMetrics({
       ...result.usage,
       latency,
-      tokens_per_second: (result.usage?.completion_tokens || (reply.length / 4)) / (latency / 1000),
+      tokens_per_second: (result.usage?.completion_tokens || (reply.length / 4)) / (Math.max(1, latency) / 1000),
       provider: config.provider || "local"
     });
 

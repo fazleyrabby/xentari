@@ -1,27 +1,24 @@
 import { useState, useEffect } from "react";
 
-export default function FilePreview({ file, content, highlightLine, onRunAgent }) {
+export default function FilePreview({ file, content, highlightLine, onRunAgent, onAppendToChat }) {
   const [selection, setSelection] = useState(null);
   const [activeLine, setActiveLine] = useState(null);
-
-  if (!content) return null;
-
-  const lines = content.split("\n");
+  const [menu, setMenu] = useState(null);
 
   // Reset active line when file changes
-  useEffect(() => { setActiveLine(null); }, [file]);
+  useEffect(() => { setActiveLine(null); setMenu(null); }, [file]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e) => {
     const sel = window.getSelection();
     const text = sel?.toString().trim();
 
     if (!text || sel.rangeCount === 0) {
-      setSelection(null);
+      if (!menu) setSelection(null);
       return;
     }
 
     // Optional: limit size
-    if (text.length > 500) return;
+    if (text.length > 1000) return;
 
     try {
       const range = sel.getRangeAt(0);
@@ -37,6 +34,31 @@ export default function FilePreview({ file, content, highlightLine, onRunAgent }
     } catch (e) {
       setSelection(null);
     }
+  };
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    const sel = window.getSelection();
+    const text = sel?.toString().trim();
+
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      text: text || null
+    });
+  };
+
+  const copyToChat = () => {
+    if (!menu?.text) return;
+    const msg = `User referenced file: ${file}\n\`\`\`\n${menu.text}\n\`\`\``;
+    onAppendToChat?.(msg);
+    setMenu(null);
+    setSelection(null);
+  };
+
+  const copyPath = () => {
+    navigator.clipboard.writeText(file);
+    setMenu(null);
   };
 
   const handleExplain = () => {
@@ -67,7 +89,30 @@ export default function FilePreview({ file, content, highlightLine, onRunAgent }
   }
 
   return (
-    <div className="relative" onMouseUp={handleMouseUp}>
+    <div className="relative" onMouseUp={handleMouseUp} onContextMenu={handleContextMenu} onClick={() => setMenu(null)}>
+      {menu && (
+        <div 
+          className="fixed z-[100] bg-zinc-900 border border-zinc-800 rounded shadow-2xl py-1 min-w-[120px] animate-fade-in"
+          style={{ top: menu.y, left: menu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {menu.text && (
+            <button 
+              onClick={copyToChat}
+              className="w-full text-left px-3 py-1.5 text-[10px] text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+            >
+              Copy to chat
+            </button>
+          )}
+          <button 
+            onClick={copyPath}
+            className="w-full text-left px-3 py-1.5 text-[10px] text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors"
+          >
+            Copy relative path
+          </button>
+        </div>
+      )}
+
       {selection && (
         <div 
           className="fixed z-50 bg-zinc-900 border border-zinc-800 rounded shadow-xl px-2 py-1 flex gap-2 items-center animate-fade-in"

@@ -9,6 +9,7 @@ import FileDrawer from "./components/FileDrawer";
 import FileExplorer from "./components/FileExplorer";
 import { parseCommand } from "./utils/parseCommand";
 import { getCommandPrompt } from "./utils/commandPrompts";
+import { detectFileReference } from "./utils/detectFileReference";
 
 const PHASE_LABELS = {
   thinking: "Thinking",
@@ -22,7 +23,6 @@ const PHASE_LABELS = {
 export default function App() {
   const [state, setState] = useState({});
   const [prompt, setPrompt] = useState("");
-  const [running, setRunning] = useState(false);
   const [config, setConfig] = useState({ projectDir: "", model: "", baseUrl: "", projectId: "" });
   const [session, setSession] = useState({ id: "default", messages: [], activeProjectId: null });
   const [sessions, setSessions] = useState(["default"]);
@@ -32,6 +32,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [newProjectPath, setNewProjectPath] = useState("");
   const [currentPhase, setCurrentPhase] = useState(null);
+  const [runningSessionId, setRunningSessionId] = useState(null);
   const [showAddProject, setShowAddProject] = useState(false);
   const [contextFiles, setContextFiles] = useState([]);
   const [showLeft, setShowLeft] = useState(true);
@@ -43,34 +44,86 @@ export default function App() {
   const [fileContent, setFileContent] = useState("");
   const [modifiedContent, setModifiedContent] = useState("");
   const [highlightLine, setHighlightLine] = useState(null);
+  const [detectedModelName, setDetectedModelName] = useState("");
 
   const bottomRef = useRef(null);
   const hiddenPickerRef = useRef(null);
+
+  const enrichInput = async (input, activeProjectPath) => {
+    const ref = detectFileReference(input);
+    if (!ref) return input;
+
+    try {
+      const res = await fetch(`/api/file?projectId=${config.projectId}&path=${encodeURIComponent(ref.path)}`);
+      const data = await res.json();
+      
+      if (data.error) return input;
+
+      const content = data.content || "";
+      let snippet = content;
+
+      if (ref.line) {
+        const lines = content.split('\n');
+        const start = Math.max(0, ref.line - 10);
+        const end = Math.min(lines.length, ref.line + 10);
+        snippet = lines.slice(start, end).join('\n');
+      }
+
+      return `User referenced file: ${ref.path}${ref.line ? ` (Line: ${ref.line})` : ''}
+
+File content:
+${snippet}
+
+---
+
+${input}`;
+    } catch (e) {
+      return input;
+    }
+  };
 
   const fetchConfig = async () => {
     try {
       const res = await fetch("/config");
       const data = await res.json();
+      
+      // Also fetch projects to resolve ID if needed
+      const pRes = await fetch("/api/projects");
+      const projectsList = await pRes.json();
+      setProjects(projectsList);
+
       setConfig(prev => {
+        const projectDir = data.projectDir || prev.projectDir || "";
+        let projectId = data.projectId || prev.projectId || "";
+        
+        if (!projectId && projectDir && projectsList.length > 0) {
+          const match = projectsList.find(p => p.path === projectDir);
+          if (match) projectId = match.id;
+        }
+
         const newCfg = {
           ...prev,
           ...data,
-          projectDir: data.projectDir || prev.projectDir || "",
+          projectDir,
           model: data.model || prev.model || "",
           baseUrl: data.baseUrl || prev.baseUrl || "",
-          projectId: prev.projectId || data.projectId || ""
+          projectId
         };
-        if (newCfg.projectDir) fetchSession("default", newCfg.projectDir);
+        if (newCfg.projectDir) {
+          fetchSession("default", newCfg.projectDir);
+          fetchSessions(newCfg.projectDir);
+        }
         return newCfg;
       });
     } catch (err) {}
   };
 
   const saveConfig = async (newCfg) => {
+    const cfg = newCfg || config;
     await fetch("/config", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newCfg || config)
+      body: JSON.stringify(cfg)
     });
     fetchConfig();
   };
@@ -92,12 +145,57 @@ export default function App() {
     } catch (err) {}
   };
 
+  const fetchSessions = async (projectDir) => {
+    try {
+      const dir = projectDir || config.projectDir;
+      if (!dir) return;
+      const res = await fetch(`/session/list?projectDir=${encodeURIComponent(dir)}`);
+      const list = await res.json();
+      setSessions(list);
+    } catch (err) {}
+  };
+
   const fetchSession = async (id = "default", projectDir) => {
     try {
       const dir = projectDir || config.projectDir;
-      const res = await fetch(`/session/load/${id}?projectDir=${encodeURIComponent(dir || "")}`);
+      if (!dir) return;
+      const res = await fetch(`/session/load/${id}?projectDir=${encodeURIComponent(dir)}`);
       const data = await res.json();
       setSession(data);
+      fetchSessions(dir);
+
+      if (runningSessionId !== id) {
+        setContextFiles([]);
+        setTimeline([]);
+        setCurrentPhase(null);
+      }
+    } catch (err) {}
+  };
+
+  const createNewSession = async () => {
+    if (!config.projectDir) return;
+    try {
+      const res = await fetch("/session/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectDir: config.projectDir })
+      });
+      const data = await res.json();
+      fetchSession(data.id);
+    } catch (err) {}
+  };
+
+  const deleteSession = async (id) => {
+    if (!config.projectDir) return;
+    try {
+      await fetch(`/session/${id}?projectDir=${encodeURIComponent(config.projectDir)}`, {
+        method: "DELETE"
+      });
+      if (session.id === id) {
+        fetchSession("default");
+      } else {
+        fetchSessions();
+      }
     } catch (err) {}
   };
 
@@ -105,7 +203,7 @@ export default function App() {
 
   const runAgent = async (options) => {
     const text = typeof options === "string" ? options : (options?.input ?? prompt);
-    if (!text.trim() || running) return;
+    if (!text.trim() || runningSessionId) return;
 
     if (!config.projectDir) {
       setSession(prev => ({
@@ -126,16 +224,20 @@ export default function App() {
     const command = parseCommand(text);
     const commandType = (typeof options === "object" && options?.meta?.command) || command.type;
 
-    const currentPrompt = command.type === "chat"
+    let currentPrompt = command.type === "chat"
       ? command.query
       : getCommandPrompt(command.type, command.query);
+
+    // ENRICH INPUT (File Injection)
+    currentPrompt = await enrichInput(currentPrompt, config.projectDir);
 
     if (typeof options === "string" || !options) { setPrompt(""); setActiveCommand("chat"); }
     const userMsg = { role: "user", content: currentPrompt };
     const historyBefore = [...session.messages, userMsg];
+    const activeSessionId = session.id;
 
     setSession(prev => ({ ...prev, messages: historyBefore }));
-    setRunning(true);
+    setRunningSessionId(activeSessionId);
     bufferRef.current = "";
     setContextFiles([]);
     setTimeline([]);
@@ -149,24 +251,33 @@ export default function App() {
         const data = JSON.parse(event.data);
 
         if (data.type === "status") {
-          if (data.message === "generating response") {
-            setCurrentPhase("responding");
-          } else {
-            setCurrentPhase(data.message.replace(" ", "-"));
-          }
-          setTimeline(prev => [...prev, { message: data.message, time: Date.now() }]);
+          setSession(prev => {
+            if (prev.id !== activeSessionId) return prev;
+            if (data.message === "generating response") {
+              setCurrentPhase("responding");
+            } else {
+              setCurrentPhase(data.message.replace(" ", "-"));
+            }
+            setTimeline(prevT => [...prevT, { message: data.message, time: Date.now() }]);
+            return prev;
+          });
         }
 
         if (data.type === "chunk") {
           bufferRef.current += data.content;
-          const aiMsg = { role: "assistant", content: bufferRef.current };
-          setSession(prev => ({
-            ...prev,
-            messages: [...historyBefore, aiMsg]
-          }));
+          const currentText = bufferRef.current;
+          
+          setSession(prev => {
+            if (prev.id !== activeSessionId) return prev;
+            const aiMsg = { role: "assistant", content: currentText };
+            return {
+              ...prev,
+              messages: [...historyBefore, aiMsg]
+            };
+          });
 
           // Simple code block detection for diff
-          const match = bufferRef.current.match(/```(?:\w+)?\n([\s\S]+?)```/);
+          const match = currentText.match(/```(?:\w+)?\n([\s\S]+?)```/);
           if (match && match[1] && selectedFile) {
             setModifiedContent(match[1].trim());
           }
@@ -177,18 +288,25 @@ export default function App() {
         }
 
         if (data.type === "metrics") {
-          setState(prev => ({ ...prev, metrics: data.metrics }));
+          setState(prevS => ({ ...prevS, metrics: data.metrics }));
+        }
+
+        if (data.type === "intelligence") {
+          setState(prevS => ({ ...prevS, intelligence: data.intelligence }));
         }
 
         if (data.type === "done" || data.type === "error") {
           if (data.type === "error") {
-             setSession(prev => ({
-                ...prev,
-                messages: [...historyBefore, { role: "assistant", content: `❌ Error: ${data.message}` }]
-             }));
+             setSession(prev => {
+                if (prev.id !== activeSessionId) return prev;
+                return {
+                  ...prev,
+                  messages: [...historyBefore, { role: "assistant", content: `❌ Error: ${data.message}` }]
+                };
+             });
           }
           eventSource.close();
-          setRunning(false);
+          setRunningSessionId(null);
           setCurrentPhase(null);
         }
       } catch (e) {
@@ -198,12 +316,15 @@ export default function App() {
 
     eventSource.onerror = () => {
       eventSource.close();
-      setRunning(false);
+      setRunningSessionId(null);
       setCurrentPhase(null);
-      setSession(prev => ({
-        ...prev,
-        messages: [...prev.messages, { role: "assistant", content: "❌ Error: Failed to connect to server stream. Ensure the backend is running at http://localhost:3000" }]
-      }));
+      setSession(prev => {
+        if (prev.id !== activeSessionId) return prev;
+        return {
+          ...prev,
+          messages: [...prev.messages, { role: "assistant", content: "❌ Error: Failed to connect to server stream. Ensure the backend is running at http://localhost:3000" }]
+        };
+      });
     };
   };
 
@@ -220,10 +341,16 @@ export default function App() {
     } catch (err) {}
   };
 
+  const appendToChat = (text) => {
+    setPrompt(prev => (prev ? prev + "\n\n" + text : text));
+  };
+
   const setProject = (p) => {
     const newCfg = { ...config, projectDir: p.path, projectId: p.id };
     setConfig(newCfg);
     saveConfig(newCfg);
+    fetchSession("default", p.path);
+    fetchSessions(p.path);
   };
 
   const openFile = async (filePath) => {
@@ -234,7 +361,15 @@ export default function App() {
     try {
       const res = await fetch(`/api/file?projectId=${config.projectId}&path=${encodeURIComponent(filePath)}`);
       const data = await res.json();
-      setFileContent(data.content || data.error || "");
+      
+      let content = "File content could not be read.";
+      if (typeof data.content === "string") {
+        content = data.content;
+      } else if (data.error) {
+        content = typeof data.error === "string" ? data.error : JSON.stringify(data.error);
+      }
+      
+      setFileContent(content);
       setHighlightLine(data.matchLine ?? null);
     } catch {
       setFileContent("Failed to load file.");
@@ -242,6 +377,7 @@ export default function App() {
   };
 
   const applyChanges = async (newContent) => {
+    if (!confirm("Are you sure you want to apply these changes? This will overwrite the existing file.")) return;
     try {
       const res = await fetch("/api/file/save", {
         method: "POST",
@@ -274,6 +410,8 @@ export default function App() {
     fetchConfig();
     fetchProjects();
     fetchModels();
+
+    fetch("/api/model").then(r => r.json()).then(d => setDetectedModelName(d.name)).catch(() => {});
 
     const poll = setInterval(async () => {
       try {
@@ -371,6 +509,45 @@ export default function App() {
             </div>
           </div>
 
+          <div className="border-t border-zinc-900 pt-4">
+            <div className="flex items-center justify-between px-2 mb-2">
+              <div className="text-[9px] uppercase text-zinc-600 tracking-tighter">Sessions</div>
+              <button 
+                onClick={createNewSession}
+                className="text-[10px] text-zinc-500 hover:text-white"
+                title="New Session"
+              >
+                +
+              </button>
+            </div>
+            <div className="space-y-1">
+              {sessions.map(s => (
+                <div 
+                  key={s} 
+                  className={`sidebar-item group rounded flex items-center justify-between ${session.id === s ? 'active' : ''}`}
+                >
+                  <div onClick={() => fetchSession(s)} className="flex items-center gap-2 flex-1 cursor-pointer truncate">
+                    <ChatIcon />
+                    <span className="truncate text-[10px]">{s === 'default' ? 'Default Chat' : s.slice(0, 8)}</span>
+                  </div>
+                  {s !== 'default' && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete session ${s}?`)) {
+                          deleteSession(s);
+                        }
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-500 px-1 transition-opacity"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="border-t border-zinc-900 pt-4 flex-1 flex flex-col min-h-0 overflow-hidden">
             <FileExplorer 
               projectId={config.projectId}
@@ -400,9 +577,15 @@ export default function App() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-             <div className="text-[10px] flex items-center gap-1.5 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
-                <div className={`w-1.5 h-1.5 rounded-full ${availableModels.length > 0 ? 'bg-green-500 shadow-[0_0_5px_green]' : 'bg-red-500'}`} />
-                <span className="text-zinc-400 hidden sm:inline">{config.model?.split(":")[0] || "No Model"}</span>
+             <div 
+               className="text-[10px] flex items-center gap-1.5 bg-zinc-900 px-2 py-1 rounded border border-zinc-800 cursor-help" 
+               title={state.intelligence?.signals ? `Detected via:\n${state.intelligence.signals.slice(0, 10).map(s => `• ${s.type}: ${s.value}`).join('\n')}${state.intelligence.signals.length > 10 ? '\n...' : ''}` : 'Detecting stack...'}
+             >
+                <div className={`w-1.5 h-1.5 rounded-full ${availableModels.length > 0 ? (state.intelligence?.confidence > 0.7 ? 'bg-emerald-500 shadow-[0_0_5px_#10b981]' : 'bg-green-500 shadow-[0_0_5px_green]') : 'bg-red-500'}`} />
+                <span className="text-zinc-400 hidden sm:inline">
+                  {state.intelligence?.primary ? `${state.intelligence.primary.toUpperCase()} • ` : ''}
+                  {detectedModelName || config.model?.split(":")[0] || "No Model"}
+                </span>
              </div>
              <button
                onClick={() => setShowContext(v => !v)}
@@ -425,7 +608,7 @@ export default function App() {
         </div>
 
         {/* TIMELINE */}
-        {timeline.length > 0 && <Timeline steps={timeline} />}
+        {runningSessionId === session.id && timeline.length > 0 && <Timeline steps={timeline} />}
 
         {/* MESSAGES */}
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-8 max-w-4xl mx-auto w-full">
@@ -472,11 +655,11 @@ export default function App() {
             </div>
           ))}
 
-          {currentPhase && (
+          {runningSessionId === session.id && currentPhase && (
             <div className="flex flex-col items-start animate-fade-in">
               <div className="chat-bubble chat-bubble-assistant text-zinc-500 flex items-center gap-2 italic">
                 <span className="agent-dot" />
-                {PHASE_LABELS[currentPhase]}...
+                {PHASE_LABELS[currentPhase] || currentPhase}...
               </div>
             </div>
           )}
@@ -529,8 +712,8 @@ export default function App() {
             </div>
             <button 
               onClick={() => runAgent()}
-              disabled={running || !prompt.trim()}
-              className={`absolute bottom-3 right-3 p-2 rounded-lg transition-all ${running || !prompt.trim() ? 'bg-zinc-800 text-zinc-600' : 'bg-white text-black hover:scale-105'}`}
+              disabled={!!runningSessionId || !prompt.trim()}
+              className={`absolute bottom-3 right-3 p-2 rounded-lg transition-all ${!!runningSessionId || !prompt.trim() ? 'bg-zinc-800 text-zinc-600' : 'bg-white text-black hover:scale-105'}`}
             >
               <SendIcon />
             </button>
@@ -549,6 +732,7 @@ export default function App() {
         onClose={() => { setSelectedFile(null); setModifiedContent(""); }}
         onRunAgent={(options) => { setSelectedFile(null); runAgent(options); }}
         onApplyChanges={applyChanges}
+        onAppendToChat={appendToChat}
       />
 
       {/* RIGHT — INFERENCE STATS — toggleable */}
@@ -682,6 +866,14 @@ function SendIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+    </svg>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
   );
 }

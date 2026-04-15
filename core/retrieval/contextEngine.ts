@@ -16,8 +16,7 @@ export type ContextBundle = {
 
 const RELATION_MAP: Record<string, string[]> = {
   "user.controller.js": ["user.service.js"],
-  "user.service.js": ["user.model.js"],
-  "todo.controller.js": ["todo.service.js"]
+  "user.service.js": ["user.model.js"]
 };
 
 /**

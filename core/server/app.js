@@ -5,7 +5,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import { getState } from "../ui/state.js";
 import { workspaceManager } from "../workspace/workspaceManager.js";
-import { loadSession, saveSession, listSessions, createSession } from "../session/store.ts";
+import { loadSession, saveSession, listSessions, createSession, deleteSession } from "../session/store.ts";
 
 import modelsRouter from "./routes/models.js";
 import filesRouter from "./routes/files.js";
@@ -13,6 +13,7 @@ import { runAgent } from "../runtime/runAgent.ts";
 import { loadConfig, saveConfig } from "../../config/configManager.js";
 import { normalizeMetrics } from "../llm/metrics.js";
 import { setMetrics } from "../ui/state.js";
+import { detectModel } from "../utils/detectModel.ts";
 
 const app = express();
 app.use(cors());
@@ -81,6 +82,9 @@ app.get("/chat/stream", async (req, res) => {
       },
       onContext: (files) => {
         if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "context", files: files.slice(0, 8) })}\n\n`);
+      },
+      onIntelligence: (intelligence) => {
+        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "intelligence", intelligence })}\n\n`);
       },
       onMetrics: (metrics) => {
         setMetrics(metrics);
@@ -189,8 +193,18 @@ app.post("/session/create", (req, res) => {
   res.json(createSession(projectDir));
 });
 
+app.delete("/session/:id", (req, res) => {
+  const { projectDir } = req.query;
+  deleteSession(projectDir, req.params.id);
+  res.json({ success: true });
+});
+
 app.post("/session/set-project", (req, res) => {
   res.json({ success: true });
+});
+
+app.get("/api/model", (req, res) => {
+  res.json({ name: detectModel() });
 });
 
 app.get("/state", (req, res) => {
