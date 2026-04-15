@@ -747,8 +747,16 @@ ${input}`;
                  <div className="text-lg font-bold text-white tabular-nums">{state.metrics?.latencyMs ?? "-"} <span className="text-[9px] text-zinc-700">ms</span></div>
               </div>
               <div className="space-y-1">
+                 <div className="text-[9px] uppercase text-zinc-600 tracking-tight">First Token</div>
+                 <div className="text-lg font-bold text-zinc-400 tabular-nums">{state.metrics?.ttf ?? "-"} <span className="text-[9px] text-zinc-700">ms</span></div>
+              </div>
+              <div className="space-y-1">
                  <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Speed</div>
                  <div className="text-lg font-bold text-white tabular-nums">{state.metrics?.tokensPerSecond ?? "-"} <span className="text-[9px] text-zinc-700">TPS</span></div>
+              </div>
+              <div className="space-y-1">
+                 <div className="text-[9px] uppercase text-zinc-600 tracking-tight">Discovery</div>
+                 <div className="text-lg font-bold text-zinc-400 tabular-nums">{(state.metrics?.perf?.scan || 0) + (state.metrics?.perf?.analysis || 0)} <span className="text-[9px] text-zinc-700">ms</span></div>
               </div>
            </div>
 

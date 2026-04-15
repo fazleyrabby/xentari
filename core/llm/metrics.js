@@ -37,6 +37,8 @@ export function normalizeMetrics(raw = {}) {
     totalTokens,
     tokensPerSecond: (typeof tokensPerSecond === "number" && isFinite(tokensPerSecond)) ? Math.round(tokensPerSecond) : null,
     latencyMs: (typeof latencyMs === "number" && isFinite(latencyMs)) ? Math.round(latencyMs) : null,
+    ttf: raw.ttf || null,
+    perf: raw.perf || null,
     provider: raw.provider || "unknown"
   };
 }

@@ -13,6 +13,8 @@ export default function FileDrawer({
   onAppendToChat 
 }) {
   const [view, setView] = useState("preview");
+  const [width, setWidth] = useState(600);
+  const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
     if (modifiedContent) {
@@ -21,6 +23,26 @@ export default function FileDrawer({
       setView("preview");
     }
   }, [modifiedContent, file]);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      const newWidth = window.innerWidth - e.clientX;
+      if (newWidth > 300 && newWidth < window.innerWidth * 0.8) {
+        setWidth(newWidth);
+      }
+    };
+    const handleMouseUp = () => setIsResizing(false);
+
+    if (isResizing) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
 
   useEffect(() => {
     if (highlightLine !== null && highlightLine !== undefined) {
@@ -34,7 +56,16 @@ export default function FileDrawer({
   if (!file) return null;
 
   return (
-    <div className="fixed right-0 top-0 w-[600px] h-full bg-zinc-950 border-l border-zinc-800 flex flex-col z-40 animate-fade-in shadow-2xl">
+    <div 
+      className="fixed right-0 top-0 h-full bg-zinc-950 border-l border-zinc-800 flex flex-col z-40 animate-fade-in shadow-2xl"
+      style={{ width: `${width}px` }}
+    >
+      {/* RESIZE HANDLE */}
+      <div 
+        className="absolute left-0 top-0 w-1 h-full cursor-ew-resize hover:bg-emerald-500/50 transition-colors z-50"
+        onMouseDown={() => setIsResizing(true)}
+      />
+
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 flex-shrink-0 bg-zinc-900/30">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 overflow-hidden">

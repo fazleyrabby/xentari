@@ -84,18 +84,42 @@ export default function FilePreview({ file, content, highlightLine, onRunAgent, 
   };
 
   function getSnippet(i) {
-    return lines.slice(Math.max(0, i - 5), i + 6).join("\n");
+    return lines.slice(Math.max(0, i - 2), i + 3).join("\n");
   }
 
   function sendLineAction(label, i) {
     const snippet = getSnippet(i);
-    const msg = `${label}:\n\`\`\`\n${snippet}\n\`\`\`\n\n(from \`${file}\`, around line ${i + 1})`;
+    const msg = `${label}:\n\`\`\`\n${snippet}\n\`\`\`\n\n(from \`${file}\`, line ${i + 1})`;
     setActiveLine(null);
     onRunAgent(msg);
   }
 
   return (
     <div className="relative" onMouseUp={handleMouseUp} onContextMenu={handleContextMenu} onClick={() => setMenu(null)}>
+      {/* ACTION OVERLAY FOR ACTIVE LINE */}
+      {activeLine !== null && (
+        <div 
+          className="fixed z-[60] bg-zinc-900 border border-emerald-500/30 rounded shadow-2xl px-2 py-1 flex gap-1 items-center animate-fade-in"
+          style={{ 
+            top: document.getElementById(`line-${activeLine}`)?.getBoundingClientRect().top,
+            right: '20px' 
+          }}
+          onMouseUp={(e) => e.stopPropagation()}
+        >
+          <span className="text-[9px] text-zinc-500 font-bold mr-2 uppercase tracking-tighter">Line {activeLine + 1}</span>
+          {["Explain", "Analyze", "Ask"].map(label => (
+            <button
+              key={label}
+              onClick={(e) => { e.stopPropagation(); sendLineAction(label, activeLine); }}
+              className="text-[9px] bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded font-sans font-bold transition-colors"
+            >
+              {label}
+            </button>
+          ))}
+          <button onClick={() => setActiveLine(null)} className="ml-1 text-zinc-500 hover:text-white">✕</button>
+        </div>
+      )}
+
       {menu && (
         <div 
           className="fixed z-[100] bg-zinc-900 border border-zinc-800 rounded shadow-2xl py-1 min-w-[120px] animate-fade-in"
@@ -162,22 +186,9 @@ export default function FilePreview({ file, content, highlightLine, onRunAgent, 
                 <td className="select-none text-right pr-3 pl-3 text-[10px] text-zinc-600 w-8 align-top pt-[1px]">
                   {i + 1}
                 </td>
-                <td className={`pr-2 text-[11px] font-mono whitespace-pre leading-5 ${isHighlight ? "text-yellow-200" : "text-zinc-300"}`}>
+                <td className={`pr-2 text-[11px] font-mono leading-5 break-all overflow-hidden ${isHighlight ? "text-yellow-200" : "text-zinc-300"}`}>
                   <div className="flex items-center justify-between gap-2">
                     <span>{line || " "}</span>
-                    {isActive && (
-                      <div className="flex gap-1 flex-shrink-0" onMouseUp={(e) => e.stopPropagation()}>
-                        {["Explain", "Analyze", "Ask"].map(label => (
-                          <button
-                            key={label}
-                            onClick={(e) => { e.stopPropagation(); sendLineAction(label + " this code", i); }}
-                            className="text-[9px] bg-zinc-700 hover:bg-zinc-600 text-zinc-200 px-2 py-0.5 rounded font-sans"
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </td>
               </tr>

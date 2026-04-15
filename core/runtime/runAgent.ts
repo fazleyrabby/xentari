@@ -17,6 +17,8 @@ function sanitizeOutput(text: string) {
 }
 
 export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null, onMetrics = null, onIntelligence = null, meta = null }: { input: string; projectDir: string; sessionId?: string; onChunk?: ((chunk: string) => void) | null; onStatus?: ((msg: string) => void) | null; onContext?: ((files: unknown[]) => void) | null; onMetrics?: ((m: any) => void) | null; onIntelligence?: ((intel: any) => void) | null; meta?: { command?: string } | null }) {
+  const perf: any = { start: Date.now() };
+  
   if (!projectDir) {
     throw new Error("projectDir is required");
   }
@@ -38,11 +40,12 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     context = buildContext(projectDir);
     setCache(cacheKey, context);
   }
+  perf.scan = Date.now() - perf.start;
 
   if (onContext && context.files) {
     const contextFiles = context.files.map((f, i) => ({
-      path: f.path || f, // handle string array fallback
-      score: f.score ?? (context.files.length - i) // fallback ranking
+      path: f.path || f, 
+      score: f.score ?? (context.files.length - i) 
     }));
     onContext(contextFiles);
   }
@@ -51,7 +54,6 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
   if (onIntelligence) onIntelligence(intelligence);
 
   if (onStatus) onStatus("analyzing context");
-
   const scoredSnippets = (context.snippets ?? [])
     .map(f => ({ ...f, score: scoreFile(f, input, intelligence) }));
 
@@ -59,15 +61,20 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     .sort((a, b) => (b.score || 0) - (a.score || 0))
     .slice(0, 8);
 
+  perf.analysis = Date.now() - perf.start - perf.scan;
   console.log('[XENTARI] CONTEXT FILES:', rankedSnippets.map(f => f.path));
 
   if (!rankedSnippets || rankedSnippets.length === 0) {
     console.warn('[XENTARI] No context files selected');
   }
 
-  const stackLabel = [intelligence.primary, ...intelligence.secondary].filter(Boolean).join(", ");
   const mode = meta?.command || "chat";
   
+  // Compact context representation
+  const contextText = rankedSnippets
+    .map(f => `FILE: ${f.path}\nCONTENT:\n${f.content}\n---`)
+    .join('\n\n');
+
   const systemPrompt = `You are Xentari — a deterministic AI coding system.
 
 Execution Context:
@@ -91,7 +98,7 @@ If something is missing:
 
 ---
 
-Project Intelligence (deterministic):
+Project Intelligence:
 Primary: ${intelligence.primary}
 Confidence: ${intelligence.confidence}
 
@@ -108,7 +115,7 @@ ${input}
 ---
 
 TOP CONTEXT CONTENT:
-${JSON.stringify(rankedSnippets, null, 2)}`;
+${contextText}`;
 
   const messages = [
     { role: "system", content: systemPrompt },
@@ -119,12 +126,13 @@ ${JSON.stringify(rankedSnippets, null, 2)}`;
   if (onChunk) {
     if (onStatus) onStatus("generating response");
     let fullContent = "";
-    const startTime = Date.now();
+    let firstTokenTime = 0;
     const stream = provider.streamChat({ model, messages });
     let finalUsage = null;
 
     for await (const data of stream) {
       if (data.type === "chunk") {
+        if (!firstTokenTime) firstTokenTime = Date.now();
         fullContent += data.content;
         onChunk(data.content);
       } else if (data.type === "usage") {
@@ -132,8 +140,11 @@ ${JSON.stringify(rankedSnippets, null, 2)}`;
       }
     }
 
-    const latency = Date.now() - startTime;
-    // Estimate tokens if usage is missing (fallback: 1 token ~= 4 chars)
+    const end = Date.now();
+    const latency = end - perf.start;
+    const ttf = firstTokenTime ? (firstTokenTime - perf.start) : latency;
+
+    // Estimate tokens if usage is missing
     const usage = finalUsage || {
       prompt_tokens: Math.ceil((JSON.stringify(messages).length) / 4),
       completion_tokens: Math.ceil(fullContent.length / 4),
@@ -142,8 +153,10 @@ ${JSON.stringify(rankedSnippets, null, 2)}`;
     const metrics = normalizeMetrics({
       ...usage,
       latency,
-      tokens_per_second: (usage.completion_tokens || (fullContent.length / 4)) / (Math.max(1, latency) / 1000),
-      provider: config.provider || "local"
+      ttf,
+      tokens_per_second: (usage.completion_tokens || (fullContent.length / 4)) / (Math.max(1, end - firstTokenTime) / 1000),
+      provider: config.provider || "local",
+      perf
     });
 
     if (onMetrics) onMetrics(metrics);
@@ -162,14 +175,16 @@ ${JSON.stringify(rankedSnippets, null, 2)}`;
   } else {
     const startTime = Date.now();
     const result = await provider.chat({ model, messages });
-    const latency = Date.now() - startTime;
+    const end = Date.now();
+    const latency = end - perf.start;
     const reply = sanitizeOutput(result.content);
     
     const metrics = normalizeMetrics({
       ...result.usage,
       latency,
-      tokens_per_second: (result.usage?.completion_tokens || (reply.length / 4)) / (Math.max(1, latency) / 1000),
-      provider: config.provider || "local"
+      tokens_per_second: (result.usage?.completion_tokens || (reply.length / 4)) / (Math.max(1, end - startTime) / 1000),
+      provider: config.provider || "local",
+      perf
     });
 
     if (onMetrics) onMetrics(metrics);
