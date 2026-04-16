@@ -32,7 +32,8 @@ export function listSessions(projectDir) {
 
   return fs.readdirSync(dir)
     .filter(f => f.endsWith(".json"))
-    .map(f => f.replace(".json", ""));
+    .map(f => f.replace(".json", ""))
+    .sort();
 }
 
 export function createSession(projectDir) {
