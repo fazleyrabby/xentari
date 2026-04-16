@@ -101,24 +101,25 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     throw new Error("projectDir is required");
   }
 
-  const config = loadConfig(projectDir);
-  const model = normalizeModel(config.provider, config.model);
-  const provider = createProvider(config);
-  
-  const history: any[] = [];
   const context = buildContext(projectDir);
   perf.scan = 0; // Neutralized
 
   const intelligence = await detectProject({ files: context.structure, projectDir });
   if (onIntelligence) onIntelligence(intelligence);
 
-  // AST EXTRACTION OVERRIDE
+  // AST EXTRACTION OVERRIDE (Minimal Deterministic Path)
   const isAnalyzeRequest = input.toLowerCase().includes("analyze") && !input.toLowerCase().includes("modify");
   if (isAnalyzeRequest && (intelligence.primary === 'laravel' || intelligence.primary === 'php')) {
     if (onStatus) onStatus("ast extraction");
     const result = extractWithAST(projectDir);
-    return { fullText: result.text, metrics: { latency: 0 }, budget: null }; // Neutralized
+    return { fullText: result.text, metrics: { latency: 0 }, budget: null };
   }
+
+  // START RUNTIME INITIALIZATION (LLM Path Only)
+  const config = loadConfig(projectDir);
+  const model = normalizeModel(config.provider, config.model);
+  const provider = createProvider(config);
+  const history: any[] = [];
 
   // LLM GUARD FOR PHP/LARAVEL
   if (intelligence.primary === 'laravel' || intelligence.primary === 'php') {

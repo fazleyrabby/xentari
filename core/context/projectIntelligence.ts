@@ -126,8 +126,9 @@ export function getCachedProject(projectDir: string): ProjectIntelligence | null
 export function saveProjectCache(projectDir: string, data: any): void {
   const dir = path.join(projectDir, ".xentari");
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(projectDir, CACHE_FILE), JSON.stringify({ ...data, timestamp: Date.now() }, null, 2));
+  fs.writeFileSync(path.join(projectDir, CACHE_FILE), JSON.stringify({ ...data, timestamp: 0 }, null, 2));
 }
+
 
 export async function detectProject({
   files,
