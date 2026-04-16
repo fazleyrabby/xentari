@@ -1,19 +1,5 @@
 [33m  ⚠[0m ⚠ Running inside Xentari project
-[XENTARI] SCANNING: /Users/rabbi/Desktop/Projects/ai/xentari
-[XENTARI] SCAN: 56.62ms
-[XENTARI] FILES FOUND: 206
-- [core/server/routes/models.js] → [function] → [export default] [router]
-- [core/modelRegistry.js] → [class] → [ModelRegistry] [ModelRegistry]
-- [core/server/routes/files.js] → [function] → [export default] [router]
-- [core/index.ts] → [function] → [normalizeImportPath] [normalizeImportPath]
-- [server.js] → [function] → [startWS] [startWS]
-- [core/models/modelMerger.js] → [function] → [mergeModels] [mergeModels]
-- [core/server/app.js] → [function] → [app] [app]
-- [tests/index.js] → [import] → [unit/parser.unit.test.js] [unit/parser.unit.test.js]
-- [web/index.html] → [html] → [web/index.html] [web/index.html]
-- [core/agents/index.js] → [export] → [plan] [plan]
-- [core/approval/approvalTypes.ts] → [export] → [APPROVAL_TYPES] [APPROVAL_TYPES]
-- [core/approval/approver.ts] → [function] → [askApproval] [askApproval]
-- [core/server/ws.js] → [function] → [startWS] [startWS]
-- [core/stacks/index.js] → [export] → [getStackProfile] [getStackProfile]
-- [core/tui/index.js] → [import] → [stage] [stage]
+[XENTARI] SCANNING: /Users/rabbi/Desktop/Projects/Laravel/rh-ecommerce
+[XENTARI] SCAN: 258.842ms
+[XENTARI] FILES FOUND: 2815
+Extraction failed or not a PHP project.
