@@ -19,25 +19,93 @@ export function strictModeGuard(
 ): GuardResult {
   const violations: string[] = [];
 
-  // 1. SPECULATIVE PATTERN CHECK (Deterministic Refusal)
-  const speculativePatterns = [
-    /\blikely\b/i,
-    /\bprobably\b/i,
-    /\btypically\b/i,
-    /\busually\b/i,
-    /\bcommon(ly)?\b/i,
-    /\b(standard|typical|expected) .*(structure|pattern|setup)\b/i,
-    /\b(assum|presum|suppos)(ing|e|ed)\b/i,
-    /\b(might|may|could) be\b/i
-  ];
+  // 1. DETERMINISTIC VOCABULARY GUARD
+  const allowedVocabulary = new Set([
+    "class", "method", "defines", "returns", "string", "number", "boolean", "void", "relation", "mixed",
+    "has-many", "has-one", "belongs-to", "belongs-to-many"
+  ]);
 
-  for (const pattern of speculativePatterns) {
-    if (pattern.test(response)) {
-      violations.push(`Speculative claim detected: "${response.match(pattern)?.[0]}"`);
+  if (/[A-Z]/.test(response) && !response.includes("not present")) {
+    violations.push("Uppercase letters detected. All IR output MUST be lowercase.");
+  }
+
+  // 2. FORMAT GUARD (Extraction Contract)
+  const lines = response.split('\n').filter(l => l.trim().length > 0);
+  // Pattern: [path] → [symbol] → [action] [normalized-type]
+  const formatPattern = /^.+? \u2192 .+? \u2192 (defines|returns) ([a-z\-]+)$/;
+  
+  const fileSummaryMap: Record<string, { hasClass: boolean; methods: number; lines: string[] }> = {};
+
+  for (const line of lines) {
+    if (line.includes("not present")) continue;
+
+    const match = line.match(formatPattern);
+    if (!match) {
+      violations.push(`Invalid IR format or verb on line: "${line.slice(0, 50)}..."`);
+    } else {
+      const type = match[2];
+      if (!allowedVocabulary.has(type) && type !== "class") {
+        violations.push(`Forbidden token/type detected: "${type}"`);
+      }
+    }
+
+    if (line.includes('#') || line.startsWith('**')) {
+      violations.push("Headings or bold sections are forbidden");
+    }
+
+    if (!line.includes(' \u2192 ')) {
+      violations.push(`Line missing " \u2192 " separator: "${line}"`);
+    }
+
+    const parts = line.split(' \u2192 ');
+    if (parts.length >= 2) {
+      const filePath = parts[0].trim();
+      const symbol = parts[1].trim();
+      
+      // Every line MUST have a file path at the start
+      if (!filePath.includes('.') && !filePath.includes('/')) {
+        violations.push(`Line missing file path: "${line}"`);
+      }
+
+      if (!fileSummaryMap[filePath]) {
+        fileSummaryMap[filePath] = { hasClass: false, methods: 0, lines: [] };
+      }
+
+      fileSummaryMap[filePath].lines.push(line);
+
+      if (symbol.toLowerCase().startsWith('class ')) {
+        if (fileSummaryMap[filePath].hasClass) {
+          violations.push(`Duplicate class definition for ${filePath}`);
+        }
+        fileSummaryMap[filePath].hasClass = true;
+        // CLASS FIRST check
+        if (fileSummaryMap[filePath].lines.length > 1) {
+          violations.push(`Class definition MUST be the first line for ${filePath}`);
+        }
+      } else if (symbol.includes('(')) {
+        fileSummaryMap[filePath].methods++;
+      }
     }
   }
 
-  // 2. TOKEN GROUNDING (Single-pass context index)
+  // Enforcement: Every file mentioned MUST have EXACTLY one class definition and ALL methods
+  Object.entries(fileSummaryMap).forEach(([file, info]) => {
+    if (file.includes("not present")) return;
+    if (!info.hasClass && !file.endsWith('.json') && !file.endsWith('.yaml') && !file.endsWith('.config.js')) {
+      violations.push(`File-bound extraction failed: Missing class definition for ${file}`);
+    }
+    if (info.methods === 0 && !file.endsWith('.json') && !file.endsWith('.yaml') && !file.endsWith('.config.js')) {
+      violations.push(`No methods extracted for ${file}. Contract requires full method list per file.`);
+    }
+  });
+
+  // Duplicate Check
+  const uniqueLines = new Set(lines);
+  if (uniqueLines.size !== lines.length) {
+    violations.push("Duplicate lines detected in output");
+  }
+
+  // 3. TOKEN GROUNDING (Single-pass context index)
   const knownTokens = buildContextTokenSet(contextFiles);
   const entities = extractEntities(response);
 

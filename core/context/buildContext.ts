@@ -124,10 +124,11 @@ export function buildContext(projectDir) {
       // Deterministic tie-breaker
       return a.localeCompare(b);
     })
-    .slice(0, 20); // Top 20 candidate files
+    .slice(0, 20) // Top 20 candidate files
+    .sort((a, b) => a.localeCompare(b)); // FINAL STABLE SORT
 
   return {
-    structure: allFiles.slice(0, 100), // Show more structure (up to 100 files)
+    structure: [...allFiles].sort((a, b) => a.localeCompare(b)).slice(0, 100), // Stable structure
     snippets: importantFiles.map(file => {
       const full = path.join(projectDir, file);
       // Only read if it exists and is small enough

@@ -324,9 +324,9 @@ if (values.review && !task && !process.stdin.isTTY) {
     const result = await runAgent({
       input: task,
       projectDir
-    });
+    }) as any;
 
-    console.log(result.message);
+    console.log(result.fullText || result.message);
   }
 }
 
