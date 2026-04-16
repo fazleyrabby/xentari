@@ -10,7 +10,7 @@ import { detectModel } from "../utils/detectModel.ts";
 import { buildPromptWithBudget, estimateTokens } from "./contextBudget.ts";
 import { execSync } from "child_process";
 import path from "path";
-import { ProjectIR, Entity } from "../types/ir.ts";
+import { ProjectIR } from "../types/ir.ts";
 
 function sanitizeOutput(text: string) {
   return text
