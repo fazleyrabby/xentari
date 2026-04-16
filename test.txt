@@ -1,6 +1,6 @@
 [33m  ⚠[0m ⚠ Running inside Xentari project
 [XENTARI] SCANNING: /Users/rabbi/Desktop/Projects/Laravel/rh-ecommerce
-[XENTARI] SCAN: 244.369ms
+[XENTARI] SCAN: 344.009ms
 [XENTARI] FILES FOUND: 2815
 app/actions/fortify/createnewuser.php → class createnewuser → defines class
 app/actions/fortify/createnewuser.php → create() → returns mixed

@@ -89,7 +89,7 @@ export function strictModeGuard(
   }
 
   // Enforcement: Every file mentioned MUST have EXACTLY one class definition and ALL methods
-  Object.entries(fileSummaryMap).forEach(([file, info]) => {
+  Object.entries(fileSummaryMap).sort((a, b) => a[0].localeCompare(b[0])).forEach(([file, info]) => {
     if (file.includes("not present")) return;
     if (!info.hasClass && !file.endsWith('.json') && !file.endsWith('.yaml') && !file.endsWith('.config.js')) {
       violations.push(`File-bound extraction failed: Missing class definition for ${file}`);
