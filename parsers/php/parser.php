@@ -78,9 +78,21 @@ class IRVisitor extends NodeVisitorAbstract
 
             $params = [];
             foreach ($node->params as $param) {
+                $typeStr = 'mixed';
+                if ($param->type instanceof Node\UnionType) {
+                    $types = array_map(function($t) { return (string)$t; }, $param->type->types);
+                    $typeStr = implode('|', $types);
+                } else if ($param->type instanceof Node\NullableType) {
+                    $typeStr = '?' . (string)$param->type->type;
+                } else if ($param->type instanceof Node\IntersectionType) {
+                    $types = array_map(function($t) { return (string)$t; }, $param->type->types);
+                    $typeStr = implode('&', $types);
+                } else if ($param->type) {
+                    $typeStr = (string)$param->type;
+                }
                 $params[] = [
                     'name' => (string)$param->var->name,
-                    'type' => $param->type ? (string)$param->type : 'mixed'
+                    'type' => $typeStr
                 ];
             }
 

@@ -91,6 +91,8 @@ export function diffFiles(oldContent: string, newContent: string) {
     lines
   };
 }
+
+export function patchToUnified(projectDir: string, fileUpdates: { file: string; content: string }[]): string {
   const diffs: string[] = [];
 
   for (const update of fileUpdates) {

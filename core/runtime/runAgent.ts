@@ -10,7 +10,11 @@ import { detectModel } from "../utils/detectModel.ts";
 import { buildPromptWithBudget, estimateTokens } from "./contextBudget.ts";
 import { execSync } from "child_process";
 import path from "path";
+import { fileURLToPath } from "url";
 import { ProjectIR } from "../types/ir.ts";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function sanitizeOutput(text: string) {
   return text
@@ -75,7 +79,7 @@ function validateIR(projectIR: ProjectIR) {
 }
 
 function extractWithAST(projectDir: string): { ir: ProjectIR; text: string } {
-  const parserPath = path.join(process.cwd(), "parsers/php/parser.php").replace(/\\/g, "/");
+  const parserPath = path.join(__dirname, "../../parsers/php/parser.php").replace(/\\/g, "/");
   try {
     const cmd = `php "${parserPath}" "${projectDir}"`;
     const raw = execSync(cmd, { encoding: "utf-8", stdio: ['pipe', 'pipe', 'pipe'] });
@@ -107,12 +111,36 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
   const intelligence = await detectProject({ files: context.structure, projectDir });
   if (onIntelligence) onIntelligence(intelligence);
 
+  const { detectFramework } = await import("../index.ts");
+  const framework = detectFramework(projectDir);
+
   // AST EXTRACTION OVERRIDE (Minimal Deterministic Path)
   const isAnalyzeRequest = input.toLowerCase().includes("analyze") && !input.toLowerCase().includes("modify");
-  if (isAnalyzeRequest && (intelligence.primary === 'laravel' || intelligence.primary === 'php')) {
+  if (isAnalyzeRequest && (intelligence.primary === 'laravel' || intelligence.primary === 'php' || framework === 'laravel')) {
     if (onStatus) onStatus("ast extraction");
     const result = extractWithAST(projectDir);
     return { fullText: result.text, metrics: { latency: 0 }, budget: null };
+  }
+
+  // NODE/TS DETERMINISTIC PATH
+  if (isAnalyzeRequest && (intelligence.primary === 'node' || intelligence.primary === 'typescript' || framework === 'node' || framework === 'typescript')) {
+    if (onStatus) onStatus("indexing project");
+    const { indexProject } = await import("../index.ts");
+    const knowledge = await indexProject(projectDir);
+    
+    const lines: string[] = [];
+    knowledge.files.sort((a, b) => a.file.localeCompare(b.file)).forEach(f => {
+      f.classes?.forEach(c => {
+        const name = c.replace('class ', '');
+        lines.push(`${f.file} → class ${name.toLowerCase()} → defines class`);
+      });
+      f.functions?.forEach(fn => {
+        const name = fn.replace('function ', '').split('(')[0].split('=')[0].split(':')[0].trim();
+        if (name) lines.push(`${f.file} → ${name.toLowerCase()}() → returns mixed`);
+      });
+    });
+    
+    return { fullText: lines.join("\n"), metrics: { latency: 0 }, budget: null };
   }
 
   // START RUNTIME INITIALIZATION (LLM Path Only)

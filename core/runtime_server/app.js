@@ -3,13 +3,13 @@ import fs from "fs";
 import path from "path";
 import bodyParser from "body-parser";
 import cors from "cors";
+import { execSync, spawn } from "child_process";
 import { getState } from "../ui/state.js";
 import { workspaceManager } from "../workspace/workspaceManager.js";
 import { loadSession, saveSession, listSessions, createSession, deleteSession } from "../session/store.ts";
 
 import modelsRouter from "./routes/models.js";
 import filesRouter from "./routes/files.js";
-import { runAgent } from "../runtime/runAgent.ts";
 import { loadConfig, saveConfig } from "../../config/configManager.js";
 import { normalizeMetrics } from "../llm/metrics.js";
 import { setMetrics } from "../ui/state.js";
@@ -66,45 +66,34 @@ app.get("/chat/stream", async (req, res) => {
   try {
     const resolvedProject = validateProjectPath(projectPath);
 
-    // HEADERS FIRST — MUST NOT BE DELAYED
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       "Connection": "keep-alive"
     });
 
-    await runAgent({
+    const binPath = path.resolve(XENTARI_ROOT, "bin/xen.js");
+    const child = spawn("node", [
+      binPath,
       input,
-      projectDir: resolvedProject,
-      meta: command ? { command } : null,
-      onStatus: (msg) => {
-        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "status", message: msg })}\n\n`);
-      },
-      onContext: (files) => {
-        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "context", files: files.slice(0, 8) })}\n\n`);
-      },
-      onIntelligence: (intelligence) => {
-        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "intelligence", intelligence })}\n\n`);
-      },
-      onMetrics: (metrics) => {
-        setMetrics(metrics);
-        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "metrics", metrics })}\n\n`);
-      },
-      onChunk: (chunk) => {
-        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "chunk", content: chunk })}\n\n`);
-      }
+      `--project=${resolvedProject}`,
+      ...(command ? [`--command=${command}`] : [])
+    ], {
+      env: { ...process.env, XEN_AUTO_APPROVE: "true" }
     });
 
-    if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+    child.stdout.on("data", (data) => {
+      const text = data.toString();
+      res.write(`data: ${JSON.stringify({ type: "chunk", content: text })}\n\n`);
+    });
+
+    child.on("close", () => {
+      res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+      res.end();
+    });
   } catch (err) {
-    // If headers were already sent, write an error event. Otherwise, standard 400.
-    if (res.headersSent) {
-      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
-    } else {
-      res.status(400).json({ error: err.message });
-    }
-  } finally {
-    res.end();
+    if (!res.headersSent) res.status(400).json({ error: err.message });
+    else res.end();
   }
 });
 
@@ -120,39 +109,71 @@ app.post("/run/stream", async (req, res) => {
       "Connection": "keep-alive"
     });
 
-    let accumulated = "";
-    await runAgent({
-      input: input || prompt,
-      projectDir: resolvedProject,
-      onChunk: (chunk) => {
-        accumulated += chunk;
-        if (!res.writableEnded) res.write(`data: ${JSON.stringify({ fullText: accumulated })}\n\n`);
-      }
+    const binPath = path.resolve(XENTARI_ROOT, "bin/xen.js");
+    const child = spawn("node", [binPath, input || prompt, `--project=${resolvedProject}`], {
+      env: { ...process.env, XEN_AUTO_APPROVE: "true" }
     });
 
-    if (!res.writableEnded) res.write("data: [DONE]\n\n");
+    let accumulated = "";
+    child.stdout.on("data", (data) => {
+      accumulated += data.toString();
+      res.write(`data: ${JSON.stringify({ fullText: accumulated })}\n\n`);
+    });
+
+    child.on("close", () => {
+      res.write("data: [DONE]\n\n");
+      res.end();
+    });
   } catch (err) {
-    if (res.headersSent) {
-      if (!res.writableEnded) res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
-    } else {
-      res.status(400).json({ error: err.message });
-    }
-  } finally {
-    res.end();
+    if (!res.headersSent) res.status(400).json({ error: err.message });
+    else res.end();
   }
 });
+
+async function pollJob(jobId) {
+  const maxRetries = 600; // 10 mins with 1s polling
+  for (let i = 0; i < maxRetries; i++) {
+    const res = await fetch(`http://localhost:3005/job/${jobId}`);
+    const data = await res.json();
+    if (data.status === "done") return data.result;
+    if (data.status === "error") throw new Error(data.error || "Job failed");
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  throw new Error("Job timeout");
+}
 
 app.post(["/chat", "/run"], async (req, res) => {
   try {
     const { input, prompt, projectPath, projectDir } = req.body;
     const resolvedProject = validateProjectPath(projectPath || projectDir);
+    const task = input || prompt;
 
-    const result = await runAgent({
-      input: input || prompt,
-      projectDir: resolvedProject
+    // Use Minimal API Layer with Queue if available
+    if (task.toLowerCase().includes("analyze") && !task.toLowerCase().includes("modify")) {
+      try {
+        const response = await fetch("http://localhost:3005/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectPath: resolvedProject })
+        });
+        const { jobId } = await response.json();
+        if (jobId) {
+          const result = await pollJob(jobId);
+          return res.json({ fullText: result });
+        }
+      } catch (err) {
+        console.error("[API QUEUE ERROR]", err.message);
+        // Fallback to direct execution
+      }
+    }
+
+    const binPath = path.resolve(XENTARI_ROOT, "bin/xen.js");
+    const output = execSync(`XEN_AUTO_APPROVE=true node "${binPath}" "${task}" --project="${resolvedProject}"`, {
+      encoding: "utf8",
+      env: { ...process.env, XEN_AUTO_APPROVE: "true" }
     });
 
-    res.json(result);
+    res.json({ fullText: output });
   } catch (err) {
     res.json({ error: err.message });
   }

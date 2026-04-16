@@ -31,6 +31,7 @@ function normalizeKey(key: string): string {
   if (k.includes('typescript') || k === 'ts') return 'typescript';
   if (k.includes('laravel')) return 'laravel';
   if (k.includes('php')) return 'php';
+  if (k.includes('node')) return 'node';
   return k;
 }
 

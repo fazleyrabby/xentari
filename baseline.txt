@@ -1,0 +1,1688 @@
+[33m  ⚠[0m ⚠ Running inside Xentari project
+[XENTARI] FILES FOUND: 179
+[2m  •[0m [INDEXER] Building knowledge index...
+[32m  ✓[0m [INDEXER] Indexed 479 files. Framework: node
+bin/xen.ts → gracefulexit() → returns mixed
+bin/xen.ts → main() → returns mixed
+cli/init.js → configexists() → returns mixed
+cli/init.js → saveconfig() → returns mixed
+cli/init.js → init() → returns mixed
+config/configManager.js → deepmerge() → returns mixed
+config/configManager.js → getglobalconfigpath() → returns mixed
+config/configManager.js → getlocalconfigpath() → returns mixed
+config/configManager.js → loadconfig() → returns mixed
+config/configManager.js → saveconfig() → returns mixed
+core/advisor.js → advisorfix() → returns mixed
+core/advisor.js → isadvisorcallallowed() → returns mixed
+core/analytics.js → analyticspath() → returns mixed
+core/analytics.js → loadanalytics() → returns mixed
+core/analytics.js → saveanalytics() → returns mixed
+core/analytics.js → logbug() → returns mixed
+core/analytics.js → recordtestresult() → returns mixed
+core/analytics.js → generateweeklyinsights() → returns mixed
+core/analytics.js → showweeklyanalysis() → returns mixed
+core/analytics.js → loadsummary() → returns mixed
+core/approval/approver.ts → askapproval() → returns mixed
+core/cli/handler.js → handlecommand() → returns mixed
+core/coder.js → detectmodule() → returns mixed
+core/coder.js → sanitizeimports() → returns mixed
+core/coder.js → buildprompt() → returns mixed
+core/coder.js → extractfilecontent() → returns mixed
+core/coder.js → generatepatch() → returns mixed
+core/config.js → loadconfig() → returns mixed
+core/config/loadConfig.ts → loadconfig() → returns mixed
+core/constraints.js → enforceconstraints() → returns mixed
+core/constraints.js → validatefileoutput() → returns mixed
+core/dashboard.js → formattokens() → returns mixed
+core/dashboard.js → renderdashboard() → returns mixed
+core/diff.ts → generatediff() → returns mixed
+core/diff.ts → difffiles() → returns mixed
+core/diff/align.js → aligndiff() → returns mixed
+core/diff/parser.js → parsediff() → returns mixed
+core/engine/analyze.ts → for() → returns mixed
+core/engine/analyze.ts → analyze() → returns mixed
+core/executor.ts → validateplan() → returns mixed
+core/executor.ts → detectmodule() → returns mixed
+core/executor.ts → elapsed() → returns mixed
+core/executor.ts → extractpatchfiles() → returns mixed
+core/executor.ts → createchain() → returns mixed
+core/executor.ts → handlefailure() → returns mixed
+core/executor.ts → handlereviewfailure() → returns mixed
+core/executor.ts → resetfailurestate() → returns mixed
+core/executor.ts → validatestepresult() → returns mixed
+core/executor.ts → validatestep() → returns mixed
+core/filesystem/fileManager.js → resolvesafepath() → returns mixed
+core/filesystem/fileManager.js → listdirectory() → returns mixed
+core/filesystem/fileManager.js → listfiles() → returns mixed
+core/filesystem/fileManager.js → readfile() → returns mixed
+core/filesystem/fileManager.js → writefile() → returns mixed
+core/index.ts → normalizeimportpath() → returns mixed
+core/index.ts → analyzefile() → returns mixed
+core/index.ts → functions() → returns mixed
+core/index.ts → detectentrypoints() → returns mixed
+core/index.ts → detectframework() → returns mixed
+core/index.ts → exists() → returns mixed
+core/index.ts → detectmodules() → returns mixed
+core/index.ts → detectflows() → returns mixed
+core/index.ts → getrank() → returns mixed
+core/index.ts → indexproject() → returns mixed
+core/llm/metrics.js → normalizemetrics() → returns mixed
+core/loadStack.js → validatestack() → returns mixed
+core/loadStack.js → loadstack() → returns mixed
+core/locks.js → acquirelock() → returns mixed
+core/locks.js → releaselock() → returns mixed
+core/locks.js → islocked() → returns mixed
+core/locks.js → clearalllocks() → returns mixed
+core/logger.js → fmt() → returns mixed
+core/logger.js → logtofile() → returns mixed
+core/memory.js → memorypath() → returns mixed
+core/memory.js → intelligencepath() → returns mixed
+core/memory.js → loadhistory() → returns mixed
+core/memory.js → remember() → returns mixed
+core/memory.js → recall() → returns mixed
+core/memory.js → loadintel() → returns mixed
+core/memory.js → saveintel() → returns mixed
+core/memory.js → getintelligence() → returns mixed
+core/memory.js → trackrecentfiles() → returns mixed
+core/memory.js → recordpattern() → returns mixed
+core/metrics.js → createmetrics() → returns mixed
+core/metrics.js → updateduration() → returns mixed
+core/models/modelMerger.js → mergemodels() → returns mixed
+core/patch/partial.js → splitdiff() → returns mixed
+core/patch/partial.js → rebuilddiff() → returns mixed
+core/patcher.js → tmppatchpath() → returns mixed
+core/patcher.js → extractfilesfrompatch() → returns mixed
+core/patcher.js → validatepatch() → returns mixed
+core/patcher.js → handlemissingfile() → returns mixed
+core/patcher.js → applypatch() → returns mixed
+core/patcher.js → undo() → returns mixed
+core/patterns.js → validatepatterns() → returns mixed
+core/patterns.js → loadpattern() → returns mixed
+core/patterns.js → validatestructure() → returns mixed
+core/pipeline.ts → elapsed() → returns mixed
+core/pipeline.ts → extractpatchfiles() → returns mixed
+core/pipeline.ts → createchain() → returns mixed
+core/pipeline.ts → codeandreview() → returns mixed
+core/pipeline.ts → processstep() → returns mixed
+core/pipeline.ts → hashcontext() → returns mixed
+core/pipeline.ts → runplanonly() → returns mixed
+core/pipeline.ts → runcodeonly() → returns mixed
+core/pipeline.ts → runreviewonly() → returns mixed
+core/pipeline.ts → run() → returns mixed
+core/plugins.js → loadplugins() → returns mixed
+core/plugins.js → buildcommandregistry() → returns mixed
+core/project/autoPlacement.js → resolvefilelocation() → returns mixed
+core/project/detector.js → exists() → returns mixed
+core/project/detector.js → detectstack() → returns mixed
+core/project/guard.js → safepath() → returns mixed
+core/project/resolver.js → resolveprojectroot() → returns mixed
+core/prompt.js → confirm() → returns mixed
+core/prompt.js → onkeypress() → returns mixed
+core/prompt.js → cleanup() → returns mixed
+core/providers/baseProvider.js → class baseprovider → defines class
+core/providers/index.ts → createprovider() → returns mixed
+core/providers/llamaProvider.js → class llamaprovider → defines class
+core/providers/lmstudioProvider.js → class lmstudioprovider → defines class
+core/providers/normalizeBaseUrl.js → normalizebaseurl() → returns mixed
+core/providers/normalizeModel.ts → normalizemodel() → returns mixed
+core/providers/ollamaProvider.js → class ollamaprovider → defines class
+core/providers/registry.js → class providerregistry → defines class
+core/providers/registry.js → getprovider() → returns mixed
+core/runtime_agents.disabled/coder.agent.js → generatefilecontent() → returns mixed
+core/runtime_agents.disabled/coder.agent.js → generatewithretry() → returns mixed
+core/runtime_agents.disabled/planner.agent.js → plan() → returns mixed
+core/runtime_agents.disabled/reviewer.agent.js → bodies() → returns mixed
+core/runtime_agents.disabled/reviewer.agent.js → signatures() → returns mixed
+core/runtime_agents.disabled/reviewer.agent.js → review() → returns mixed
+core/runtime_agents.disabled/reviewer.agent.js → isapproved() → returns mixed
+core/runtime_agents.disabled/reviewer.agent.js → reviewwithretry() → returns mixed
+core/runtime_retrieval.disabled/consistency.ts → capturefilesnapshot() → returns mixed
+core/runtime_retrieval.disabled/consistency.ts → extractexports() → returns mixed
+core/runtime_retrieval.disabled/consistency.ts → validatecontracts() → returns mixed
+core/runtime_retrieval.disabled/consistency.ts → extractusedfunctions() → returns mixed
+core/runtime_retrieval.disabled/consistency.ts → checkstale() → returns mixed
+core/runtime_retrieval.disabled/consistency.ts → loadsnapshot() → returns mixed
+core/runtime_retrieval.disabled/consistency.ts → savesnapshot() → returns mixed
+core/runtime_retrieval.disabled/consistency.ts → updatesnapshotafterstep() → returns mixed
+core/runtime_retrieval.disabled/contextBuilder.ts → buildcontext() → returns mixed
+core/runtime_retrieval.disabled/contextBuilder.ts → functionblock() → returns mixed
+core/runtime_retrieval.disabled/contextBuilder.ts → extractfunction() → returns mixed
+core/runtime_retrieval.disabled/contextBuilder.ts → extractimports() → returns mixed
+core/runtime_retrieval.disabled/contextEngine.ts → selectcontext() → returns mixed
+core/runtime_retrieval.disabled/contextEngine.ts → gettargetfile() → returns mixed
+core/runtime_retrieval.disabled/contextEngine.ts → getrelatedfiles() → returns mixed
+core/runtime_retrieval.disabled/contextEngine.ts → getpattern() → returns mixed
+core/runtime_retrieval.disabled/contextEngine.ts → getrules() → returns mixed
+core/runtime_retrieval.disabled/contextEngine.ts → formatcontext() → returns mixed
+core/runtime_retrieval.disabled/feedbackEngine.ts → classifyfailure() → returns mixed
+core/runtime_retrieval.disabled/feedbackEngine.ts → loadfeedback() → returns mixed
+core/runtime_retrieval.disabled/feedbackEngine.ts → savefeedback() → returns mixed
+core/runtime_retrieval.disabled/feedbackEngine.ts → logfailure() → returns mixed
+core/runtime_retrieval.disabled/feedbackEngine.ts → getfeedbackforstep() → returns mixed
+core/runtime_retrieval.disabled/feedbackEngine.ts → getadaptiverules() → returns mixed
+core/runtime_retrieval.disabled/intentEngine.ts → intentallowscontractbreak() → returns mixed
+core/runtime_retrieval.disabled/intentEngine.ts → iswithinscope() → returns mixed
+core/runtime_retrieval.disabled/intentEngine.ts → validatechangesize() → returns mixed
+core/runtime_retrieval.disabled/resolver.ts → resolvecontract() → returns mixed
+core/runtime_retrieval.disabled/tokenLimiter.ts → trimcontext() → returns mixed
+core/runtime_retrieval.disabled/validator.ts → validatecontext() → returns mixed
+core/runtime_sandbox.disabled/cleanup.js → cleanupsandbox() → returns mixed
+core/runtime_sandbox.disabled/diff.js → getchangedfiles() → returns mixed
+core/runtime_sandbox.disabled/diff.js → walk() → returns mixed
+core/runtime_sandbox.disabled/manager.js → createsandbox() → returns mixed
+core/runtime_server.disabled/app.js → validateprojectpath() → returns mixed
+core/runtime_server.disabled/routes/files.js → getprojectroot() → returns mixed
+core/runtime_server.disabled/ws.js → startws() → returns mixed
+core/runtime_tui.disabled/colors.js → setcolormode() → returns mixed
+core/runtime_tui.disabled/colors.js → wrap() → returns mixed
+core/runtime_tui.disabled/diffInteractive.js → rendersidebyside() → returns mixed
+core/runtime_tui.disabled/diffInteractive.js → interactiveapprove() → returns mixed
+core/runtime_tui.disabled/diffView.js → pad() → returns mixed
+core/runtime_tui.disabled/diffView.js → renderdiff() → returns mixed
+core/runtime_tui.disabled/diffViewer.js → formatdiff() → returns mixed
+core/runtime_tui.disabled/diffViewerInteractive.js → colorline() → returns mixed
+core/runtime_tui.disabled/diffViewerInteractive.js → classify() → returns mixed
+core/runtime_tui.disabled/diffViewerInteractive.js → renderwindow() → returns mixed
+core/runtime_tui.disabled/diffViewerInteractive.js → interactivediff() → returns mixed
+core/runtime_tui.disabled/diffViewerInteractive.js → render() → returns mixed
+core/runtime_tui.disabled/diffViewerInteractive.js → onkeypress() → returns mixed
+core/runtime_tui.disabled/diffViewerInteractive.js → cleanup() → returns mixed
+core/runtime_tui.disabled/diffViewerInteractive.js → simplediffpreview() → returns mixed
+core/runtime_tui.disabled/header.js → getterminalwidth() → returns mixed
+core/runtime_tui.disabled/header.js → getmodelabel() → returns mixed
+core/runtime_tui.disabled/header.js → renderheader() → returns mixed
+core/runtime_tui.disabled/logger.js → info() → returns mixed
+core/runtime_tui.disabled/logger.js → warn() → returns mixed
+core/runtime_tui.disabled/logger.js → error() → returns mixed
+core/runtime_tui.disabled/stage.js → showstage() → returns mixed
+core/runtime_tui.disabled/statusBar.js → renderstatus() → returns mixed
+core/runtime_tui.disabled/statusBar.js → renderstatusbar() → returns mixed
+core/runtime_tui.disabled/ux.js → showstage() → returns mixed
+core/runtime_tui.disabled/ux.js → success() → returns mixed
+core/runtime_tui.disabled/ux.js → warn() → returns mixed
+core/runtime_tui.disabled/ux.js → error() → returns mixed
+core/runtime_tui.disabled/ux.js → showcontext() → returns mixed
+core/runtime/contextBudget.ts → estimatetokens() → returns mixed
+core/runtime/contextBudget.ts → buildpromptwithbudget() → returns mixed
+core/runtime/runAgent.ts → class first → defines class
+core/runtime/runAgent.ts → sanitizeoutput() → returns mixed
+core/runtime/runAgent.ts → irtoxentariformat() → returns mixed
+core/runtime/runAgent.ts → validateir() → returns mixed
+core/runtime/runAgent.ts → extractwithast() → returns mixed
+core/runtime/runAgent.ts → runagent() → returns mixed
+core/runtime/strictGuard.ts → class definition → defines class
+core/runtime/strictGuard.ts → class definition → defines class
+core/runtime/strictGuard.ts → class definition → defines class
+core/runtime/strictGuard.ts → strictmodeguard() → returns mixed
+core/runtime/strictGuard.ts → extractentities() → returns mixed
+core/runtime/strictGuard.ts → buildcontexttokenset() → returns mixed
+core/runtime/strictGuard.ts → sanitizeresponse() → returns mixed
+core/scheduler.js → buildexecutionbatches() → returns mixed
+core/session/store.ts → loadsession() → returns mixed
+core/session/store.ts → savesession() → returns mixed
+core/session/store.ts → listsessions() → returns mixed
+core/session/store.ts → createsession() → returns mixed
+core/session/store.ts → deletesession() → returns mixed
+core/session/store.ts → loadhistory() → returns mixed
+core/session/store.ts → savehistory() → returns mixed
+core/session/store.ts → addtohistory() → returns mixed
+core/stacks/index.js → getstackprofile() → returns mixed
+core/summarizer.js → summarizepatch() → returns mixed
+core/tier.js → detectfromname() → returns mixed
+core/tier.js → detecttier() → returns mixed
+core/tier.js → gettierprofile() → returns mixed
+core/tier.js → gettierlabel() → returns mixed
+core/tier.js → resettier() → returns mixed
+core/tui.js → starttui() → returns mixed
+core/tui.js → exit() → returns mixed
+core/tui.js → keypresshandler() → returns mixed
+core/tui.js → loop() → returns mixed
+core/types/approval.ts → class approvaltype → defines class
+core/types/approval.ts → class approvalrequest → defines class
+core/types/patch.ts → class patchresult → defines class
+core/types/patch.ts → class patchvalidationresult → defines class
+core/types/patch.ts → class fileupdate → defines class
+core/types/pipeline.ts → class task → defines class
+core/types/pipeline.ts → class context → defines class
+core/types/pipeline.ts → class pipelineresult → defines class
+core/types/pipeline.ts → class agentoptions → defines class
+core/types/retrieval.ts → class retrievalcontract → defines class
+core/types/retrieval.ts → class retrievalvalidationresult → defines class
+core/ui/state.js → getstate() → returns mixed
+core/ui/state.js → updatestate() → returns mixed
+core/ui/state.js → settimeline() → returns mixed
+core/ui/state.js → setview() → returns mixed
+core/ui/state.js → scrollup() → returns mixed
+core/ui/state.js → scrolldown() → returns mixed
+core/ui/state.js → addaction() → returns mixed
+core/ui/state.js → setstatus() → returns mixed
+core/ui/state.js → setmode() → returns mixed
+core/ui/state.js → setmetrics() → returns mixed
+core/utils/detectModel.ts → detectmodel() → returns mixed
+core/utils/simulation.js → simulatefailure() → returns mixed
+core/utils/simulation.js → partial() → returns mixed
+core/utils/testRunner.ts → hastsx() → returns mixed
+core/utils/testRunner.ts → runtest() → returns mixed
+core/utils/testRunner.ts → run() → returns mixed
+core/utils/testRunner.ts → summarizefailure() → returns mixed
+core/validators/planValidator.js → validateplan() → returns mixed
+core/workspace/workspaceManager.js → class workspacemanager → defines class
+core/workspace/workspaceManager.js → getprojectspath() → returns mixed
+parsers/php/parser.php → class irvisitor → defines class
+parsers/php/parser.php → class relationshipvisitor → defines class
+parsers/php/parser.php → __construct() → returns mixed
+parsers/php/parser.php → getlocation() → returns mixed
+parsers/php/parser.php → generateid() → returns mixed
+parsers/php/parser.php → enternode() → returns mixed
+parsers/php/parser.php → enternode() → returns mixed
+parsers/php/refactor.php → class refactorvisitor → defines class
+parsers/php/refactor.php → class instanceof → defines class
+parsers/php/refactor.php → class instanceof → defines class
+parsers/php/refactor.php → class t → defines class
+parsers/php/refactor.php → __construct() → returns mixed
+parsers/php/refactor.php → enternode() → returns mixed
+parsers/php/refactor.php → leavenode() → returns mixed
+parsers/php/refactor.php → isfound() → returns mixed
+parsers/php/TestModel.php → class testmodel → defines class
+parsers/php/TestModel.php → items() → returns mixed
+parsers/php/TestModel.php → owner() → returns mixed
+parsers/php/vendor/composer/autoload_real.php → class composerautoloaderinitc23ab20d2a4df0f72da3a8ea0c6a126d → defines class
+parsers/php/vendor/composer/autoload_real.php → loadclassloader() → returns mixed
+parsers/php/vendor/composer/autoload_real.php → getloader() → returns mixed
+parsers/php/vendor/composer/autoload_static.php → class composerstaticinitc23ab20d2a4df0f72da3a8ea0c6a126d → defines class
+parsers/php/vendor/composer/autoload_static.php → getinitializer() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → class loader → defines class
+parsers/php/vendor/composer/ClassLoader.php → class in → defines class
+parsers/php/vendor/composer/ClassLoader.php → class under → defines class
+parsers/php/vendor/composer/ClassLoader.php → class is → defines class
+parsers/php/vendor/composer/ClassLoader.php → class classloader → defines class
+parsers/php/vendor/composer/ClassLoader.php → __construct() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → getprefixes() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → getprefixespsr4() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → getfallbackdirs() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → getfallbackdirspsr4() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → getclassmap() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → addclassmap() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → add() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → addpsr4() → returns mixed
+parsers/php/vendor/composer/ClassLoader.php → set() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → class is → defines class
+parsers/php/vendor/composer/InstalledVersions.php → class installedversions → defines class
+parsers/php/vendor/composer/InstalledVersions.php → class is → defines class
+parsers/php/vendor/composer/InstalledVersions.php → class and → defines class
+parsers/php/vendor/composer/InstalledVersions.php → class but → defines class
+parsers/php/vendor/composer/InstalledVersions.php → getinstalledpackages() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → getinstalledpackagesbytype() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → isinstalled() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → satisfies() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → getversionranges() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → getversion() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → getprettyversion() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → getreference() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → getinstallpath() → returns mixed
+parsers/php/vendor/composer/InstalledVersions.php → getrootpackage() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → class class_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → class builder → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → class to → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → class abstract → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → extend() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → implement() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → makeabstract() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → makefinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → makereadonly() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → addstmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → addattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Class_.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → class classconst → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → class constant → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → addconst() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → makepublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → makeprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → makeprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → makefinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → setdoccomment() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → addattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → settype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/ClassConst.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Declaration.php → class declaration → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Declaration.php → addstmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Declaration.php → addstmts() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Declaration.php → setdoccomment() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Enum_.php → class enum_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Enum_.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Enum_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Enum_.php → setscalartype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Enum_.php → implement() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Enum_.php → addstmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Enum_.php → addattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Enum_.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/EnumCase.php → class enumcase → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/EnumCase.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/EnumCase.php → setvalue() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/EnumCase.php → setdoccomment() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/EnumCase.php → addattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/EnumCase.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Function_.php → class function_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Function_.php → builder() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Function_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Function_.php → addstmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Function_.php → addattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Function_.php → node() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Function_.php → node() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Function_.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/FunctionLike.php → class functionlike → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/FunctionLike.php → return() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/FunctionLike.php → makereturnbyref() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/FunctionLike.php → addparam() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/FunctionLike.php → addparams() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/FunctionLike.php → setreturntype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Interface_.php → class interface_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Interface_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Interface_.php → extend() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Interface_.php → addstmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Interface_.php → addattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Interface_.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → class method → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → makepublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → makeprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → makeprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → makestatic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → makeabstract() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → makefinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → addstmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → addattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Method.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Namespace_.php → class namespace_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Namespace_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Namespace_.php → addstmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Namespace_.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → class param → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → setdefault() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → settype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → makebyref() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → makevariadic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → makepublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → makeprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → makeprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → makereadonly() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Param.php → makeprivateset() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → class property → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makepublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makeprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makeprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makestatic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makereadonly() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makeabstract() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makefinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makeprivateset() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Property.php → makeprotectedset() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Trait_.php → class trait_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Trait_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Trait_.php → addstmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Trait_.php → addattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Trait_.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUse.php → class traituse → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUse.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUse.php → and() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUse.php → with() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUse.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → class traituseadaptation → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → as() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → makepublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → makeprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → makeprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → insteadof() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → setmodifier() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/TraitUseAdaptation.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Use_.php → class use_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Use_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Use_.php → as() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Builder/Use_.php → getnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → class builderfactory → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → class builder → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → class builder → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → class use → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → class constant → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → attribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → namespace() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → class() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → interface() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → trait() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → enum() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → usetrait() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → traituseadaptation() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → method() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderFactory.php → param() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → class defines → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → class builderhelpers → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizenode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizestmt() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizeidentifier() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizeidentifierorexpr() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizename() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizenameorexpr() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizetype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizevalue() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizedoccomment() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/BuilderHelpers.php → normalizeattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → class comment → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → gettext() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → getstartline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → getstartfilepos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → getstarttokenpos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → getendline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → getendfilepos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → getendtokenpos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → __tostring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment.php → getreformattedtext() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Comment/Doc.php → class doc → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/compatibility_tokens.php → definecompatibilitytokens() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluationException.php → class constexprevaluationexception → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → class constexprevaluator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → class doc → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → class doc → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → class doc → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → array_merge() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → evaluatesilently() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → evaluatedirectly() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → evaluate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → evaluatearray() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → evaluateternary() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → evaluatebinaryop() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ConstExprEvaluator.php → evaluateconstfetch() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → class error → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → getrawmessage() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → getstartline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → getendline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → getattributes() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → setattributes() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → setrawmessage() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → setstartline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → hascolumninfo() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Error.php → getstartcolumn() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ErrorHandler.php → handleerror() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ErrorHandler/Collecting.php → class collecting → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ErrorHandler/Collecting.php → handleerror() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ErrorHandler/Collecting.php → geterrors() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ErrorHandler/Collecting.php → haserrors() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ErrorHandler/Collecting.php → clearerrors() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ErrorHandler/Throwing.php → class throwing → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ErrorHandler/Throwing.php → handleerror() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/DiffElem.php → class diffelem → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/DiffElem.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/Differ.php → class differ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/Differ.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/Differ.php → diff() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/Differ.php → diffwithreplacements() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/Differ.php → calculatetrace() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/Differ.php → extractdiff() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/Differ.php → coalescereplacements() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/PrintableNewAnonClassNode.php → class structure → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/PrintableNewAnonClassNode.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/PrintableNewAnonClassNode.php → class printablenewanonclassnode → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/PrintableNewAnonClassNode.php → class instanceof → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/PrintableNewAnonClassNode.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/PrintableNewAnonClassNode.php → fromnewnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/PrintableNewAnonClassNode.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/PrintableNewAnonClassNode.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → class tokenpolyfill → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → class introduced → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → class tokenpolyfill → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → gettokenname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → returns() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → is() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → isignorable() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → __tostring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → tokenize() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenPolyfill.php → init() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → class tokenstream → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → haveparens() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → havebraces() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → havetokenimmediatelybefore() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → havetokenimmediatelyafter() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → skipleft() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → skipright() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → skipleftwhitespace() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → skiprightwhitespace() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Internal/TokenStream.php → findright() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → class jsondecoder → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → class map → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → decode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → decoderecursive() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → decodearray() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → decodenode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → decodecomment() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → reflectionclassfromnodetype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/JsonDecoder.php → classnamefromnodetype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer.php → class lexer → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer.php → tokenize() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer.php → handleinvalidcharacter() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer.php → isunterminatedcomment() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer.php → postprocesstokens() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer.php → reports() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/Emulative.php → class emulative → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/Emulative.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/Emulative.php → tokenize() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/Emulative.php → isforwardemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/Emulative.php → isreverseemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/Emulative.php → sortpatches() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/Emulative.php → fixuptokens() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/Emulative.php → fixuperrors() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AsymmetricVisibilityTokenEmulator.php → class asymmetricvisibilitytokenemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AsymmetricVisibilityTokenEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AsymmetricVisibilityTokenEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AsymmetricVisibilityTokenEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AsymmetricVisibilityTokenEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AsymmetricVisibilityTokenEmulator.php → iskeywordcontext() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AsymmetricVisibilityTokenEmulator.php → getpreviousnonspacetoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AttributeEmulator.php → class attributeemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AttributeEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AttributeEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AttributeEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AttributeEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/AttributeEmulator.php → preprocesscode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/EnumTokenEmulator.php → class enumtokenemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/EnumTokenEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/EnumTokenEmulator.php → getkeywordstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/EnumTokenEmulator.php → getkeywordtoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/EnumTokenEmulator.php → iskeywordcontext() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ExplicitOctalEmulator.php → class explicitoctalemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ExplicitOctalEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ExplicitOctalEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ExplicitOctalEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ExplicitOctalEmulator.php → resolveintegerorfloattoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ExplicitOctalEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php → class keywordemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php → getkeywordstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php → getkeywordtoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php → iskeywordcontext() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php → getpreviousnonspacetoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/KeywordEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/MatchTokenEmulator.php → class matchtokenemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/MatchTokenEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/MatchTokenEmulator.php → getkeywordstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/MatchTokenEmulator.php → getkeywordtoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/NullsafeTokenEmulator.php → class nullsafetokenemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/NullsafeTokenEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/NullsafeTokenEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/NullsafeTokenEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/NullsafeTokenEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PipeOperatorEmulator.php → class pipeoperatoremulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PipeOperatorEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PipeOperatorEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PipeOperatorEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PipeOperatorEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PropertyTokenEmulator.php → class propertytokenemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PropertyTokenEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PropertyTokenEmulator.php → getkeywordstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/PropertyTokenEmulator.php → getkeywordtoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyFunctionTokenEmulator.php → class readonlyfunctiontokenemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyFunctionTokenEmulator.php → getkeywordstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyFunctionTokenEmulator.php → getkeywordtoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyFunctionTokenEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyFunctionTokenEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyTokenEmulator.php → class readonlytokenemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyTokenEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyTokenEmulator.php → getkeywordstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyTokenEmulator.php → getkeywordtoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyTokenEmulator.php → iskeywordcontext() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReadonlyTokenEmulator.php → readonly() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReverseEmulator.php → class reverseemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReverseEmulator.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReverseEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReverseEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReverseEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReverseEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/ReverseEmulator.php → preprocesscode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/TokenEmulator.php → class tokenemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/TokenEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/TokenEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/TokenEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/TokenEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/TokenEmulator.php → preprocesscode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/VoidCastEmulator.php → class voidcastemulator → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/VoidCastEmulator.php → getphpversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/VoidCastEmulator.php → isemulationneeded() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/VoidCastEmulator.php → emulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Lexer/TokenEmulator/VoidCastEmulator.php → reverseemulate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Modifiers.php → class modifiers → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Modifiers.php → class member → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Modifiers.php → tostring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Modifiers.php → isvalidmodifier() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Modifiers.php → verifyclassmodifier() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Modifiers.php → verifymodifier() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → class namecontext → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → class names → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → class alias → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → startnamespace() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → addalias() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → getnamespace() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → getresolvedname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → getresolvedclassname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → getpossiblenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → getshortname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → resolvealias() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NameContext.php → aliases() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getstartline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getendline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getstarttokenpos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getendtokenpos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getstartfilepos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getendfilepos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node.php → getcomments() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Arg.php → class arg → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Arg.php → call() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Arg.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Arg.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Arg.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ArrayItem.php → class arrayitem → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ArrayItem.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ArrayItem.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ArrayItem.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Attribute.php → class attribute → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Attribute.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Attribute.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Attribute.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/AttributeGroup.php → class attributegroup → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/AttributeGroup.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/AttributeGroup.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/AttributeGroup.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ClosureUse.php → class closureuse → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ClosureUse.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ClosureUse.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ClosureUse.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ComplexType.php → class for → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/ComplexType.php → class complextype → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Const_.php → class const_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Const_.php → class const → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Const_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Const_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Const_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/DeclareItem.php → class declareitem → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/DeclareItem.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/DeclareItem.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/DeclareItem.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr.php → class expr → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Array_.php → class array_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Array_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Array_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Array_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrayDimFetch.php → class arraydimfetch → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrayDimFetch.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrayDimFetch.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrayDimFetch.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrayItem.php → class arrayitem → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → class arrowfunction → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → returnsbyref() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → getparams() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → getreturntype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → getattrgroups() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → getstmts() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ArrowFunction.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Assign.php → class assign → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Assign.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Assign.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Assign.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp.php → class assignop → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/BitwiseAnd.php → class bitwiseand → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/BitwiseAnd.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/BitwiseOr.php → class bitwiseor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/BitwiseOr.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/BitwiseXor.php → class bitwisexor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/BitwiseXor.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Coalesce.php → class coalesce → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Coalesce.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Concat.php → class concat → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Concat.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Div.php → class div → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Div.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Minus.php → class minus → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Minus.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Mod.php → class mod → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Mod.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Mul.php → class mul → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Mul.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Plus.php → class plus → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Plus.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Pow.php → class pow → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/Pow.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/ShiftLeft.php → class shiftleft → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/ShiftLeft.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/ShiftRight.php → class shiftright → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignOp/ShiftRight.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignRef.php → class assignref → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignRef.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignRef.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/AssignRef.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp.php → class binaryop → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseAnd.php → class bitwiseand → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseAnd.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseAnd.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseOr.php → class bitwiseor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseOr.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseOr.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseXor.php → class bitwisexor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseXor.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BitwiseXor.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BooleanAnd.php → class booleanand → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BooleanAnd.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BooleanAnd.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BooleanOr.php → class booleanor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BooleanOr.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/BooleanOr.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Coalesce.php → class coalesce → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Coalesce.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Coalesce.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Concat.php → class concat → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Concat.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Concat.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Div.php → class div → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Div.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Div.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Equal.php → class equal → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Equal.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Equal.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Greater.php → class greater → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Greater.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Greater.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/GreaterOrEqual.php → class greaterorequal → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/GreaterOrEqual.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/GreaterOrEqual.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Identical.php → class identical → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Identical.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Identical.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalAnd.php → class logicaland → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalAnd.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalAnd.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalOr.php → class logicalor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalOr.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalOr.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalXor.php → class logicalxor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalXor.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/LogicalXor.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Minus.php → class minus → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Minus.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Minus.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Mod.php → class mod → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Mod.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Mod.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Mul.php → class mul → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Mul.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Mul.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/NotEqual.php → class notequal → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/NotEqual.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/NotEqual.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/NotIdentical.php → class notidentical → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/NotIdentical.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/NotIdentical.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Pipe.php → class pipe → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Pipe.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Pipe.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Plus.php → class plus → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Plus.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Plus.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Pow.php → class pow → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Pow.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Pow.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/ShiftLeft.php → class shiftleft → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/ShiftLeft.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/ShiftLeft.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/ShiftRight.php → class shiftright → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/ShiftRight.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/ShiftRight.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Smaller.php → class smaller → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Smaller.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Smaller.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/SmallerOrEqual.php → class smallerorequal → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/SmallerOrEqual.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/SmallerOrEqual.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Spaceship.php → class spaceship → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Spaceship.php → getoperatorsigil() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BinaryOp/Spaceship.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BitwiseNot.php → class bitwisenot → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BitwiseNot.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BitwiseNot.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BitwiseNot.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BooleanNot.php → class booleannot → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BooleanNot.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BooleanNot.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/BooleanNot.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/CallLike.php → class calllike → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/CallLike.php → class callable → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/CallLike.php → class callable → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/CallLike.php → class callables → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/CallLike.php → getrawargs() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/CallLike.php → isfirstclasscallable() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/CallLike.php → getargs() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/CallLike.php → getarg() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast.php → class cast → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Array_.php → class array_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Array_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Bool_.php → class bool_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Bool_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Double.php → class double → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Double.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Int_.php → class int_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Int_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Object_.php → class object_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Object_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/String_.php → class string_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/String_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Unset_.php → class unset_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Unset_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Void_.php → class void_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Cast/Void_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ClassConstFetch.php → class classconstfetch → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ClassConstFetch.php → class const → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ClassConstFetch.php → class class → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ClassConstFetch.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ClassConstFetch.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ClassConstFetch.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Clone_.php → class clone_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Clone_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Clone_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Clone_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → class closure → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → node() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → returnsbyref() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → getparams() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → getreturntype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → getstmts() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → getattrgroups() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Closure.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ClosureUse.php → class closureuse → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ConstFetch.php → class constfetch → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ConstFetch.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ConstFetch.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ConstFetch.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Empty_.php → class empty_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Empty_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Empty_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Empty_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Error.php → class error → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Error.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Error.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Error.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ErrorSuppress.php → class errorsuppress → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ErrorSuppress.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ErrorSuppress.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ErrorSuppress.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Eval_.php → class eval_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Eval_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Eval_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Eval_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Exit_.php → class exit_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Exit_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Exit_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Exit_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/FuncCall.php → class funccall → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/FuncCall.php → call() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/FuncCall.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/FuncCall.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/FuncCall.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/FuncCall.php → getrawargs() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Include_.php → class include_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Include_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Include_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Include_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Instanceof_.php → class instanceof_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Instanceof_.php → class class → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Instanceof_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Instanceof_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Instanceof_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Isset_.php → class isset_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Isset_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Isset_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Isset_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/List_.php → class list_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/List_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/List_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/List_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Match_.php → class match_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Match_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Match_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Match_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/MethodCall.php → class methodcall → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/MethodCall.php → call() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/MethodCall.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/MethodCall.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/MethodCall.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/MethodCall.php → getrawargs() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/New_.php → class new_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/New_.php → class class → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/New_.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/New_.php → call() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/New_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/New_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/New_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/New_.php → getrawargs() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafeMethodCall.php → class nullsafemethodcall → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafeMethodCall.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafeMethodCall.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafeMethodCall.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafeMethodCall.php → getrawargs() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafePropertyFetch.php → class nullsafepropertyfetch → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafePropertyFetch.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafePropertyFetch.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/NullsafePropertyFetch.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PostDec.php → class postdec → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PostDec.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PostDec.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PostDec.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PostInc.php → class postinc → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PostInc.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PostInc.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PostInc.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PreDec.php → class predec → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PreDec.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PreDec.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PreDec.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PreInc.php → class preinc → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PreInc.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PreInc.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PreInc.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Print_.php → class print_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Print_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Print_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Print_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PropertyFetch.php → class propertyfetch → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PropertyFetch.php → call() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PropertyFetch.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PropertyFetch.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/PropertyFetch.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ShellExec.php → class shellexec → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ShellExec.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ShellExec.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/ShellExec.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticCall.php → class staticcall → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticCall.php → class class → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticCall.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticCall.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticCall.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticCall.php → getrawargs() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticPropertyFetch.php → class staticpropertyfetch → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticPropertyFetch.php → class class → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticPropertyFetch.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticPropertyFetch.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/StaticPropertyFetch.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Ternary.php → class ternary → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Ternary.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Ternary.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Ternary.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Throw_.php → class throw_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Throw_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Throw_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Throw_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/UnaryMinus.php → class unaryminus → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/UnaryMinus.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/UnaryMinus.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/UnaryMinus.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/UnaryPlus.php → class unaryplus → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/UnaryPlus.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/UnaryPlus.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/UnaryPlus.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Variable.php → class variable → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Variable.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Variable.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Variable.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Yield_.php → class yield_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Yield_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Yield_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/Yield_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/YieldFrom.php → class yieldfrom → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/YieldFrom.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/YieldFrom.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Expr/YieldFrom.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/FunctionLike.php → returnsbyref() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/FunctionLike.php → getparams() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/FunctionLike.php → getreturntype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/FunctionLike.php → body() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/FunctionLike.php → getstmts() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/FunctionLike.php → getattrgroups() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → class identifier → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → tostring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → tolowerstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → isspecialclassname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → __tostring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Identifier.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/InterpolatedStringPart.php → class interpolatedstringpart → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/InterpolatedStringPart.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/InterpolatedStringPart.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/InterpolatedStringPart.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/IntersectionType.php → class intersectiontype → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/IntersectionType.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/IntersectionType.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/IntersectionType.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/MatchArm.php → class matcharm → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/MatchArm.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/MatchArm.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/MatchArm.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → class this → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → getparts() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → getfirst() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → getlast() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → isunqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → isqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → isfullyqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → isrelative() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name.php → tostring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/FullyQualified.php → class fullyqualified → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/FullyQualified.php → isunqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/FullyQualified.php → isqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/FullyQualified.php → isfullyqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/FullyQualified.php → isrelative() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/FullyQualified.php → tocodestring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/FullyQualified.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/Relative.php → class relative → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/Relative.php → isunqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/Relative.php → isqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/Relative.php → isfullyqualified() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/Relative.php → isrelative() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/Relative.php → tocodestring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Name/Relative.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/NullableType.php → class nullabletype → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/NullableType.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/NullableType.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/NullableType.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → class param → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → ispromoted() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → isfinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → ispublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → isprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → isprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → isreadonly() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Param.php → ispublicset() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → class propertyhook → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → returnsbyref() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → getparams() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → getreturntype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → isfinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → getstmts() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → getattrgroups() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyHook.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyItem.php → class propertyitem → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyItem.php → class property → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyItem.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyItem.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/PropertyItem.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar.php → class scalar → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/DNumber.php → class dnumber → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Encapsed.php → class encapsed → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/EncapsedStringPart.php → class encapsedstringpart → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Float_.php → class float_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Float_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Float_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Float_.php → fromstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Float_.php → parse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Float_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Int_.php → class int_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Int_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Int_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Int_.php → fromstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/Int_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/InterpolatedString.php → class interpolatedstring → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/InterpolatedString.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/InterpolatedString.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/InterpolatedString.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/LNumber.php → class lnumber → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst.php → class magicconst → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Class_.php → class class_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Class_.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Class_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Dir.php → class dir → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Dir.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Dir.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/File.php → class file → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/File.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/File.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Function_.php → class function_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Function_.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Function_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Line.php → class line → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Line.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Line.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Method.php → class method → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Method.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Method.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Namespace_.php → class namespace_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Namespace_.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Namespace_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Property.php → class property → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Property.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Property.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Trait_.php → class trait_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Trait_.php → getname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/MagicConst/Trait_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/String_.php → class string_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/String_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/String_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/String_.php → fromstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/String_.php → parse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/String_.php → parseescapesequences() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/String_.php → codepointtoutf8() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Scalar/String_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/StaticVar.php → class staticvar → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/StaticVar.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/StaticVar.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/StaticVar.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt.php → class stmt → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Block.php → class block → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Block.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Block.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Block.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Break_.php → class break_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Break_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Break_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Break_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Case_.php → class case_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Case_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Case_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Case_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Catch_.php → class catch_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Catch_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Catch_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Catch_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → class class_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → class is → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → class is → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → class is → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → isabstract() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → isfinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → isreadonly() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → isanonymous() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Class_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → class classconst → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → class const → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → ispublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → isprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → isprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → isfinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassConst.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassLike.php → class classlike → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassLike.php → gettraituses() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassLike.php → getconstants() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassLike.php → getproperties() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassLike.php → getproperty() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassLike.php → getmethods() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassLike.php → getmethod() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → class classmethod → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → class method → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → returnsbyref() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → getparams() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → getreturntype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → getstmts() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → getattrgroups() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → ispublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → isprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ClassMethod.php → isprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Const_.php → class const_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Const_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Const_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Const_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Continue_.php → class continue_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Continue_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Continue_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Continue_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Declare_.php → class declare_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Declare_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Declare_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Declare_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/DeclareDeclare.php → class declaredeclare → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Do_.php → class do_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Do_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Do_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Do_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Echo_.php → class echo_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Echo_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Echo_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Echo_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Else_.php → class else_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Else_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Else_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Else_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ElseIf_.php → class elseif_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ElseIf_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ElseIf_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/ElseIf_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Enum_.php → class enum_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Enum_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Enum_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Enum_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/EnumCase.php → class enumcase → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/EnumCase.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/EnumCase.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/EnumCase.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Expression.php → class expression → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Expression.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Expression.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Expression.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Finally_.php → class finally_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Finally_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Finally_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Finally_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/For_.php → class for_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/For_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/For_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/For_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Foreach_.php → class foreach_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Foreach_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Foreach_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Foreach_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → class function_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → returns() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → node() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → returnsbyref() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → getparams() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → getreturntype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → getattrgroups() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → getstmts() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Function_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Global_.php → class global_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Global_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Global_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Global_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Goto_.php → class goto_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Goto_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Goto_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Goto_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/GroupUse.php → class groupuse → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/GroupUse.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/GroupUse.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/GroupUse.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/HaltCompiler.php → class haltcompiler → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/HaltCompiler.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/HaltCompiler.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/HaltCompiler.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/If_.php → class if_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/If_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/If_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/If_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/InlineHTML.php → class inlinehtml → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/InlineHTML.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/InlineHTML.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/InlineHTML.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Interface_.php → class interface_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Interface_.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Interface_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Interface_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Interface_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Label.php → class label → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Label.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Label.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Label.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Namespace_.php → class namespace_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Namespace_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Namespace_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Namespace_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Nop.php → class nop → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Nop.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Nop.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → class property → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → class property → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → ispublic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → isprotected() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → isprivate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → isstatic() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → isreadonly() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → isabstract() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → isfinal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Property.php → ispublicset() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/PropertyProperty.php → class propertyproperty → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Return_.php → class return_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Return_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Return_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Return_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Static_.php → class static_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Static_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Static_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Static_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/StaticVar.php → class staticvar → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Switch_.php → class switch_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Switch_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Switch_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Switch_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Trait_.php → class trait_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Trait_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Trait_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Trait_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUse.php → class traituse → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUse.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUse.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUse.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation.php → class traituseadaptation → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation/Alias.php → class alias → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation/Alias.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation/Alias.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation/Alias.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation/Precedence.php → class precedence → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation/Precedence.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation/Precedence.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TraitUseAdaptation/Precedence.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TryCatch.php → class trycatch → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TryCatch.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TryCatch.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/TryCatch.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Unset_.php → class unset_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Unset_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Unset_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Unset_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Use_.php → class use_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Use_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Use_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/Use_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/UseUse.php → class useuse → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/While_.php → class while_ → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/While_.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/While_.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/Stmt/While_.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UnionType.php → class uniontype → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UnionType.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UnionType.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UnionType.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UseItem.php → class useitem → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UseItem.php → or() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UseItem.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UseItem.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UseItem.php → getalias() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/UseItem.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/VariadicPlaceholder.php → class callable → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/VariadicPlaceholder.php → class variadicplaceholder → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/VariadicPlaceholder.php → class callable → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/VariadicPlaceholder.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/VariadicPlaceholder.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/VariadicPlaceholder.php → getsubnodenames() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/VarLikeIdentifier.php → class varlikeidentifier → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Node/VarLikeIdentifier.php → gettype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → class nodeabstract → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getstartline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getendline() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getstarttokenpos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getendtokenpos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getstartfilepos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getendfilepos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getcomments() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeAbstract.php → getdoccomment() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → class nodedumper → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → class class
+    private → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dump() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dumprecursive() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dumpflags() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dumpenum() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dumpincludetype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dumpusetype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dumpintkind() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dumpstringkind() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeDumper.php → dumparraykind() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → class nodefinder → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → class class → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → class class → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → callback() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → find() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → findinstanceof() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → callback() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → findfirst() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeFinder.php → findfirstinstanceof() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverser.php → class nodetraverser → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverser.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverser.php → addvisitor() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverser.php → removevisitor() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverser.php → traverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverser.php → traversenode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverser.php → traversearray() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverser.php → ensurereplacementreasonable() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverserInterface.php → addvisitor() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverserInterface.php → removevisitor() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeTraverserInterface.php → traverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor.php → beforetraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor.php → leavenode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor.php → aftertraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/CloningVisitor.php → class cloningvisitor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/CloningVisitor.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/CommentAnnotatingVisitor.php → class commentannotatingvisitor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/CommentAnnotatingVisitor.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/CommentAnnotatingVisitor.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FindingVisitor.php → class findingvisitor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FindingVisitor.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FindingVisitor.php → getfoundnodes() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FindingVisitor.php → beforetraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FindingVisitor.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FirstFindingVisitor.php → class firstfindingvisitor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FirstFindingVisitor.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FirstFindingVisitor.php → getfoundnode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FirstFindingVisitor.php → beforetraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/FirstFindingVisitor.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → class nameresolver → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → class instanceof → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → getnamecontext() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → beforetraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → addalias() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → resolvesignature() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → resolvetype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → resolvename() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → resolveclassname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NameResolver.php → addnamespacedname() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NodeConnectingVisitor.php → class nodeconnectingvisitor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NodeConnectingVisitor.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NodeConnectingVisitor.php → beforetraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NodeConnectingVisitor.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/NodeConnectingVisitor.php → leavenode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/ParentConnectingVisitor.php → class parentconnectingvisitor → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/ParentConnectingVisitor.php → array_pop() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/ParentConnectingVisitor.php → count() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/ParentConnectingVisitor.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/ParentConnectingVisitor.php → beforetraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/ParentConnectingVisitor.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitor/ParentConnectingVisitor.php → leavenode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitorAbstract.php → class nodevisitorabstract → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitorAbstract.php → beforetraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitorAbstract.php → enternode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitorAbstract.php → leavenode() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/NodeVisitorAbstract.php → aftertraverse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Parser.php → parse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Parser.php → gettokens() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Parser/Php7.php → class php7 → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Parser/Php7.php → initreducecallbacks() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Parser/Php8.php → class php8 → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Parser/Php8.php → initreducecallbacks() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → class parserabstract → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → class name → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → initreducecallbacks() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → parse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → gettokens() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → doparse() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → emiterror() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → geterrormessage() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → getexpectedtokens() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → getattributes() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserAbstract.php → getattributesfortoken() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserFactory.php → class parserfactory → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserFactory.php → createforversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserFactory.php → createfornewestsupportedversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/ParserFactory.php → createforhostversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → class phpversion → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → fromcomponents() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → getnewestsupported() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → gethostversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → fromstring() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → equals() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → newerorequal() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → older() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → ishostversion() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PhpVersion.php → supportsbuiltintype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter.php → prettyprint() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter.php → prettyprintexpr() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter.php → prettyprintfile() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter.php → printformatpreserving() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → class standard → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → class instanceof → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → pparam() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → parg() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → pvariadicplaceholder() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → pconst() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → pnullabletype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → puniontype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → pintersectiontype() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → pidentifier() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → pvarlikeidentifier() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinter/Standard.php → pattribute() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → class prettyprinterabstract → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → class of → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → class node → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → class of → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → to() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → __construct() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → resetstate() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → setindentlevel() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → indent() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → outdent() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → prettyprint() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → prettyprintexpr() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → prettyprintfile() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/PrettyPrinterAbstract.php → preprocessnodes() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Token.php → class token → defines class
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Token.php → getendpos() → returns mixed
+parsers/php/vendor/nikic/php-parser/lib/PhpParser/Token.php → getendline() → returns mixed
+stacks/node-basic/patterns/controller.pattern.js → exports() → returns mixed
+stacks/node-basic/patterns/model.pattern.js → createmodel() → returns mixed
+stacks/node-basic/patterns/routes.pattern.js → exports() → returns mixed
+stacks/node-basic/planner.js → detectcomplexity() → returns mixed
+stacks/node-basic/planner.js → extractjson() → returns mixed
+stacks/node-basic/planner.js → generateplan() → returns mixed
+stacks/node-basic/validator.js → validator() → returns mixed
+stacks/node-basic/validator.js → testrunner() → returns mixed
+tests/core_suite_advanced.js → runtests() → returns mixed
+tests/execution.spec.js → runtest() → returns mixed
+tests/execution.spec.js → starttests() → returns mixed
+tests/internal/contextBudget.test.ts → test() → returns mixed
+tests/internal/contextConsistency.test.ts → test() → returns mixed
+tests/internal/determinism.test.ts → test() → returns mixed
+tests/internal/guard.test.ts → class authservice → defines class
+tests/internal/guard.test.ts → test() → returns mixed
+tests/internal/guard.test.ts → login() → returns mixed
+tests/internal/injection.test.ts → test() → returns mixed
+tests/internal/lowSignal.test.ts → test() → returns mixed
+tests/internal/priority.test.ts → test() → returns mixed
+tests/internal/scoring.test.ts → class cartcontroller → defines class
+tests/internal/scoring.test.ts → test() → returns mixed
+tests/internal/scoring.test.ts → checkout() → returns mixed
+tests/multi_step_validation.js → runvalidation() → returns mixed
+tests/regression/regression.test.js → getallfiles() → returns mixed
+tests/runTests.ts → run() → returns mixed
+tests/runTests.ts → assert() → returns mixed
+tests/standalone-engine.ts → test() → returns mixed
+tests/system.spec.js → getallfiles() → returns mixed
+tests/testRunner.js → runtest() → returns mixed
+tests/ui.spec.js → runtest() → returns mixed
+web/src/App.jsx → app() → returns mixed
+web/src/App.jsx → enrichinput() → returns mixed
+web/src/App.jsx → fetchconfig() → returns mixed
+web/src/App.jsx → saveconfig() → returns mixed
+web/src/App.jsx → fetchprojects() → returns mixed
+web/src/App.jsx → fetchmodels() → returns mixed
+web/src/App.jsx → fetchsessions() → returns mixed
+web/src/App.jsx → fetchsession() → returns mixed
+web/src/App.jsx → createnewsession() → returns mixed
+web/src/App.jsx → deletesession() → returns mixed
+web/src/components/ChangesPanel.jsx → changespanel() → returns mixed
+web/src/components/ContextPanel.jsx → scoringtimeline() → returns mixed
+web/src/components/ContextPanel.jsx → contextpanel() → returns mixed
+web/src/components/DiffViewer.jsx → diffviewer() → returns mixed
+web/src/components/FileDrawer.jsx → filedrawer() → returns mixed
+web/src/components/FileDrawer.jsx → handlemousemove() → returns mixed
+web/src/components/FileDrawer.jsx → handlemouseup() → returns mixed
+web/src/components/FileDrawer.jsx → copyicon() → returns mixed
+web/src/components/FileExplorer.jsx → filenode() → returns mixed
+web/src/components/FileExplorer.jsx → loadchildren() → returns mixed
+web/src/components/FileExplorer.jsx → handleclick() → returns mixed
+web/src/components/FileExplorer.jsx → fileexplorer() → returns mixed
+web/src/components/FileExplorer.jsx → fetchroot() → returns mixed
+web/src/components/FileExplorer.jsx → chevronicon() → returns mixed
+web/src/components/FileExplorer.jsx → fileicon() → returns mixed
+web/src/components/FileExplorer.jsx → copyicon() → returns mixed
+web/src/components/FilePreview.jsx → filepreview() → returns mixed
+web/src/components/FilePreview.jsx → handlemouseup() → returns mixed
+web/src/components/FilePreview.jsx → handlecontextmenu() → returns mixed
+web/src/components/FilePreview.jsx → copytochat() → returns mixed
+web/src/components/FilePreview.jsx → copypath() → returns mixed
+web/src/components/FilePreview.jsx → handleexplain() → returns mixed
+web/src/components/FilePreview.jsx → handlerefactor() → returns mixed
+web/src/components/FilePreview.jsx → getsnippet() → returns mixed
+web/src/components/FilePreview.jsx → sendlineaction() → returns mixed
+web/src/components/Timeline.jsx → timeline() → returns mixed
+web/src/utils/commandPrompts.js → getcommandprompt() → returns mixed
+web/src/utils/detectFileReference.js → detectfilereference() → returns mixed
+web/src/utils/parseCommand.js → parsecommand() → returns mixed
