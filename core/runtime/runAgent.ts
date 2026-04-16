@@ -34,12 +34,15 @@ function irToXentariFormat(projectIR: ProjectIR): string {
         if (a.type === 'class') return -1;
         if (b.type === 'class') return 1;
       }
-      if (a.name !== b.name) return a.name.localeCompare(b.name);
+      const nameA = a.name || 'anonymous';
+      const nameB = b.name || 'anonymous';
+      if (nameA !== nameB) return nameA.localeCompare(nameB);
       return a.location.start.line - b.location.start.line;
     });
 
     for (const entity of sortedEntities) {
-      const symbol = entity.type === 'class' ? `class ${entity.name}` : `${entity.name}()`;
+      const name = entity.name || 'anonymous';
+      const symbol = entity.type === 'class' ? `class ${name}` : `${name}()`;
       const fact = entity.type === 'class' ? 'defines class' : `returns ${entity.returns.relation || entity.returns.kind}`;
       lines.push(`${fileIR.file} → ${symbol} → ${fact}`);
     }
@@ -59,7 +62,8 @@ function validateIR(projectIR: ProjectIR) {
   const ids = new Set<string>();
   for (const file of projectIR) {
     for (const entity of file.entities) {
-      if (!entity.id || !entity.type || !entity.name || !entity.location) {
+      // Allow empty name for classes (anonymous classes)
+      if (!entity.id || !entity.type || !entity.location) {
         throw new Error(`Invalid IR entity: ${JSON.stringify(entity)}`);
       }
       if (ids.has(entity.id)) {

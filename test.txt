@@ -1,0 +1,334 @@
+[33m  ⚠[0m ⚠ Running inside Xentari project
+[XENTARI] SCANNING: /Users/rabbi/Desktop/Projects/Laravel/rh-ecommerce
+[XENTARI] SCAN: 202.992ms
+[XENTARI] FILES FOUND: 2815
+app/actions/fortify/createnewuser.php → class createnewuser → defines class
+app/actions/fortify/createnewuser.php → create() → returns mixed
+app/actions/fortify/passwordvalidationrules.php → passwordrules() → returns mixed
+app/actions/fortify/passwordvalidationrules.php → passwordvalidationrules() → returns mixed
+app/actions/fortify/resetuserpassword.php → class resetuserpassword → defines class
+app/actions/fortify/resetuserpassword.php → reset() → returns mixed
+app/actions/fortify/updateuserpassword.php → class updateuserpassword → defines class
+app/actions/fortify/updateuserpassword.php → update() → returns mixed
+app/actions/fortify/updateuserprofileinformation.php → class updateuserprofileinformation → defines class
+app/actions/fortify/updateuserprofileinformation.php → update() → returns mixed
+app/actions/fortify/updateuserprofileinformation.php → updateverifieduser() → returns mixed
+app/console/kernel.php → class kernel → defines class
+app/console/kernel.php → commands() → returns mixed
+app/console/kernel.php → schedule() → returns mixed
+app/exceptions/handler.php → class handler → defines class
+app/exceptions/handler.php → register() → returns mixed
+app/http/controllers/admin/attributecontroller.php → class attributecontroller → defines class
+app/http/controllers/admin/attributecontroller.php → create() → returns mixed
+app/http/controllers/admin/attributecontroller.php → destroy() → returns mixed
+app/http/controllers/admin/attributecontroller.php → edit() → returns mixed
+app/http/controllers/admin/attributecontroller.php → index() → returns mixed
+app/http/controllers/admin/attributecontroller.php → show() → returns mixed
+app/http/controllers/admin/attributecontroller.php → status() → returns mixed
+app/http/controllers/admin/attributecontroller.php → store() → returns mixed
+app/http/controllers/admin/attributecontroller.php → update() → returns mixed
+app/http/controllers/admin/attributeoptioncontroller.php → class attributeoptioncontroller → defines class
+app/http/controllers/admin/attributeoptioncontroller.php → create() → returns mixed
+app/http/controllers/admin/attributeoptioncontroller.php → destroy() → returns mixed
+app/http/controllers/admin/attributeoptioncontroller.php → edit() → returns mixed
+app/http/controllers/admin/attributeoptioncontroller.php → index() → returns mixed
+app/http/controllers/admin/attributeoptioncontroller.php → status() → returns mixed
+app/http/controllers/admin/attributeoptioncontroller.php → store() → returns mixed
+app/http/controllers/admin/attributeoptioncontroller.php → update() → returns mixed
+app/http/controllers/admin/brandcontroller.php → class brandcontroller → defines class
+app/http/controllers/admin/brandcontroller.php → create() → returns mixed
+app/http/controllers/admin/brandcontroller.php → destroy() → returns mixed
+app/http/controllers/admin/brandcontroller.php → edit() → returns mixed
+app/http/controllers/admin/brandcontroller.php → index() → returns mixed
+app/http/controllers/admin/brandcontroller.php → show() → returns mixed
+app/http/controllers/admin/brandcontroller.php → status() → returns mixed
+app/http/controllers/admin/brandcontroller.php → store() → returns mixed
+app/http/controllers/admin/brandcontroller.php → update() → returns mixed
+app/http/controllers/admin/categorycontroller.php → class categorycontroller → defines class
+app/http/controllers/admin/categorycontroller.php → create() → returns mixed
+app/http/controllers/admin/categorycontroller.php → destroy() → returns mixed
+app/http/controllers/admin/categorycontroller.php → edit() → returns mixed
+app/http/controllers/admin/categorycontroller.php → flattenids() → returns mixed
+app/http/controllers/admin/categorycontroller.php → index() → returns mixed
+app/http/controllers/admin/categorycontroller.php → show() → returns mixed
+app/http/controllers/admin/categorycontroller.php → sort() → returns mixed
+app/http/controllers/admin/categorycontroller.php → store() → returns mixed
+app/http/controllers/admin/categorycontroller.php → update() → returns mixed
+app/http/controllers/admin/dashboardcontroller.php → class dashboardcontroller → defines class
+app/http/controllers/admin/dashboardcontroller.php → index() → returns mixed
+app/http/controllers/admin/flashsalecontroller.php → class flashsalecontroller → defines class
+app/http/controllers/admin/flashsalecontroller.php → create() → returns mixed
+app/http/controllers/admin/flashsalecontroller.php → destroy() → returns mixed
+app/http/controllers/admin/flashsalecontroller.php → edit() → returns mixed
+app/http/controllers/admin/flashsalecontroller.php → getproduct() → returns mixed
+app/http/controllers/admin/flashsalecontroller.php → index() → returns mixed
+app/http/controllers/admin/flashsalecontroller.php → show() → returns mixed
+app/http/controllers/admin/flashsalecontroller.php → store() → returns mixed
+app/http/controllers/admin/flashsalecontroller.php → update() → returns mixed
+app/http/controllers/admin/labelcontroller.php → class labelcontroller → defines class
+app/http/controllers/admin/labelcontroller.php → create() → returns mixed
+app/http/controllers/admin/labelcontroller.php → destroy() → returns mixed
+app/http/controllers/admin/labelcontroller.php → edit() → returns mixed
+app/http/controllers/admin/labelcontroller.php → index() → returns mixed
+app/http/controllers/admin/labelcontroller.php → show() → returns mixed
+app/http/controllers/admin/labelcontroller.php → status() → returns mixed
+app/http/controllers/admin/labelcontroller.php → store() → returns mixed
+app/http/controllers/admin/labelcontroller.php → update() → returns mixed
+app/http/controllers/admin/mediacontroller.php → class mediacontroller → defines class
+app/http/controllers/admin/mediacontroller.php → create() → returns mixed
+app/http/controllers/admin/mediacontroller.php → delete() → returns mixed
+app/http/controllers/admin/mediacontroller.php → destroy() → returns mixed
+app/http/controllers/admin/mediacontroller.php → downloadimage() → returns mixed
+app/http/controllers/admin/mediacontroller.php → edit() → returns mixed
+app/http/controllers/admin/mediacontroller.php → index() → returns mixed
+app/http/controllers/admin/mediacontroller.php → show() → returns mixed
+app/http/controllers/admin/mediacontroller.php → store() → returns mixed
+app/http/controllers/admin/mediacontroller.php → update() → returns mixed
+app/http/controllers/admin/paymentmethodcontroller.php → class paymentmethodcontroller → defines class
+app/http/controllers/admin/paymentmethodcontroller.php → create() → returns mixed
+app/http/controllers/admin/paymentmethodcontroller.php → destroy() → returns mixed
+app/http/controllers/admin/paymentmethodcontroller.php → edit() → returns mixed
+app/http/controllers/admin/paymentmethodcontroller.php → index() → returns mixed
+app/http/controllers/admin/paymentmethodcontroller.php → show() → returns mixed
+app/http/controllers/admin/paymentmethodcontroller.php → store() → returns mixed
+app/http/controllers/admin/paymentmethodcontroller.php → update() → returns mixed
+app/http/controllers/admin/productcontroller.php → class productcontroller → defines class
+app/http/controllers/admin/productcontroller.php → __construct() → returns mixed
+app/http/controllers/admin/productcontroller.php → create() → returns mixed
+app/http/controllers/admin/productcontroller.php → destroy() → returns mixed
+app/http/controllers/admin/productcontroller.php → edit() → returns mixed
+app/http/controllers/admin/productcontroller.php → imageupload() → returns mixed
+app/http/controllers/admin/productcontroller.php → index() → returns mixed
+app/http/controllers/admin/productcontroller.php → show() → returns mixed
+app/http/controllers/admin/productcontroller.php → status() → returns mixed
+app/http/controllers/admin/productcontroller.php → store() → returns mixed
+app/http/controllers/admin/productcontroller.php → update() → returns mixed
+app/http/controllers/admin/productvariationcontroller.php → class productvariationcontroller → defines class
+app/http/controllers/admin/productvariationcontroller.php → attributestore() → returns mixed
+app/http/controllers/admin/productvariationcontroller.php → getvariationdata() → returns mixed
+app/http/controllers/admin/productvariationcontroller.php → variation() → returns mixed
+app/http/controllers/admin/productvariationcontroller.php → variationdestroy() → returns mixed
+app/http/controllers/admin/productvariationcontroller.php → variationedit() → returns mixed
+app/http/controllers/admin/productvariationcontroller.php → variationstatus() → returns mixed
+app/http/controllers/admin/productvariationcontroller.php → variationstore() → returns mixed
+app/http/controllers/admin/rolecontroller.php → class rolecontroller → defines class
+app/http/controllers/admin/rolecontroller.php → create() → returns mixed
+app/http/controllers/admin/rolecontroller.php → destroy() → returns mixed
+app/http/controllers/admin/rolecontroller.php → edit() → returns mixed
+app/http/controllers/admin/rolecontroller.php → index() → returns mixed
+app/http/controllers/admin/rolecontroller.php → show() → returns mixed
+app/http/controllers/admin/rolecontroller.php → store() → returns mixed
+app/http/controllers/admin/rolecontroller.php → update() → returns mixed
+app/http/controllers/admin/settingcontroller.php → class settingcontroller → defines class
+app/http/controllers/admin/slidercontroller.php → class slidercontroller → defines class
+app/http/controllers/admin/slidercontroller.php → __construct() → returns mixed
+app/http/controllers/admin/slidercontroller.php → create() → returns mixed
+app/http/controllers/admin/slidercontroller.php → destroy() → returns mixed
+app/http/controllers/admin/slidercontroller.php → edit() → returns mixed
+app/http/controllers/admin/slidercontroller.php → index() → returns mixed
+app/http/controllers/admin/slidercontroller.php → show() → returns mixed
+app/http/controllers/admin/slidercontroller.php → store() → returns mixed
+app/http/controllers/admin/slidercontroller.php → update() → returns mixed
+app/http/controllers/admin/tagcontroller.php → class tagcontroller → defines class
+app/http/controllers/admin/tagcontroller.php → create() → returns mixed
+app/http/controllers/admin/tagcontroller.php → destroy() → returns mixed
+app/http/controllers/admin/tagcontroller.php → edit() → returns mixed
+app/http/controllers/admin/tagcontroller.php → index() → returns mixed
+app/http/controllers/admin/tagcontroller.php → show() → returns mixed
+app/http/controllers/admin/tagcontroller.php → status() → returns mixed
+app/http/controllers/admin/tagcontroller.php → store() → returns mixed
+app/http/controllers/admin/tagcontroller.php → update() → returns mixed
+app/http/controllers/admin/usercontroller.php → class usercontroller → defines class
+app/http/controllers/admin/usercontroller.php → create() → returns mixed
+app/http/controllers/admin/usercontroller.php → destroy() → returns mixed
+app/http/controllers/admin/usercontroller.php → edit() → returns mixed
+app/http/controllers/admin/usercontroller.php → index() → returns mixed
+app/http/controllers/admin/usercontroller.php → show() → returns mixed
+app/http/controllers/admin/usercontroller.php → store() → returns mixed
+app/http/controllers/admin/usercontroller.php → update() → returns mixed
+app/http/controllers/controller.php → class controller → defines class
+app/http/controllers/testcontroller.php → class testcontroller → defines class
+app/http/controllers/testcontroller.php → combinations() → returns mixed
+app/http/controllers/testcontroller.php → index() → returns mixed
+app/http/kernel.php → class kernel → defines class
+app/http/menutestcontroller.php → class menucontroller → defines class
+app/http/menutestcontroller.php → create() → returns mixed
+app/http/menutestcontroller.php → destroy() → returns mixed
+app/http/menutestcontroller.php → edit() → returns mixed
+app/http/menutestcontroller.php → flattenids() → returns mixed
+app/http/menutestcontroller.php → index() → returns mixed
+app/http/menutestcontroller.php → show() → returns mixed
+app/http/menutestcontroller.php → sort() → returns mixed
+app/http/menutestcontroller.php → store() → returns mixed
+app/http/menutestcontroller.php → update() → returns mixed
+app/http/menutestcontroller.php → updatemenu() → returns mixed
+app/http/middleware/authenticate.php → class authenticate → defines class
+app/http/middleware/authenticate.php → redirectto() → returns mixed
+app/http/middleware/encryptcookies.php → class encryptcookies → defines class
+app/http/middleware/preventrequestsduringmaintenance.php → class preventrequestsduringmaintenance → defines class
+app/http/middleware/redirectifauthenticated.php → class redirectifauthenticated → defines class
+app/http/middleware/redirectifauthenticated.php → handle() → returns mixed
+app/http/middleware/trimstrings.php → class trimstrings → defines class
+app/http/middleware/trusthosts.php → class trusthosts → defines class
+app/http/middleware/trusthosts.php → hosts() → returns mixed
+app/http/middleware/trustproxies.php → class trustproxies → defines class
+app/http/middleware/validatesignature.php → class validatesignature → defines class
+app/http/middleware/verifycsrftoken.php → class verifycsrftoken → defines class
+app/lib/paymentgateway/mollie.php → class mollie → defines class
+app/lib/paymentgateway/mollie.php → test() → returns mixed
+app/lib/paymentgateway/paypal.php → class paypal → defines class
+app/lib/paymentgateway/paypal.php → test() → returns mixed
+app/lib/paymentgateway/paystack.php → class paystack → defines class
+app/lib/paymentgateway/paystack.php → test() → returns mixed
+app/lib/paymentgateway/sslcommerze.php → class sslcommerze → defines class
+app/lib/paymentgateway/sslcommerze.php → test() → returns mixed
+app/lib/paymentgateway/stripe.php → class stripe → defines class
+app/lib/paymentgateway/stripe.php → test() → returns mixed
+app/models/attribute.php → class attribute → defines class
+app/models/attribute.php → attribute_option() → returns has-many
+app/models/attribute.php → getcreatedatattribute() → returns mixed
+app/models/attribute.php → meta() → returns has-one
+app/models/attributeoption.php → class attributeoption → defines class
+app/models/attributeoption.php → attr() → returns belongs-to
+app/models/attributeoption.php → product_variation() → returns belongs-to-many
+app/models/brand.php → class brand → defines class
+app/models/brand.php → getcreatedatattribute() → returns mixed
+app/models/category.php → class category → defines class
+app/models/category.php → children() → returns has-many
+app/models/category.php → childrenrecursive() → returns mixed
+app/models/category.php → parent() → returns belongs-to
+app/models/category.php → products() → returns belongs-to-many
+app/models/flashsale.php → class flashsale → defines class
+app/models/flashsale.php → getproductimg() → returns mixed
+app/models/flashsale.php → term() → returns belongs-to
+app/models/flashsaleinfo.php → class flashsaleinfo → defines class
+app/models/flashsaleinfo.php → flashsales() → returns has-many
+app/models/flashsaleinfo.php → termmeta() → returns has-one
+app/models/label.php → class label → defines class
+app/models/label.php → getcreatedatattribute() → returns mixed
+app/models/label.php → meta() → returns has-one
+app/models/media.php → class media → defines class
+app/models/paymentgateway.php → class paymentgateway → defines class
+app/models/product.php → class product → defines class
+app/models/product.php → categories() → returns belongs-to-many
+app/models/product.php → images() → returns mixed
+app/models/product.php → product_attributes() → returns has-one
+app/models/product.php → qty() → returns has-one
+app/models/product.php → scopedeletedno() → returns mixed
+app/models/product.php → scopewithattributeids() → returns mixed
+app/models/product.php → scopewithattributes() → returns mixed
+app/models/product.php → scopewithqty() → returns mixed
+app/models/product.php → scopewithstock() → returns mixed
+app/models/product.php → seo() → returns mixed
+app/models/product.php → stock_status() → returns has-one
+app/models/productattribute.php → class productattribute → defines class
+app/models/productattribute.php → attribute_option() → returns has-many
+app/models/productattribute.php → attribute_type() → returns has-one
+app/models/productattribute.php → getcreatedatattribute() → returns mixed
+app/models/productattribute.php → meta() → returns has-one
+app/models/productmeta.php → class productmeta → defines class
+app/models/productvariation.php → class productvariation → defines class
+app/models/productvariation.php → attribute_option() → returns belongs-to-many
+app/models/productvariation.php → image() → returns mixed
+app/models/productvariationcombination.php → class productvariationcombination → defines class
+app/models/setting.php → class setting → defines class
+app/models/tag.php → class tag → defines class
+app/models/tag.php → getcreatedatattribute() → returns mixed
+app/models/tag.php → meta() → returns has-one
+app/models/term.php → class term → defines class
+app/models/term.php → flashsales() → returns has-many
+app/models/term.php → sliderinfo() → returns has-one
+app/models/termmeta.php → class termmeta → defines class
+app/models/user.php → class user → defines class
+app/models/user.php → getpermissionbygroupname() → returns mixed
+app/models/user.php → getpermissiongroups() → returns mixed
+app/models/usermetas.php → class usermetas → defines class
+app/models/variation.php → class variation → defines class
+app/models/variation.php → attr() → returns belongs-to
+app/models/variation.php → product_variation() → returns belongs-to-many
+app/providers/appserviceprovider.php → class appserviceprovider → defines class
+app/providers/appserviceprovider.php → boot() → returns mixed
+app/providers/appserviceprovider.php → register() → returns mixed
+app/providers/authserviceprovider.php → class authserviceprovider → defines class
+app/providers/authserviceprovider.php → boot() → returns mixed
+app/providers/broadcastserviceprovider.php → class broadcastserviceprovider → defines class
+app/providers/broadcastserviceprovider.php → boot() → returns mixed
+app/providers/eventserviceprovider.php → class eventserviceprovider → defines class
+app/providers/eventserviceprovider.php → boot() → returns mixed
+app/providers/eventserviceprovider.php → shoulddiscoverevents() → returns mixed
+app/providers/fortifyserviceprovider.php → class fortifyserviceprovider → defines class
+app/providers/fortifyserviceprovider.php → boot() → returns mixed
+app/providers/fortifyserviceprovider.php → register() → returns mixed
+app/providers/routeserviceprovider.php → class routeserviceprovider → defines class
+app/providers/routeserviceprovider.php → boot() → returns mixed
+app/providers/routeserviceprovider.php → configureratelimiting() → returns mixed
+app/services/attributeoptions.php → class attributeoptions → defines class
+app/services/attributeoptions.php → store() → returns mixed
+app/services/bulkactionservice.php → class bulkactionservice → defines class
+app/services/bulkactionservice.php → deleteservice() → returns mixed
+app/services/sliderservice.php → class sliderservice → defines class
+app/services/sliderservice.php → deleteexistingsliderimage() → returns mixed
+app/services/sliderservice.php → generatesliderarray() → returns mixed
+database/factories/userfactory.php → class userfactory → defines class
+database/factories/userfactory.php → definition() → returns mixed
+database/factories/userfactory.php → unverified() → returns mixed
+database/migrations/2014_10_12_000000_create_users_table.php → class anonymous → defines class
+database/migrations/2014_10_12_100000_create_password_resets_table.php → class anonymous → defines class
+database/migrations/2014_10_12_200000_add_two_factor_columns_to_users_table.php → class anonymous → defines class
+database/migrations/2019_08_19_000000_create_failed_jobs_table.php → class anonymous → defines class
+database/migrations/2019_12_14_000001_create_personal_access_tokens_table.php → class anonymous → defines class
+database/migrations/2022_09_23_060354_create_brands_table.php → class anonymous → defines class
+database/migrations/2022_09_24_064146_create_categories_table.php → class anonymous → defines class
+database/migrations/2022_09_25_165615_create_products_table.php → class anonymous → defines class
+database/migrations/2022_09_26_172808_create_category_product_table.php → class anonymous → defines class
+database/migrations/2022_09_30_044450_create_terms_table.php → class anonymous → defines class
+database/migrations/2022_09_30_044455_create_termmetas_table.php → class anonymous → defines class
+database/migrations/2022_10_04_222227_create_permission_tables.php → class createpermissiontables → defines class
+database/migrations/2022_10_04_222227_create_permission_tables.php → down() → returns mixed
+database/migrations/2022_10_04_222227_create_permission_tables.php → up() → returns mixed
+database/migrations/2022_10_06_052937_create_usermetas_table.php → class anonymous → defines class
+database/migrations/2022_10_07_161336_create_product_variations_table.php → class anonymous → defines class
+database/migrations/2022_10_07_162458_create_productmetas_table.php → class anonymous → defines class
+database/migrations/2022_10_08_183240_create_product_variation_combinations_table.php → class anonymous → defines class
+database/migrations/2022_10_11_174417_create_attribute_options_table.php → class anonymous → defines class
+database/migrations/2022_10_14_045732_create_flash_sales_table.php → class anonymous → defines class
+database/migrations/2022_10_26_175621_create_settings_table.php → class anonymous → defines class
+database/migrations/2022_10_28_184154_create_media_table.php → class anonymous → defines class
+database/migrations/2022_11_04_061152_create_payment_gateways_table.php → class anonymous → defines class
+database/migrations/2022_11_17_092058_create_test_table.php → class anonymous → defines class
+database/seeders/brandseeder.php → class brandseeder → defines class
+database/seeders/brandseeder.php → run() → returns mixed
+database/seeders/categoryseeder.php → class categoryseeder → defines class
+database/seeders/categoryseeder.php → run() → returns mixed
+database/seeders/databaseseeder.php → class databaseseeder → defines class
+database/seeders/databaseseeder.php → run() → returns mixed
+database/seeders/optionseeder.php → class optionseeder → defines class
+database/seeders/optionseeder.php → run() → returns mixed
+database/seeders/roleandpermissionsseeder.php → class roleandpermissionsseeder → defines class
+database/seeders/roleandpermissionsseeder.php → run() → returns mixed
+database/seeders/termseeder.php → class termseeder → defines class
+database/seeders/termseeder.php → run() → returns mixed
+database/seeders/userseeder.php → class userseeder → defines class
+database/seeders/userseeder.php → run() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallery.php → class laravelgallery → defines class
+packages/fazleyrabby/laravel-gallery/src/laravelgallery.php → deleteimage() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallery.php → getimages() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallery.php → imageupload() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallery.php → storeimage() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallerycontroller.php → class laravelgallerycontroller → defines class
+packages/fazleyrabby/laravel-gallery/src/laravelgallerycontroller.php → destroy() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallerycontroller.php → downloadimage() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallerycontroller.php → index() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallerycontroller.php → show() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallerycontroller.php → store() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgallerycontroller.php → tailwind() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgalleryprovider.php → class laravelgalleryprovider → defines class
+packages/fazleyrabby/laravel-gallery/src/laravelgalleryprovider.php → boot() → returns mixed
+packages/fazleyrabby/laravel-gallery/src/laravelgalleryprovider.php → register() → returns mixed
+tests/createsapplication.php → createapplication() → returns mixed
+tests/createsapplication.php → createsapplication() → returns mixed
+tests/feature/exampletest.php → class exampletest → defines class
+tests/feature/exampletest.php → test_the_application_returns_a_successful_response() → returns mixed
+tests/testcase.php → class testcase → defines class
+tests/unit/exampletest.php → class exampletest → defines class
+tests/unit/exampletest.php → test_that_true_is_true() → returns mixed
