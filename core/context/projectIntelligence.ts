@@ -68,7 +68,7 @@ function collectSignals(projectDir: string, files: string[]): Signal[] {
     try {
       const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
       const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
-      Object.keys(allDeps).forEach(dep => {
+      Object.keys(allDeps).sort().forEach(dep => {
         const key = normalizeKey(dep);
         signals.push({ key, type: 'dependency', value: dep, weight: 3 });
       });
@@ -81,7 +81,7 @@ function collectSignals(projectDir: string, files: string[]): Signal[] {
     try {
       const composer = JSON.parse(fs.readFileSync(composerPath, "utf-8"));
       const allDeps = { ...composer.require, ...composer['require-dev'] };
-      Object.keys(allDeps).forEach(dep => {
+      Object.keys(allDeps).sort().forEach(dep => {
         const key = normalizeKey(dep);
         signals.push({ key, type: 'dependency', value: dep, weight: 3 });
       });
