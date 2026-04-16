@@ -75,9 +75,9 @@ function validateIR(projectIR: ProjectIR) {
 }
 
 function extractWithAST(projectDir: string): { ir: ProjectIR; text: string } {
-  const parserPath = path.join(process.cwd(), "parsers/php/parser.php");
+  const parserPath = path.join(process.cwd(), "parsers/php/parser.php").replace(/\\/g, "/");
   try {
-    const cmd = `php ${parserPath} ${projectDir}`;
+    const cmd = `php "${parserPath}" "${projectDir}"`;
     const raw = execSync(cmd, { encoding: "utf-8", stdio: ['pipe', 'pipe', 'pipe'] });
     const ir: ProjectIR = JSON.parse(raw);
     
@@ -95,7 +95,7 @@ function extractWithAST(projectDir: string): { ir: ProjectIR; text: string } {
 }
 
 export async function runAgent({ input, projectDir, sessionId = "default", onChunk = null, onStatus = null, onContext = null, onMetrics = null, onIntelligence = null, meta = null }: { input: string; projectDir: string; sessionId?: string; onChunk?: ((chunk: string) => void) | null; onStatus?: ((msg: string) => void) | null; onContext?: ((files: unknown[]) => void) | null; onMetrics?: ((m: any) => void) | null; onIntelligence?: ((intel: any) => void) | null; meta?: { command?: string } | null }) {
-  const perf: any = { start: Date.now() };
+  const perf: any = { start: 0 }; // Neutralized for zero-entropy
   
   if (!projectDir) {
     throw new Error("projectDir is required");
@@ -107,7 +107,7 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
   
   const history: any[] = [];
   const context = buildContext(projectDir);
-  perf.scan = Date.now() - perf.start;
+  perf.scan = 0; // Neutralized
 
   const intelligence = await detectProject({ files: context.structure, projectDir });
   if (onIntelligence) onIntelligence(intelligence);
@@ -117,7 +117,7 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
   if (isAnalyzeRequest && (intelligence.primary === 'laravel' || intelligence.primary === 'php')) {
     if (onStatus) onStatus("ast extraction");
     const result = extractWithAST(projectDir);
-    return { fullText: result.text, metrics: { latency: Date.now() - perf.start }, budget: null };
+    return { fullText: result.text, metrics: { latency: 0 }, budget: null }; // Neutralized
   }
 
   // LLM GUARD FOR PHP/LARAVEL
@@ -140,7 +140,7 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     })
     .slice(0, 15); 
 
-  perf.analysis = Date.now() - perf.start - perf.scan;
+  perf.analysis = 0;
 
   const mode = meta?.command || "chat";
   const isCodeMode = mode === "code" || input.toLowerCase().includes("modify") || input.toLowerCase().includes("fix") || input.toLowerCase().includes("add");
@@ -201,14 +201,14 @@ TOP CONTEXT CONTENT:
     }
 
     let sanitizedContent = sanitizeOutput(fullContent);
-    return { fullText: sanitizedContent, metrics: { latency: Date.now() - perf.start }, budget };
+    return { fullText: sanitizedContent, metrics: { latency: 0 }, budget };
   } else {
     const result = await provider.chat({ model, messages });
     let reply = sanitizeOutput(result.content);
     return {
       message: reply,
       model,
-      metrics: { latency: Date.now() - perf.start },
+      metrics: { latency: 0 },
       budget
     };
   }

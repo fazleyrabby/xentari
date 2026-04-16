@@ -77,15 +77,11 @@ const structureCache = new Map<string, { files: string[], ts: number }>();
 const STRUCTURE_TTL = 30 * 1000; // 30 seconds structure cache
 
 export function buildContext(projectDir) {
-  const absProjectDir = path.resolve(projectDir);
-  
   // 1. Get structure from scan (deterministic ordering)
   let allFiles: string[] = [];
   
-  console.log('[XENTARI] SCANNING:', absProjectDir);
-  console.time('[XENTARI] SCAN');
   allFiles = globSync("**/*.{js,ts,php,py,go,astro,vue,svelte,css,html}", {
-    cwd: absProjectDir,
+    cwd: projectDir,
     ignore: [
       "**/node_modules/**", 
       "**/vendor/**", 
@@ -99,7 +95,6 @@ export function buildContext(projectDir) {
     follow: false
   }).sort((a, b) => a.localeCompare(b)); // Deterministic sort
   
-  console.timeEnd('[XENTARI] SCAN');
   console.log('[XENTARI] FILES FOUND:', allFiles.length);
 
   // Smart selection of important files based on structure and common patterns
