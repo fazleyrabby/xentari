@@ -1,0 +1,52 @@
+{
+  "next": {
+    "id": "struct-1",
+    "type": "structure",
+    "description": "Create routes directory structure",
+    "file": "routes/index.js",
+    "priority": 1,
+    "dependsOn": [],
+    "meta": {
+      "capability": "general",
+      "layer": "module"
+    }
+  },
+  "available": [
+    {
+      "id": "struct-1",
+      "type": "structure",
+      "description": "Create routes directory structure",
+      "file": "routes/index.js",
+      "priority": 1,
+      "dependsOn": [],
+      "meta": {
+        "capability": "general",
+        "layer": "module"
+      }
+    },
+    {
+      "id": "struct-2",
+      "type": "structure",
+      "description": "Create controllers directory structure",
+      "file": "controllers/BaseController.js",
+      "priority": 1,
+      "dependsOn": [],
+      "meta": {
+        "capability": "general",
+        "layer": "module"
+      }
+    },
+    {
+      "id": "struct-3",
+      "type": "structure",
+      "description": "Create models directory structure",
+      "file": "models/User.js",
+      "priority": 1,
+      "dependsOn": [],
+      "meta": {
+        "capability": "general",
+        "layer": "module"
+      }
+    }
+  ]
+}

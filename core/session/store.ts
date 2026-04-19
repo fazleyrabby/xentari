@@ -32,7 +32,8 @@ export function listSessions(projectDir) {
 
   return fs.readdirSync(dir)
     .filter(f => f.endsWith(".json"))
-    .map(f => f.replace(".json", ""));
+    .map(f => f.replace(".json", ""))
+    .sort();
 }
 
 export function createSession(projectDir) {
@@ -40,6 +41,14 @@ export function createSession(projectDir) {
   const sessionId = crypto.randomUUID();
   saveSession(projectDir, sessionId, []);
   return { id: sessionId, messages: [] };
+}
+
+export function deleteSession(projectDir, sessionId) {
+  if (!projectDir) return;
+  const file = path.join(projectDir, ".xentari", "sessions", `${sessionId}.json`);
+  if (fs.existsSync(file)) {
+    fs.unlinkSync(file);
+  }
 }
 
 export function loadHistory(projectDir) {

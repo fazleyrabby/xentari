@@ -2,9 +2,9 @@ import { join, dirname } from "node:path";
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { log, logToFile } from "./logger.js";
-import { generateWithRetry } from "./agents/coder.agent.js";
-import { plan as plannerPlan } from "./agents/planner.agent.js";
-import { review as reviewerReview, isApproved } from "./agents/reviewer.agent.js";
+import { generateWithRetry } from "./runtime_agents/coder.agent.js";
+import { plan as plannerPlan } from "./runtime_agents/planner.agent.js";
+import { review as reviewerReview, isApproved } from "./runtime_agents/reviewer.agent.js";
 import { applyPatch, validatePatch } from "./patcher.js";
 import { patchToUnified } from "./diff.ts";
 import { remember, trackRecentFiles, recordPattern, getRecentFileNames } from "./memory.js";
@@ -17,22 +17,22 @@ import { acquireLock, releaseLock } from "./locks.js";
 import { loadConfig } from "./config.js";
 import { createMetrics } from "./metrics.js";
 import { logBug, recordTestResult } from "./analytics.js";
-import { resolveContract } from "./retrieval/resolver.ts";
-import { buildContext } from "./retrieval/contextBuilder.ts";
-import { validateContext } from "./retrieval/validator.ts";
-import { trimContext } from "./retrieval/tokenLimiter.ts";
-import { stage, statusBar, diffInteractive } from "./tui/index.js";
+import { resolveContract } from "./runtime_retrieval/resolver.ts";
+import { buildContext } from "./runtime_retrieval/contextBuilder.ts";
+import { validateContext } from "./runtime_retrieval/validator.ts";
+import { trimContext } from "./runtime_retrieval/tokenLimiter.ts";
+import { stage, statusBar, diffInteractive } from "./runtime_tui/index.js";
 import crypto from "crypto";
-import { createSandbox } from "./sandbox/manager.js";
-import { cleanupSandbox } from "./sandbox/cleanup.js";
-import { getChangedFiles } from "./sandbox/diff.js";
-import * as ux from "./tui/ux.js";
+import { createSandbox } from "./runtime_sandbox/manager.js";
+import { cleanupSandbox } from "./runtime_sandbox/cleanup.js";
+import { getChangedFiles } from "./runtime_sandbox/diff.js";
+import * as ux from "./runtime_tui/ux.js";
 import { addToHistory } from "./session/store.ts";
 import { detectStack } from "./project/detector.js";
-import { renderStatus } from "./tui/statusBar.js";
+import { renderStatus } from "./runtime_tui/statusBar.js";
 import { loadIndex, indexProject } from "./index.ts";
 import { runTest, summarizeFailure } from "./utils/testRunner.ts";
-import { selectContext, formatContext } from "./retrieval/contextEngine.ts";
+import { selectContext, formatContext } from "./runtime_retrieval/contextEngine.ts";
 import { 
   loadSnapshot, 
   saveSnapshot, 
@@ -40,14 +40,14 @@ import {
   updateSnapshotAfterStep, 
   checkStale, 
   captureFileSnapshot 
-} from "./retrieval/consistency.ts";
+} from "./runtime_retrieval/consistency.ts";
 import { 
   isWithinScope, 
   intentAllowsContractBreak, 
   validateChangeSize,
   Intent
-} from "./retrieval/intentEngine.ts";
-import { logFailure } from "./retrieval/feedbackEngine.ts";
+} from "./runtime_retrieval/intentEngine.ts";
+import { logFailure } from "./runtime_retrieval/feedbackEngine.ts";
 
 import { simulateFailure } from "./utils/simulation.js";
 import { loadStack } from "./loadStack.js";

@@ -321,12 +321,25 @@ if (values.review && !task && !process.stdin.isTTY) {
     const { runAgentStep } = await import("../core/executor.ts");
     await runAgentStep({ task, projectDir });
   } else {
+    const { getHash, logObservation } = await import("../core/utils/observability.ts");
+    const startTime = Date.now();
     const result = await runAgent({
       input: task,
-      projectDir: process.cwd()
+      projectDir
+    }) as any;
+    const endTime = Date.now();
+    const output = result.fullText || result.message;
+    
+    logObservation({
+      jobId: "cli-direct",
+      inputHash: getHash(task + projectDir),
+      outputHash: getHash(output),
+      startTime,
+      endTime,
+      durationMs: endTime - startTime
     });
 
-    console.log(result.message);
+    console.log(output);
   }
 }
 

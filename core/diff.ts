@@ -59,8 +59,39 @@ export function generateDiff(projectDir: string, filePath: string, newContent: s
 
 
 /**
- * Higher level function to generate a multi-file unified patch.
+ * Generates a structured line-by-line diff for UI rendering.
  */
+export function diffFiles(oldContent: string, newContent: string) {
+  const oldLines = oldContent.split("\n");
+  const newLines = newContent.split("\n");
+  const additions: number[] = [];
+  const deletions: number[] = [];
+  const lines: { type: "same" | "added" | "removed"; content: string; oldLine?: number; newLine?: number }[] = [];
+
+  let i = 0, j = 0;
+  while (i < oldLines.length || j < newLines.length) {
+    if (i < oldLines.length && j < newLines.length && oldLines[i] === newLines[j]) {
+      lines.push({ type: "same", content: oldLines[i], oldLine: i + 1, newLine: j + 1 });
+      i++;
+      j++;
+    } else if (j < newLines.length && (i >= oldLines.length || !oldLines.slice(i).includes(newLines[j]))) {
+      lines.push({ type: "added", content: newLines[j], newLine: j + 1 });
+      additions.push(j + 1);
+      j++;
+    } else {
+      lines.push({ type: "removed", content: oldLines[i], oldLine: i + 1 });
+      deletions.push(i + 1);
+      i++;
+    }
+  }
+
+  return {
+    additions: additions.length,
+    deletions: deletions.length,
+    lines
+  };
+}
+
 export function patchToUnified(projectDir: string, fileUpdates: { file: string; content: string }[]): string {
   const diffs: string[] = [];
 

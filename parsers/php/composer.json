@@ -1,0 +1,12 @@
+{
+    "name": "rabbi/php",
+    "authors": [
+        {
+            "name": "Md. Fazley Rabbi",
+            "email": "fazley111@gmail.com"
+        }
+    ],
+    "require": {
+        "nikic/php-parser": "^5.7"
+    }
+}

@@ -12,9 +12,9 @@ export async function loadPlugins(root) {
   if (!existsSync(pluginDir)) return [];
 
   const plugins = [];
-  const folders = readdirSync(pluginDir);
-
+  const folders = readdirSync(pluginDir).sort();
   for (const folder of folders) {
+
     const pluginPath = join(pluginDir, folder, "plugin.js");
 
     if (existsSync(pluginPath)) {

@@ -1,6 +1,6 @@
 import http from "node:http";
-import app from "./core/server/app.js";
-import { startWS } from "./core/server/ws.js";
+import app from "./core/runtime_server/app.js";
+import { startWS } from "./core/runtime_server/ws.js";
 
 const server = http.createServer(app);
 
