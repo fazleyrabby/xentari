@@ -1,0 +1,32 @@
+{
+  "next": {
+    "id": "auth-1",
+    "type": "route",
+    "description": "Add basic authentication routes",
+    "file": "routes/auth.js",
+    "priority": 4,
+    "dependsOn": [
+      "auth-2"
+    ],
+    "meta": {
+      "capability": "authentication",
+      "layer": "entrypoint"
+    }
+  },
+  "available": [
+    {
+      "id": "auth-1",
+      "type": "route",
+      "description": "Add basic authentication routes",
+      "file": "routes/auth.js",
+      "priority": 4,
+      "dependsOn": [
+        "auth-2"
+      ],
+      "meta": {
+        "capability": "authentication",
+        "layer": "entrypoint"
+      }
+    }
+  ]
+}

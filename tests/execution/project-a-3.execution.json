@@ -1,0 +1,36 @@
+{
+  "next": {
+    "id": "auth-2",
+    "type": "controller",
+    "description": "Implement login and registration logic",
+    "file": "controllers/AuthController.js",
+    "priority": 3,
+    "dependsOn": [
+      "struct-1",
+      "struct-2",
+      "struct-3"
+    ],
+    "meta": {
+      "capability": "authentication",
+      "layer": "handler"
+    }
+  },
+  "available": [
+    {
+      "id": "auth-2",
+      "type": "controller",
+      "description": "Implement login and registration logic",
+      "file": "controllers/AuthController.js",
+      "priority": 3,
+      "dependsOn": [
+        "struct-1",
+        "struct-2",
+        "struct-3"
+      ],
+      "meta": {
+        "capability": "authentication",
+        "layer": "handler"
+      }
+    }
+  ]
+}

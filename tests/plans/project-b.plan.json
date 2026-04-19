@@ -1,0 +1,57 @@
+{
+  "steps": [
+    {
+      "id": "struct-1",
+      "type": "structure",
+      "description": "Create routes directory structure",
+      "file": "routes/index.js",
+      "priority": 1,
+      "dependsOn": [],
+      "meta": {
+        "capability": "general",
+        "layer": "module"
+      }
+    },
+    {
+      "id": "struct-2",
+      "type": "structure",
+      "description": "Create controllers directory structure",
+      "file": "controllers/BaseController.js",
+      "priority": 1,
+      "dependsOn": [],
+      "meta": {
+        "capability": "general",
+        "layer": "module"
+      }
+    },
+    {
+      "id": "auth-2",
+      "type": "controller",
+      "description": "Implement login and registration logic",
+      "file": "controllers/AuthController.js",
+      "priority": 3,
+      "dependsOn": [
+        "struct-1",
+        "struct-2"
+      ],
+      "meta": {
+        "capability": "authentication",
+        "layer": "handler"
+      }
+    },
+    {
+      "id": "auth-1",
+      "type": "route",
+      "description": "Add basic authentication routes",
+      "file": "routes/auth.js",
+      "priority": 4,
+      "dependsOn": [
+        "auth-2"
+      ],
+      "meta": {
+        "capability": "authentication",
+        "layer": "entrypoint"
+      }
+    }
+  ]
+}

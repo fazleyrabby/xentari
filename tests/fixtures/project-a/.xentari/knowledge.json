@@ -1,0 +1,50 @@
+{
+  "framework": "node",
+  "entryPoints": [
+    "index.js"
+  ],
+  "files": [
+    {
+      "file": "index.js",
+      "functions": [],
+      "imports": [],
+      "classes": [
+        "class ProjectA"
+      ],
+      "hasExports": false,
+      "size": 51,
+      "dependencies": []
+    },
+    {
+      "file": "package.json",
+      "functions": [],
+      "imports": [],
+      "classes": [],
+      "hasExports": false,
+      "size": 48,
+      "dependencies": []
+    }
+  ],
+  "domains": {},
+  "modules": {
+    "general": [
+      "index.js",
+      "package.json"
+    ]
+  },
+  "flows": {
+    "general": {
+      "flow": [
+        "index.js",
+        "package.json"
+      ]
+    }
+  },
+  "dependencies": {
+    "index.js": [],
+    "package.json": []
+  },
+  "reverseDependencies": {},
+  "timestamp": "2026-04-19T18:08:58.295Z",
+  "projectDir": "/Users/rabbi/Desktop/Projects/ai/xentari/tests/fixtures/project-a"
+}

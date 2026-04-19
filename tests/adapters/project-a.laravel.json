@@ -1,0 +1,75 @@
+{
+  "steps": [
+    {
+      "id": "struct-1",
+      "type": "structure",
+      "description": "Create routes directory structure",
+      "file": "routes/index.js",
+      "priority": 1,
+      "dependsOn": [],
+      "meta": {
+        "capability": "general",
+        "layer": "module"
+      },
+      "projectedFile": "app/General/"
+    },
+    {
+      "id": "struct-2",
+      "type": "structure",
+      "description": "Create controllers directory structure",
+      "file": "controllers/BaseController.js",
+      "priority": 1,
+      "dependsOn": [],
+      "meta": {
+        "capability": "general",
+        "layer": "module"
+      },
+      "projectedFile": "app/General/"
+    },
+    {
+      "id": "struct-3",
+      "type": "structure",
+      "description": "Create models directory structure",
+      "file": "models/User.js",
+      "priority": 1,
+      "dependsOn": [],
+      "meta": {
+        "capability": "general",
+        "layer": "module"
+      },
+      "projectedFile": "app/General/"
+    },
+    {
+      "id": "auth-2",
+      "type": "controller",
+      "description": "Implement login and registration logic",
+      "file": "controllers/AuthController.js",
+      "priority": 3,
+      "dependsOn": [
+        "struct-1",
+        "struct-2",
+        "struct-3"
+      ],
+      "meta": {
+        "capability": "authentication",
+        "layer": "handler"
+      },
+      "projectedFile": "app/Http/Controllers/AuthenticationController.php"
+    },
+    {
+      "id": "auth-1",
+      "type": "route",
+      "description": "Add basic authentication routes",
+      "file": "routes/auth.js",
+      "priority": 4,
+      "dependsOn": [
+        "auth-2"
+      ],
+      "meta": {
+        "capability": "authentication",
+        "layer": "entrypoint"
+      },
+      "projectedFile": "routes/web.php"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "primary": "php",
+  "secondary": [],
+  "confidence": 1,
+  "signals": [
+    {
+      "key": "php",
+      "type": "extension",
+      "value": ".php",
+      "weight": 1
+    }
+  ],
+  "hash": "04f6b77fc85c6a2630680a17d2cb7cd0",
+  "timestamp": 0
+}

@@ -23,7 +23,16 @@
   },
   "scripts": {
     "start": "node bin/xen.js",
-    "build": "tsc"
+    "build": "tsc",
+    "test:run": "tsx tests/run.ts",
+    "test:update": "tsx tests/run.ts --update",
+    "test:stress": "tsx tests/stress.ts",
+    "test:plans": "tsx tests/plan_harness.ts",
+    "test:update:plans": "tsx tests/plan_harness.ts --update",
+    "test:execution": "tsx tests/execution_harness.ts",
+    "test:update:execution": "tsx tests/execution_harness.ts --update",
+    "test:adapters": "tsx tests/adapter_harness.ts",
+    "test:update:adapters": "tsx tests/adapter_harness.ts --update"
   },
   "dependencies": {
     "body-parser": "^2.2.2",
