@@ -137,7 +137,7 @@ app.post("/project", (req, res) => {
     return res.status(400).json({ error: "plan and target are required" });
   }
 
-  const result = projectPlan(plan, target as any);
+  const result = projectPlan(plan, target);
   res.json(result);
 });
 
