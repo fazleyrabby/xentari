@@ -32,7 +32,16 @@
     "test:execution": "tsx tests/execution_harness.ts",
     "test:update:execution": "tsx tests/execution_harness.ts --update",
     "test:adapters": "tsx tests/adapter_harness.ts",
-    "test:update:adapters": "tsx tests/adapter_harness.ts --update"
+    "test:update:adapters": "tsx tests/adapter_harness.ts --update",
+    "test:patch": "tsx tests/patch_harness.ts",
+    "test:update:patch": "tsx tests/patch_harness.ts --update",
+    "test:templates": "tsx tests/template_harness.ts",
+    "test:update:templates": "tsx tests/template_harness.ts --update",
+    "test:apply": "tsx tests/apply_harness.ts",
+    "test:cli": "tsx cli/index.ts",
+    "test:git": "tsx tests/git/git_harness.ts",
+    "test:update:git": "tsx tests/git/git_harness.ts --update",
+    "test:git:commit": "tsx tests/git_commit_harness.ts"
   },
   "dependencies": {
     "body-parser": "^2.2.2",
