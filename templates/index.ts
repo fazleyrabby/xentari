@@ -1,17 +1,35 @@
 import { TEMPLATE_REGISTRY, TemplateContext } from "./registry.ts";
 
-export function extractNameFromPath(filePath: string): string {
+export function normalizeName(base: string): string {
+  // Canonical normalization: Remove existing suffixes, remove non-alphanumeric, capitalize first letter
+  const clean = base
+    .replace(/Controller$/i, '')
+    .replace(/Model$/i, '')
+    .replace(/[^a-zA-Z0-9]/g, '');
+    
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
+export function extractNameFromPath(filePath: string, template: string): string {
   const parts = filePath.split("/");
   const fileName = parts[parts.length - 1];
-  const name = fileName.split(".")[0];
-  
-  // Capitalize first letter
-  return name.charAt(0).toUpperCase() + name.slice(1);
+  const base = fileName.split(".")[0];
+  const normalized = normalizeName(base);
+
+  return normalized;
 }
 
 export function buildContext(patch: any): TemplateContext {
+  // Prefer explicit subject for the template name
+  const rawName = patch.subject && patch.subject !== "base" && patch.subject !== "index" 
+    ? patch.subject 
+    : extractNameFromPath(patch.target, patch.template);
+    
+  const name = normalizeName(rawName);
+
   return {
-    name: extractNameFromPath(patch.target)
+    name,
+    projectType: patch.projectType || "node"
   };
 }
 

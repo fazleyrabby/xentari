@@ -130,6 +130,9 @@ export async function runAgent({ input, projectDir, sessionId = "default", onChu
     
     const lines: string[] = [];
     knowledge.files.sort((a, b) => a.file.localeCompare(b.file)).forEach(f => {
+      if ((!f.classes || f.classes.length === 0) && (!f.functions || f.functions.length === 0)) {
+        lines.push(`${f.file} → module → exists`);
+      }
       f.classes?.forEach(c => {
         const name = c.replace('class ', '');
         lines.push(`${f.file} → class ${name.toLowerCase()} → defines class`);

@@ -123,6 +123,47 @@ app.post("/plan", (req, res) => {
   res.json({ jobId });
 });
 
+import { LlamaParser } from "../../core/intent/llamaParser.ts";
+import fs from "node:fs";
+
+app.post("/instruct", async (req, res) => {
+  const { instruction, projectPath } = req.body;
+  if (!instruction) {
+    return res.status(400).json({ error: "instruction is required" });
+  }
+
+  const parser = new LlamaParser();
+  const parsed = await parser.parse(instruction);
+  
+  if ("error" in parsed) {
+    return res.status(400).json(parsed);
+  }
+
+  const isLaravel = projectPath && fs.existsSync(path.join(projectPath, "composer.json"));
+
+  const steps = parsed.intents.map((intent, idx) => ({
+    id: `step-${idx}`,
+    type: intent.intent === "add_auth" ? "route" : 
+          intent.intent === "create_route" ? "route" : 
+          intent.intent === "add_controller" ? "controller" : "structure",
+    description: `Implement ${intent.intent} for ${intent.subject}`,
+    file: `${intent.subject}.js`, 
+    priority: 10,
+    dependsOn: [],
+    meta: { 
+      capability: intent.intent, 
+      layer: intent.intent === "add_auth" ? "entrypoint" : 
+             intent.intent === "create_route" ? "entrypoint" : 
+             intent.intent === "add_controller" ? "handler" : "module",
+      subject: intent.subject,
+      projectType: isLaravel ? "laravel" : "node"
+    }
+  }));
+  
+  const plan = { steps };
+  res.json({ plan });
+});
+
 app.post("/execute", (req, res) => {
   const { plan, state } = req.body;
 
@@ -216,9 +257,9 @@ setInterval(() => {
   }
 }, 300000);
 
-const PORT = process.env.PORT || 3005;
-app.listen(PORT, () => {
-  console.log(`Minimal API Layer with Queue running on port ${PORT}`);
+const PORT = 4000;
+app.listen(PORT, "127.0.0.1", () => {
+  console.log(`Minimal API Layer with Queue running on http://127.0.0.1:${PORT}`);
 });
 
 export default app;

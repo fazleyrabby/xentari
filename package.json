@@ -1,6 +1,6 @@
 {
   "name": "xentari",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "**Xentari is a deterministic, local-first AI development system that executes coding tasks through structured pipelines instead of chat.**",
   "keywords": [
     "cli",
@@ -19,11 +19,12 @@
   "type": "module",
   "main": "index.js",
   "bin": {
-    "xen": "bin/xen.js"
+    "xen": "dist/cli.js"
   },
   "scripts": {
     "start": "node bin/xen.js",
-    "build": "tsc",
+    "build": "node scripts/build.js",
+    "prepack": "npm run build",
     "test:run": "tsx tests/run.ts",
     "test:update": "tsx tests/run.ts --update",
     "test:stress": "tsx tests/stress.ts",
@@ -41,7 +42,8 @@
     "test:cli": "tsx cli/index.ts",
     "test:git": "tsx tests/git/git_harness.ts",
     "test:update:git": "tsx tests/git/git_harness.ts --update",
-    "test:git:commit": "tsx tests/git_commit_harness.ts"
+    "test:git:commit": "tsx tests/git_commit_harness.ts",
+    "test:ci": "tsx tests/ci/ci_harness.ts"
   },
   "dependencies": {
     "body-parser": "^2.2.2",
@@ -53,6 +55,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "esbuild": "^0.28.0",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   },

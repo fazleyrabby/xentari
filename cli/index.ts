@@ -138,6 +138,30 @@ async function main() {
       console.log(typeof result === "string" ? result : JSON.stringify(result, null, 2));
       break;
     }
+    case "instruct": {
+      const instruction = arg;
+      const projectPath = positionals[2] || process.cwd();
+      
+      const { plan, error } = await callApi("/instruct", { instruction, projectPath });
+      if (error) {
+        console.error(JSON.stringify({ error }));
+        process.exit(1);
+      }
+      
+      const projectedPlan = await callApi("/project", { plan, target: values.target || "laravel" });
+      const patches = await callApi("/patch", { projectedPlan });
+      const rendered = await callApi("/render", { patches: patches.patches });
+      const gitPatch = await callApi("/git/patch", { files: rendered.files });
+      
+      if (values.write) {
+        const result = await callApi("/apply", { files: rendered.files, root: projectPath });
+        console.log("=== XENTARI APPLY MODE ===\n");
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        console.log(gitPatch.patch || "✓ Xentari: no changes required");
+      }
+      break;
+    }
     case "execute": {
       // Assuming execute takes plan from stdin or a file for this wrapper
       console.error(JSON.stringify({ error: "execute command requires structured input, use apply flow" }));
@@ -240,6 +264,48 @@ async function main() {
           const result = await callApi("/apply", { files, root });
           console.log(JSON.stringify(result, null, 2));
         });
+      }
+      break;
+    }
+    case "ci": {
+      if (!arg) {
+        console.error(JSON.stringify({ error: "path is required for ci command" }));
+        process.exit(2);
+      }
+
+      try {
+        // 1. Analyze
+        const { jobId: analyzeId } = await callApi("/analyze", { projectPath: arg });
+        await pollJob(analyzeId, false);
+
+        // 2. Plan
+        const { jobId: planId } = await callApi("/plan", { projectPath: arg });
+        const plan = await pollJob(planId);
+
+        // 3. Project
+        const projectedPlan = await callApi("/project", { plan, target: values.target || "node-basic" });
+
+        // 4. Patch
+        const patches = await callApi("/patch", { projectedPlan });
+
+        // 5. Render
+        const rendered = await callApi("/render", { patches: patches.patches });
+
+        // 6. Git Patch
+        const gitPatch = await callApi("/git/patch", { files: rendered.files });
+
+        if (!gitPatch.patch || gitPatch.patch.trim() === "") {
+          console.log("✓ Xentari: no changes required");
+          process.exit(0);
+        } else {
+          console.log("✗ Xentari: drift detected\n");
+          console.log(gitPatch.patch);
+          console.log("\nFix with:\nxen apply --write --commit");
+          process.exit(1);
+        }
+      } catch (err: any) {
+        console.error(`Xentari CI failed: ${err.message}`);
+        process.exit(2);
       }
       break;
     }
