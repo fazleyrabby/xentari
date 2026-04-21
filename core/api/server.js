@@ -12,6 +12,10 @@ const XENTARI_ROOT = path.resolve(__dirname, "../../");
 import { buildPlan } from "../../planner/index.ts";
 import { execute } from "../../executor/index.ts";
 import { projectPlan } from "../../adapter/index.ts";
+import { generatePatches } from "../../patch/index.ts";
+import { processPatches } from "../../templates/index.ts";
+import { applyFiles } from "../../apply/index.ts";
+import { generateGitPatch } from "../../git/index.ts";
 
 const app = express();
 app.use(express.json());
@@ -119,6 +123,47 @@ app.post("/plan", (req, res) => {
   res.json({ jobId });
 });
 
+import { LlamaParser } from "../../core/intent/llamaParser.ts";
+import fs from "node:fs";
+
+app.post("/instruct", async (req, res) => {
+  const { instruction, projectPath } = req.body;
+  if (!instruction) {
+    return res.status(400).json({ error: "instruction is required" });
+  }
+
+  const parser = new LlamaParser();
+  const parsed = await parser.parse(instruction);
+  
+  if ("error" in parsed) {
+    return res.status(400).json(parsed);
+  }
+
+  const isLaravel = projectPath && fs.existsSync(path.join(projectPath, "composer.json"));
+
+  const steps = parsed.intents.map((intent, idx) => ({
+    id: `step-${idx}`,
+    type: intent.intent === "add_auth" ? "route" : 
+          intent.intent === "create_route" ? "route" : 
+          intent.intent === "add_controller" ? "controller" : "structure",
+    description: `Implement ${intent.intent} for ${intent.subject}`,
+    file: `${intent.subject}.js`, 
+    priority: 10,
+    dependsOn: [],
+    meta: { 
+      capability: intent.intent, 
+      layer: intent.intent === "add_auth" ? "entrypoint" : 
+             intent.intent === "create_route" ? "entrypoint" : 
+             intent.intent === "add_controller" ? "handler" : "module",
+      subject: intent.subject,
+      projectType: isLaravel ? "laravel" : "node"
+    }
+  }));
+  
+  const plan = { steps };
+  res.json({ plan });
+});
+
 app.post("/execute", (req, res) => {
   const { plan, state } = req.body;
 
@@ -139,6 +184,54 @@ app.post("/project", (req, res) => {
 
   const result = projectPlan(plan, target);
   res.json(result);
+});
+
+app.post("/patch", (req, res) => {
+  const { projectedPlan } = req.body;
+
+  if (!projectedPlan) {
+    return res.status(400).json({ error: "projectedPlan is required" });
+  }
+
+  const result = generatePatches(projectedPlan);
+  res.json(result);
+});
+
+app.post("/render", (req, res) => {
+  const { patches } = req.body;
+
+  if (!patches) {
+    return res.status(400).json({ error: "patches are required" });
+  }
+
+  const result = processPatches(patches);
+  res.json(result);
+});
+
+app.post("/apply", (req, res) => {
+  const { files, root } = req.body;
+
+  if (!files || !root) {
+    return res.status(400).json({ error: "files and root are required" });
+  }
+
+  try {
+    const result = applyFiles(files, root);
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post("/git/patch", (req, res) => {
+  const { files } = req.body;
+
+  if (!files || !Array.isArray(files)) {
+    return res.status(400).json({ error: "files array is required" });
+  }
+
+  const patch = generateGitPatch(files);
+  res.json({ patch });
 });
 
 app.get("/job/:id", (req, res) => {
@@ -164,9 +257,9 @@ setInterval(() => {
   }
 }, 300000);
 
-const PORT = process.env.PORT || 3005;
-app.listen(PORT, () => {
-  console.log(`Minimal API Layer with Queue running on port ${PORT}`);
+const PORT = 4000;
+app.listen(PORT, "127.0.0.1", () => {
+  console.log(`Minimal API Layer with Queue running on http://127.0.0.1:${PORT}`);
 });
 
 export default app;

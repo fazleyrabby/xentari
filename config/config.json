@@ -6,7 +6,7 @@
   "maxFileChars": 1500,
   "maxTokens": 600,
   "maxPatchChars": 8000,
-  "temperature": 0.2,
+  "temperature": 0.0,
   "dryRun": false,
   "retrieverWeights": {
     "filename": 2,

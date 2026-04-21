@@ -1,0 +1,101 @@
+name: Xentari CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  xentari-ci:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Start Xentari API Server
+        run: npx tsx core/api/server.js &
+        env:
+          PORT: 3005
+
+      - name: Wait for API Server
+        run: sleep 5
+
+      - name: Run Xentari CI Drift Detection
+        id: xentari_ci
+        run: |
+          npx tsx cli/index.ts ci . > xentari_output.txt 2>&1
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        env:
+          XENTARI_API_URL: http://localhost:3005
+        continue-on-error: true
+
+      - name: Post PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('xentari_output.txt', 'utf8');
+            const driftDetected = output.includes('drift detected');
+            const exitCode = parseInt('${{ steps.xentari_ci.outputs.exit_code }}');
+            
+            let body = '';
+            const header = !driftDetected ? '### Xentari Status' : '### Xentari Drift Detected';
+            
+            if (!driftDetected) {
+              body = `${header}\n\n✓ No changes required`;
+            } else {
+              // Safe truncation logic
+              let diffOutput = output;
+              const limit = 60000;
+              if (diffOutput.length > limit) {
+                const lines = diffOutput.substring(0, limit).split('\n');
+                lines.pop(); // Remove last partial line
+                diffOutput = lines.join('\n') + '\n\n... (truncated)';
+              }
+              body = `${header}\n\n\`\`\`diff\n${diffOutput}\n\`\`\`\n\nFix with:\n\n\`\`\`bash\nxen apply --write --commit\n\`\`\``;
+            }
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              (comment.body.includes('### Xentari Status') || comment.body.includes('### Xentari Drift Detected'))
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }
+
+            if (exitCode !== 0) {
+              process.exit(exitCode);
+            }

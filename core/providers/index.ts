@@ -4,7 +4,12 @@ export function createProvider(config) {
       const res = await fetch(`${config.baseUrl}/chat/completions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: model.id, messages })
+        body: JSON.stringify({ 
+          model: model.id, 
+          messages,
+          temperature: config.temperature,
+          seed: 42
+        })
       });
       const data = await res.json();
       return {
@@ -22,7 +27,9 @@ export function createProvider(config) {
       const body: any = { 
         model: model.id, 
         messages,
-        stream: true
+        stream: true,
+        temperature: config.temperature,
+        seed: 42
       };
 
       // Only include stream_options if we think the provider supports it or as a fallback
